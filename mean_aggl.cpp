@@ -25,6 +25,7 @@
 #include <limits>
 #include <map>
 #include <vector>
+#include <iomanip>
 #include <zi/disjoint_sets/disjoint_sets.hpp>
 
 template <class T>
@@ -105,7 +106,7 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg,
                 // std::cout << "Joined " << s0 << " and " << s1 << " to " << s
                 //           << " at " << e->edge.w << "\n";
                 if (s0 != s1) {
-                    of << s0 << " " << s1 << " " << s << " " << e->edge.w << std::endl;
+                    of << std::setprecision (17) << s0 << " " << s1 << " " << s << " " << e->edge.w << std::endl;
                 }
             }
 
@@ -172,7 +173,7 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg,
         auto v1 = e->edge.v1;
         auto s0 = sets.find_set(v0);
         auto s1 = sets.find_set(v1);
-        of << s0 << " " << s1 << " " << e->edge.w << std::endl;
+        of << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
     }
     of.close();
 
