@@ -26,7 +26,7 @@
 #include <map>
 #include <vector>
 #include <iomanip>
-#include <zi/disjoint_sets/disjoint_sets.hpp>
+#include <boost/pending/disjoint_sets.hpp>
 
 template <class T>
 struct edge_t
@@ -72,7 +72,14 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg,
     Plus    plus;
     heap_type<T, Compare> heap;
 
-    zi::disjoint_sets<uint64_t> sets(n);
+    std::vector<uint64_t> rank(n);
+    std::vector<uint64_t> parent(n);
+
+    boost::disjoint_sets<uint64_t*, uint64_t*> sets(&rank[0], &parent[0]);
+    for (int i =0; i<n; i++) {
+        sets.make_set(i);
+    }
+
     std::vector<std::map<uint64_t, heapable_edge<T, Compare>*>> incident(n);
 
     std::vector<heapable_edge<T, Compare>> edges(rg.size());
@@ -101,7 +108,8 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg,
             {
                 auto s0 = sets.find_set(v0);
                 auto s1 = sets.find_set(v1);
-                auto s  = sets.join(s0, s1);
+                sets.link(s0, s1);
+                auto s = sets.find_set(v0);
 
                 // std::cout << "Joined " << s0 << " and " << s1 << " to " << s
                 //           << " at " << e->edge.w << "\n";
