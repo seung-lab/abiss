@@ -258,16 +258,20 @@ int main(int argc, char *argv[])
 {
     std::vector<edge_t<mean_edge>> rg;
     double th = atof(argv[1]);
+    std::ifstream rg_file(argv[2]);
+    if (!rg_file.is_open()) {
+        return -1;
+    }
 
     std::size_t m, v, n;
-    std::cin >> m >> v >> n;
+    rg_file >> m >> v >> n;
 
     for (std::size_t i = 0; i < n; ++i)
     {
         edge_t<mean_edge> e;
         uint64_t u1, u2;
         double sum_aff, area;
-        std::cin >> e.v0 >> e.v1 >> e.w.sum >> e.w.num >> u1 >> u2 >> sum_aff >>  area;
+        rg_file >> e.v0 >> e.v1 >> e.w.sum >> e.w.num >> u1 >> u2 >> sum_aff >>  area;
         atomic_edge_t * ae = new atomic_edge_t(u1,u2,sum_aff,area);
         e.w.repr = ae;
         rg.push_back(e);
