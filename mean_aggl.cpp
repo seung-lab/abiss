@@ -91,8 +91,8 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg,
         incident[rg[i].v1][rg[i].v0] = &edges[i];
     }
 
-    std::ofstream of;
-    of.open("test_mst.in", std::ofstream::out | std::ofstream::trunc);
+    std::ofstream of_mst;
+    of_mst.open("test_mst.in", std::ofstream::out | std::ofstream::trunc);
 
     while (heap.size() && comp(heap.top()->edge.w, threshold))
     {
@@ -114,7 +114,7 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg,
                 // std::cout << "Joined " << s0 << " and " << s1 << " to " << s
                 //           << " at " << e->edge.w << "\n";
                 if (s0 != s1) {
-                    of << std::setprecision (17) << s0 << " " << s1 << " " << s << " " << e->edge.w << std::endl;
+                    of_mst << std::setprecision (17) << s0 << " " << s1 << " " << s << " " << e->edge.w << std::endl;
                 }
             }
 
@@ -167,12 +167,13 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg,
         }
     }
 
-    of.close();
+    of_mst.close();
 
     //std::cout << "Total of " << next << " segments\n";
 
-    of.open("new_rg.in", std::ofstream::out | std::ofstream::trunc);
-    of << n-1 << " " << n << " " << heap.size() << std::endl;
+    std::ofstream of_rg;
+    of_rg.open("new_rg.in", std::ofstream::out | std::ofstream::trunc);
+    of_rg << n-1 << " " << n << " " << heap.size() << std::endl;
     while (heap.size())
     {
         auto e = heap.top();
@@ -181,9 +182,9 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg,
         auto v1 = e->edge.v1;
         auto s0 = sets.find_set(v0);
         auto s1 = sets.find_set(v1);
-        of << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
+        of_rg << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
     }
-    of.close();
+    of_rg.close();
 
     return;
 }
