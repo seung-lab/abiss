@@ -25,6 +25,7 @@
 #include <limits>
 #include <map>
 #include <vector>
+#include <unordered_set>
 #include <iomanip>
 #include <boost/pending/disjoint_sets.hpp>
 
@@ -65,7 +66,7 @@ struct heapable_edge
 
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
           class Limits = std::numeric_limits<T>>
-inline void agglomerate(std::vector<edge_t<T>> const& rg,
+inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uint64_t> & frozen_supervoxels,
                                          T const& threshold, uint64_t const n)
 {
     Compare comp;
@@ -94,6 +95,9 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg,
     std::ofstream of_mst;
     of_mst.open("test_mst.in", std::ofstream::out | std::ofstream::trunc);
 
+    std::ofstream of_frozen_edges;
+    of_frozen_edges.open("frozen_rg.in", std::ofstream::out | std::ofstream::trunc);
+
     while (heap.size() && comp(heap.top()->edge.w, threshold))
     {
         auto e = heap.top();
@@ -108,6 +112,18 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg,
             {
                 auto s0 = sets.find_set(v0);
                 auto s1 = sets.find_set(v1);
+                if (frozen_supervoxels.count(s0) > 0) {
+                    frozen_supervoxels.insert(s1);
+                    of_frozen_edges << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
+                    continue;
+                }
+
+                if (frozen_supervoxels.count(s1) > 0) {
+                    frozen_supervoxels.insert(s0);
+                    of_frozen_edges << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
+                    continue;
+                }
+
                 sets.link(s0, s1);
                 auto s = sets.find_set(v0);
 
@@ -168,6 +184,7 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg,
     }
 
     of_mst.close();
+    of_frozen_edges.close();
 
     //std::cout << "Total of " << next << " segments\n";
 
@@ -258,9 +275,16 @@ operator<<(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
 int main(int argc, char *argv[])
 {
     std::vector<edge_t<mean_edge>> rg;
+    std::unordered_set<uint64_t> frozen_supervoxels;
     double th = atof(argv[1]);
     std::ifstream rg_file(argv[2]);
     if (!rg_file.is_open()) {
+        std::cout << "Cannot open the region graph file" << std::endl;
+        return -1;
+    }
+    std::ifstream frozen_file(argv[3]);
+    if (!frozen_file.is_open()) {
+        std::cout << "Cannot open the frozen supervoxel file" << std::endl;
         return -1;
     }
 
@@ -278,8 +302,16 @@ int main(int argc, char *argv[])
         rg.push_back(e);
     }
 
+    uint64_t sv;
+    while (!frozen_file.eof()) {
+        frozen_file >> sv;
+        frozen_supervoxels.insert(sv);
+    }
+
+    rg_file.close();
+    frozen_file.close();
     agglomerate<mean_edge, mean_edge_greater, mean_edge_plus,
-                           mean_edge_limits>(rg, mean_edge(th, 1), v);
+                           mean_edge_limits>(rg, frozen_supervoxels, mean_edge(th, 1), v);
 
     //for (auto& e : res)
     //{
