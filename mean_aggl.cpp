@@ -65,6 +65,31 @@ struct heapable_edge
     typename heap_type<T, C>::handle_type handle;
 };
 
+template <typename key, typename container>
+class incident_matrix
+{
+public:
+    incident_matrix()
+        :d_pmap() {
+    }
+
+    ~incident_matrix() {
+        for(auto & p : d_pmap) {
+            delete p.second;
+            p.second = NULL;
+        }
+    }
+
+    container & operator[](key k) {
+        if (d_pmap.count(k) == 0) {
+            d_pmap.emplace(k, new container);
+        }
+        return *(d_pmap.at(k));
+    }
+private:
+    std::unordered_map<key, container * > d_pmap;
+};
+
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
           class Limits = std::numeric_limits<T>>
 inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uint64_t> & frozen_supervoxels,
@@ -88,7 +113,7 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
         sets.make_set(i);
     }
 
-    std::vector<std::map<uint64_t, heapable_edge<T, Compare>*>> incident(n);
+    incident_matrix<uint64_t, std::map<uint64_t, heapable_edge<T, Compare>* > > incident;
 
     std::vector<heapable_edge<T, Compare>> edges(rg.size());
     for (std::size_t i = 0; i < rg.size(); ++i)
