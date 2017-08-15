@@ -23,6 +23,7 @@
 #include <iostream>
 #include <fstream>
 #include <limits>
+#include <unordered_map>
 #include <map>
 #include <vector>
 #include <unordered_set>
@@ -73,10 +74,16 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
     Plus    plus;
     heap_type<T, Compare> heap;
 
-    std::vector<uint64_t> rank(n);
-    std::vector<uint64_t> parent(n);
+    typedef std::unordered_map<uint64_t,std::size_t> rank_t;
+    typedef std::unordered_map<uint64_t,uint64_t> parent_t;
+    rank_t rank_map;
+    parent_t parent_map;
 
-    boost::disjoint_sets<uint64_t*, uint64_t*> sets(&rank[0], &parent[0]);
+    boost::associative_property_map<rank_t> rank_pmap(rank_map);
+    boost::associative_property_map<parent_t> parent_pmap(parent_map);
+
+    boost::disjoint_sets<boost::associative_property_map<rank_t>, boost::associative_property_map<parent_t> > sets(rank_pmap, parent_pmap);
+
     for (int i =0; i<n; i++) {
         sets.make_set(i);
     }
