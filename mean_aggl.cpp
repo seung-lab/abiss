@@ -93,11 +93,13 @@ private:
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
           class Limits = std::numeric_limits<T>>
 inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uint64_t> & frozen_supervoxels,
-                                         T const& threshold, uint64_t const n)
+                                         T const& threshold, std::unordered_set<uint64_t> const & supervoxels)
 {
     Compare comp;
     Plus    plus;
     heap_type<T, Compare> heap;
+
+    auto n = supervoxels.size();
 
     typedef std::unordered_map<uint64_t,std::size_t> rank_t;
     typedef std::unordered_map<uint64_t,uint64_t> parent_t;
@@ -109,8 +111,8 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
 
     boost::disjoint_sets<boost::associative_property_map<rank_t>, boost::associative_property_map<parent_t> > sets(rank_pmap, parent_pmap);
 
-    for (int i =0; i<n; i++) {
-        sets.make_set(i);
+    for (uint64_t s : supervoxels) {
+        sets.make_set(s);
     }
 
     incident_matrix<uint64_t, std::map<uint64_t, heapable_edge<T, Compare>* > > incident;
@@ -308,6 +310,7 @@ int main(int argc, char *argv[])
 {
     std::vector<edge_t<mean_edge>> rg;
     std::unordered_set<uint64_t> frozen_supervoxels;
+    std::unordered_set<uint64_t> supervoxels;
     double th = atof(argv[1]);
     std::ifstream rg_file(argv[2]);
     if (!rg_file.is_open()) {
@@ -332,6 +335,8 @@ int main(int argc, char *argv[])
         atomic_edge_t * ae = new atomic_edge_t(u1,u2,sum_aff,area);
         e.w.repr = ae;
         rg.push_back(e);
+        supervoxels.insert(e.v0);
+        supervoxels.insert(e.v1);
     }
 
     uint64_t sv;
@@ -343,7 +348,7 @@ int main(int argc, char *argv[])
     rg_file.close();
     frozen_file.close();
     agglomerate<mean_edge, mean_edge_greater, mean_edge_plus,
-                           mean_edge_limits>(rg, frozen_supervoxels, mean_edge(th, 1), v);
+                           mean_edge_limits>(rg, frozen_supervoxels, mean_edge(th, 1), supervoxels);
 
     //for (auto& e : res)
     //{
