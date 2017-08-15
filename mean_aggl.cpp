@@ -224,7 +224,6 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
 
     std::ofstream of_rg;
     of_rg.open("new_rg.in", std::ofstream::out | std::ofstream::trunc);
-    of_rg << n-1 << " " << n << " " << heap.size() << std::endl;
     while (heap.size())
     {
         auto e = heap.top();
@@ -323,10 +322,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    std::size_t m, v, n;
-    rg_file >> m >> v >> n;
-
-    for (std::size_t i = 0; i < n; ++i)
+    while (!rg_file.eof())
     {
         edge_t<mean_edge> e;
         uint64_t u1, u2;
