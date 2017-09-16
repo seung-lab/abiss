@@ -2,6 +2,46 @@
 #define UTILS_HPP
 
 #include "Types.h"
+#include <queue>
+
+std::vector<ContactRegion> connectComponent(const ContactRegion & cr)
+{
+    std::vector<ContactRegion> cc_sets;
+    ContactRegion visited;
+    for (auto root: cr) {
+        if (visited.count(root) > 0) {
+            continue;
+        }
+        ContactRegion cc;
+        std::queue<Coord> voxel_queue;
+        voxel_queue.push(root);
+        while (!voxel_queue.empty()) {
+            auto node = voxel_queue.front();
+            voxel_queue.pop();
+            if (visited.count(node) > 0) {
+                continue;
+            }
+            visited.insert(node);
+            cc.insert(node);
+            for (int i = -1; i <= 1; i++) {
+                for (int j = -1; j <= 1; j++) {
+                    for (int k = -1; k <= 1; k++) {
+                        if (i == 0 && j == 0 && k == 0) {
+                            continue;
+                        }
+                        Coord neighbor({node[0]+i,node[1]+j,node[2]+k});
+                        if (visited.count(neighbor) == 0 && cr.count(neighbor) > 0) {
+                            voxel_queue.push(neighbor);
+                        }
+                    }
+                }
+            }
+        }
+        cc_sets.push_back(cc);
+    }
+    return cc_sets;
+}
+
 
 template <typename Ts, typename ... Ta>
 void traverseSegments(const Ts& seg, bool overlappingChunk, Ta& ... extractors)
