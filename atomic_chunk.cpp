@@ -3,6 +3,7 @@
 #include "SizeExtractor.hpp"
 #include "AffinityExtractor.hpp"
 #include "MeanEdge.hpp"
+#include "ReweightedLocalMeanEdge.hpp"
 #include <cstdint>
 #include <array>
 #include <fstream>
@@ -56,7 +57,9 @@ void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinit
             writeEdge(p, kv.second, path);
         } else {
             auto me = meanAffinity<float, int>(kv.second);
-            complete << p.first << " " << p.second << " " << me.first << " " << me.second << std::endl;
+            auto rlme = reweightedLocalMeanAffinity<float, int>(kv.second, 0.25);
+            complete << p.first << " " << p.second << " " << me.first << " " << me.second << " ";
+            complete << p.first << " " << p.second << " " << rlme.first << " " << rlme.second << std::endl;
         }
     }
     incomplete.close();

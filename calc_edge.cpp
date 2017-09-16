@@ -1,4 +1,5 @@
 #include "MeanEdge.hpp"
+#include "ReweightedLocalMeanEdge.hpp"
 #include <cstdint>
 #include <fstream>
 #include <boost/format.hpp>
@@ -25,7 +26,9 @@ int main(int argc, char * argv[])
     while (edge_list >> seg1 >> seg2){
         auto edge = load_edge<float, int32_t>(seg1, seg2);
         auto me = meanAffinity<float, int32_t>(edge);
-        std::cout << seg1 << " " << seg2 << " " << me.first << " " << me.second << std::endl;
+        auto rlme = reweightedLocalMeanAffinity<float, int32_t>(edge, 0.25);
+        std::cout << seg1 << " " << seg2 << " " << me.first << " " << me.second << " ";
+        std::cout << seg1 << " " << seg2 << " " << rlme.first << " " << rlme.second << std::endl;
     }
     edge_list.close();
 }
