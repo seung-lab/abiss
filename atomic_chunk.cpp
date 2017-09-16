@@ -55,8 +55,8 @@ void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinit
             incomplete << p.first << " " << p.second << "\n";
             writeEdge(p, kv.second, path);
         } else {
-            MeanEdge<float, int> me(kv.second);
-            complete << p.first << " " << p.second << " " << me.affinity() << " " << me.area() << "\n";
+            auto me = meanAffinity<float, int>(kv.second);
+            complete << p.first << " " << p.second << " " << me.first << " " << me.second << std::endl;
         }
     }
     incomplete.close();

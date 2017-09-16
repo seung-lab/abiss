@@ -24,8 +24,8 @@ int main(int argc, char * argv[])
     std::ifstream edge_list(argv[1]);
     while (edge_list >> seg1 >> seg2){
         auto edge = load_edge<float, int32_t>(seg1, seg2);
-        MeanEdge<float, int32_t> output(edge);
-        std::cout << seg1 << " " << seg2 << " " << output.affinity() << " " << output.area() << std::endl;
+        auto me = meanAffinity<float, int32_t>(edge);
+        std::cout << seg1 << " " << seg2 << " " << me.first << " " << me.second << std::endl;
     }
     edge_list.close();
 }

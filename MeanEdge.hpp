@@ -4,26 +4,16 @@
 #include "Types.h"
 
 template <typename Ta, typename Ts>
-class MeanEdge
+std::pair<Ta, Ts> meanAffinity(const Edge<Ta> & edge)
 {
-public:
-    MeanEdge(const Edge<Ta> & edge)
-        :m_affinity(0), m_area(0) {
-        processEdge(edge);
-    }
-    Ts area() const { return m_area; }
-    Ta affinity() const { return m_affinity; }
-private:
-    void processEdge(const Edge<Ta> & edge) {
-        for (int i = 0; i != 3; i++) {
-            for (auto & kv : edge[i]) {
-                m_affinity += kv.second;
-                m_area += 1;
-            }
+    Ta affinity = 0;
+    Ts area = 0;
+    for (int i = 0; i != 3; i++) {
+        for (auto & kv : edge[i]) {
+            affinity += kv.second;
+            area += 1;
         }
     }
-    Ta m_affinity;
-    Ts m_area;
-};
-
+    return std::make_pair(affinity, area);
+}
 #endif
