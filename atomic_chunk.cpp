@@ -1,5 +1,5 @@
 #include "Types.h"
-#include "Segmentation.hpp"
+#include "Utils.hpp"
 #include "SizeExtractor.hpp"
 #include "AffinityExtractor.hpp"
 #include "MeanEdge.hpp"

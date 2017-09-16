@@ -1,5 +1,5 @@
-#ifndef SEGMENTATION_HPP
-#define SEGMENTATION_HPP
+#ifndef UTILS_HPP
+#define UTILS_HPP
 
 #include "Types.h"
 
