@@ -322,22 +322,26 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    while (!rg_file.eof())
+    uint64_t v1, v2;
+
+    while (rg_file >> v1 >> v2)
     {
         edge_t<mean_edge> e;
+        e.v0 = v1;
+        e.v1 = v2;
         uint64_t u1, u2;
         double sum_aff, area;
-        rg_file >> e.v0 >> e.v1 >> e.w.sum >> e.w.num >> u1 >> u2 >> sum_aff >>  area;
+        rg_file >> e.w.sum >> e.w.num >> u1 >> u2 >> sum_aff >> area;
         atomic_edge_t * ae = new atomic_edge_t(u1,u2,sum_aff,area);
         e.w.repr = ae;
+        //std::cout << e.v0 <<" " << e.v1 <<" " << e.w.sum <<" " << e.w.num<<" "  << u1<<" "  << u2<<" "  << sum_aff<<" "  << area << std::endl;
         rg.push_back(e);
         supervoxels.insert(e.v0);
         supervoxels.insert(e.v1);
     }
 
     uint64_t sv;
-    while (!frozen_file.eof()) {
-        frozen_file >> sv;
+    while (frozen_file >> sv) {
         frozen_supervoxels.insert(sv);
     }
 
