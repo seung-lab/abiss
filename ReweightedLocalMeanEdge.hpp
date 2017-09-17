@@ -96,4 +96,9 @@ std::pair<Ta, Ts> reweightedLocalMeanAffinity(const Edge<Ta> & edge)
                   return a.first/a.second < b.first/b.second;});
 }
 
+template <typename Ta, typename Ts>
+std::pair<Ta, Ts> reweightedLocalMeanAffinity_helper(const SegPair<Ts> & segPair, const std::unordered_map<SegPair<Ts>, Edge<Ta>, boost::hash<SegPair<Ts> > > & edges)
+{
+    return reweightedLocalMeanAffinity<Ta, Ts>(edges.at(segPair));
+}
 #endif
