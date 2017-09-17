@@ -57,7 +57,7 @@ void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinit
             writeEdge(p, kv.second, path);
         } else {
             auto me = meanAffinity<float, int>(kv.second);
-            auto rlme = reweightedLocalMeanAffinity<float, int>(kv.second, 0.25);
+            auto rlme = reweightedLocalMeanAffinity<float, int>(kv.second);
             complete << p.first << " " << p.second << " " << me.first << " " << me.second << " ";
             complete << p.first << " " << p.second << " " << rlme.first << " " << rlme.second << std::endl;
         }

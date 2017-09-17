@@ -1,6 +1,8 @@
 #ifndef REWEIGHTED_LOCAL_MEAN_EDGE_HPP
 #define REWEIGHTED_LOCAL_MEAN_EDGE_HPP
 
+#define THRESHOLD 0.25
+
 #include "Types.h"
 #include "Utils.hpp"
 
@@ -15,12 +17,12 @@ ContactRegion mergeContactRegion(const auto & edge)
     return cr;
 }
 
-ContactRegion trimContactRegion(const ContactRegion & cr, const auto & edge, auto threshold)
+ContactRegion trimContactRegion(const ContactRegion & cr, const auto & edge)
 {
     ContactRegion res;
     for (auto v: cr) {
         for (int i = 0; i != 3; i++) {
-            if (edge[i].count(v) > 0 && edge[i].at(v) > threshold) {
+            if (edge[i].count(v) > 0 && edge[i].at(v) > THRESHOLD) {
                 res.insert(v);
                 break;
             }
@@ -47,7 +49,7 @@ std::pair<Ta, Ts> sumAffinity(const ContactRegion & cr, const Edge<Ta> & edge)
 }
 
 template <typename Ta, typename Ts>
-std::pair<Ta, Ts> reweightedLocalMeanAffinity(const Edge<Ta> & edge, Ta threshold)
+std::pair<Ta, Ts> reweightedLocalMeanAffinity(const Edge<Ta> & edge)
 {
     std::vector<std::pair<Ta, Ts> > reweighted_pairs;
     auto cr = mergeContactRegion(edge);
@@ -64,7 +66,7 @@ std::pair<Ta, Ts> reweightedLocalMeanAffinity(const Edge<Ta> & edge, Ta threshol
         std::tie(reweighted_cc_affinity, cc_area) = sumAffinity<Ta, Ts>(cc, edge);
         Ta reweighted_cc_area = cc_area;
 
-        auto trimmed_cc_sets = connectComponent(trimContactRegion(cc, edge, threshold));
+        auto trimmed_cc_sets = connectComponent(trimContactRegion(cc, edge));
 
         for (auto tcc: trimmed_cc_sets) {
             Ts tcc_area = 0;
