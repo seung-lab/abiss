@@ -37,6 +37,7 @@ int main(int argc, char * argv[])
         complete_segpairs.append(p);
         edges[p] = loadEdge<float, int32_t>(seg1, seg2);
     }
+    edge_list.close();
 
     auto me_helper = std::bind(meanAffinity_helper<float, int>, _1, edges);
     auto rlme_helper = std::bind (reweightedLocalMeanAffinity_helper<float, int>, _1, edges);
@@ -46,10 +47,12 @@ int main(int argc, char * argv[])
     auto me = f_me.results();
     auto rlme = f_rlme.results();
 
+    std::ofstream ofs("new_edges.dat", std::ios_base::binary);
+
     for (int i = 0; i != complete_segpairs.size(); i++) {
         auto & p = complete_segpairs[i];
-        std::cout << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
-        std::cout << p.first << " " << p.second << " " << rlme[i].first << " " << rlme[i].second << std::endl;
+        ofs << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
+        ofs << p.first << " " << p.second << " " << rlme[i].first << " " << rlme[i].second << "\n";
     }
-    edge_list.close();
+    ofs.close();
 }
