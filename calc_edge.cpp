@@ -6,7 +6,7 @@
 #include <QtConcurrent>
 
 template<typename Ta, typename Ts>
-Edge<Ta> load_edge(Ts seg1, Ts seg2)
+Edge<Ta> loadEdge(Ts seg1, Ts seg2)
 {
     int i,x,y,z;
     Ta affinity;
@@ -31,7 +31,7 @@ int main(int argc, char * argv[])
     while (edge_list >> seg1 >> seg2){
         auto p = std::make_pair(seg1, seg2);
         complete_segpairs.append(p);
-        edges[p] = load_edge<float, int32_t>(seg1, seg2);
+        edges[p] = loadEdge<float, int32_t>(seg1, seg2);
     }
 
     auto me_helper = std::bind(meanAffinity_helper<float, int>, _1, edges);
