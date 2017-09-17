@@ -127,10 +127,10 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
     }
 
     std::ofstream of_mst;
-    of_mst.open("test_mst.in", std::ofstream::out | std::ofstream::trunc);
+    of_mst.open("mst.dat", std::ofstream::out | std::ofstream::trunc);
 
-    std::ofstream of_frozen_edges;
-    of_frozen_edges.open("frozen_rg.in", std::ofstream::out | std::ofstream::trunc);
+    std::ofstream of_res;
+    of_res.open("residual_rg.dat", std::ofstream::out | std::ofstream::trunc);
 
     while (heap.size() && comp(heap.top()->edge.w, threshold))
     {
@@ -148,13 +148,13 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
                 auto s1 = sets.find_set(v1);
                 if (frozen_supervoxels.count(s0) > 0) {
                     frozen_supervoxels.insert(s1);
-                    of_frozen_edges << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
+                    of_res << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
                     continue;
                 }
 
                 if (frozen_supervoxels.count(s1) > 0) {
                     frozen_supervoxels.insert(s0);
-                    of_frozen_edges << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
+                    of_res << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
                     continue;
                 }
 
@@ -229,9 +229,9 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
         auto v1 = e->edge.v1;
         auto s0 = sets.find_set(v0);
         auto s1 = sets.find_set(v1);
-        of_frozen_edges << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
+        of_res << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
     }
-    of_frozen_edges.close();
+    of_res.close();
 
     return;
 }
