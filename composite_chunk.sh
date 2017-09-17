@@ -6,4 +6,5 @@ rm -rf edges
 mkdir $output
 mkdir edges
 python ../scripts/merge_chunks.py $1
-../build/me process_edges.dat >> complete_edges_"$output".dat
+../build/me process_edges.dat
+cat new_edges.dat >> complete_edges_"$output".dat
