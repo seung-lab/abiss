@@ -218,12 +218,9 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
     }
 
     of_mst.close();
-    of_frozen_edges.close();
 
     //std::cout << "Total of " << next << " segments\n";
 
-    std::ofstream of_rg;
-    of_rg.open("new_rg.in", std::ofstream::out | std::ofstream::trunc);
     while (heap.size())
     {
         auto e = heap.top();
@@ -232,9 +229,9 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
         auto v1 = e->edge.v1;
         auto s0 = sets.find_set(v0);
         auto s1 = sets.find_set(v1);
-        of_rg << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
+        of_frozen_edges << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
     }
-    of_rg.close();
+    of_frozen_edges.close();
 
     return;
 }
