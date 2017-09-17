@@ -20,8 +20,12 @@ def read_seg_ids(fn):
 def merge_files(target, fnList):
     with open(target,"wb") as outfile:
         for fn in fnList:
-            with open(fn, "rb") as infile:
-                outfile.write(infile.read())
+            try:
+                with open(fn, "rb") as infile:
+                    outfile.write(infile.read())
+            except IOError:
+                print fn, " does not exist"
+                pass
 
 def generate_subface_keys(idx):
     pos = idx % 3
