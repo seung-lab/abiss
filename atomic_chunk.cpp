@@ -29,13 +29,14 @@ std::unordered_set<Ts> processMetaData(const AffinityExtractor<Ts, Ta, ConstChun
 }
 
 template<typename Ta, typename Ts>
-void writeEdge(const SegPair<Ts> & p, const Edge<Ta> & edge, const char * path)
+void writeEdge(const SegPair<Ts> & p, const std::unordered_map<SegPair<Ts>, Edge<Ta>, boost::hash<SegPair<Ts> > > & edges, const char * path)
 {
     std::ofstream out(str(boost::format("%1%/%2%_%3%.dat") % path % p.first % p.second), std::ios_base::binary);
+    const auto & edge = edges.at(p);
     for (int i = 0; i != 3; i++) {
-        for (auto kv : edge[i]) {
-            auto k = kv.first;
-            auto v = kv.second;
+        for (const auto & kv : edge[i]) {
+            const auto & k = kv.first;
+            const auto & v = kv.second;
             out << i << " ";
             out << k[0] << " " << k[1] << " " << k[2] << " ";
             out << v << "\n";
