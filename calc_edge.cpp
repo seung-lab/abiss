@@ -12,7 +12,11 @@ Edge<Ta> loadEdge(Ts seg1, Ts seg2)
     Ta affinity;
     Edge<Ta> edge;
     std::ifstream in(str(boost::format("edges/%1%_%2%.dat") % seg1 % seg2));
-    while (in >> i >> x >> y >> z >> affinity) {
+    while (in.read(reinterpret_cast<char *>(&i), sizeof(i))) {
+        in.read(reinterpret_cast<char *>(&x), sizeof(x));
+        in.read(reinterpret_cast<char *>(&x), sizeof(y));
+        in.read(reinterpret_cast<char *>(&x), sizeof(z));
+        in.read(reinterpret_cast<char *>(&affinity), sizeof(z));
         Coord coord({x,y,z});
         edge[i][coord] = affinity;
     }

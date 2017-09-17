@@ -38,9 +38,9 @@ void writeEdge(const SegPair<Ts> & p, const std::unordered_map<SegPair<Ts>, Edge
         for (const auto & kv : edge[i]) {
             const auto & k = kv.first;
             const auto & v = kv.second;
-            out << i << " ";
-            out << k[0] << " " << k[1] << " " << k[2] << " ";
-            out << v << "\n";
+            out.write(reinterpret_cast<const char *>(&i), sizeof(i));
+            out.write(reinterpret_cast<const char *>(k.data()), sizeof(int)*3);
+            out.write(reinterpret_cast<const char *>(&v), sizeof(v));
         }
     }
     out.close();
