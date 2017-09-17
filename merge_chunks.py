@@ -96,16 +96,17 @@ def merge_faces(p, faceMaps):
 
     merge_and_process_edges(p, incomplete_edges, frozen_segs)
 
-def merge_complete_edges(p):
+def merge_intermediate_outputs(p, prefix):
     d = p["children"]
     mip_c = p["mip_level"]-1
-    prefix = "complete_edges_"
-    inputs = [prefix+chunk_tag(mip_c, d[k])+".dat" for k in d]
-    output = prefix+chunk_tag(p["mip_level"], p["indices"])+".dat"
+    inputs = [prefix+"_"+chunk_tag(mip_c, d[k])+".dat" for k in d]
+    output = prefix+"_"+chunk_tag(p["mip_level"], p["indices"])+".dat"
     merge_files(output, inputs)
 
 def merge_chunks(p):
-    merge_complete_edges(p)
+    merge_intermediate_outputs(p, "complete_edges")
+    merge_intermediate_outputs(p, "mst")
+    merge_intermediate_outputs(p, "residual_rg")
     d = p["children"]
     face_maps = {i : [d[k] for k in generate_subface_keys(i) if k in d] for i in range(6)}
     merge_faces(p,face_maps)
