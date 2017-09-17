@@ -9,6 +9,7 @@
 #include <fstream>
 #include <boost/format.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
+#include <QtConcurrent>
 
 namespace bio = boost::iostreams;
 
@@ -48,20 +49,42 @@ void writeEdge(const SegPair<Ts> & p, const std::unordered_map<SegPair<Ts>, Edge
 template<typename Ta, typename Ts>
 void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinityExtractor, const char * path)
 {
+    using namespace std::placeholders;
+
     auto incomplete_segments = processMetaData(affinityExtractor, path);
+    QList<SegPair<Ts> > incomplete_segpairs;
+    QList<SegPair<Ts> > complete_segpairs;
+    auto & edges = affinityExtractor.edges();
+    auto me_helper = std::bind(meanAffinity_helper<float, int>, _1, edges);
+    auto rlme_helper = std::bind(reweightedLocalMeanAffinity_helper<float, int>, _1, edges);
+
     std::ofstream incomplete(str(boost::format("incomplete_edges_%1%.dat") % path), std::ios_base::binary);
     std::ofstream complete(str(boost::format("complete_edges_%1%.dat") % path), std::ios_base::binary);
-    for (auto kv : affinityExtractor.edges()) {
-        auto p = kv.first;
-        if (incomplete_segments.count(p.first) > 0 && incomplete_segments.count(p.second) > 0) {
-            incomplete << p.first << " " << p.second << "\n";
-            writeEdge(p, kv.second, path);
+
+    for (const auto & kv : edges) {
+        const auto & k = kv.first;
+        if (incomplete_segments.count(k.first) > 0 && incomplete_segments.count(k.second) > 0) {
+            incomplete_segpairs.append(k);
         } else {
-            auto me = meanAffinity<float, int>(kv.second);
-            auto rlme = reweightedLocalMeanAffinity<float, int>(kv.second);
-            complete << p.first << " " << p.second << " " << me.first << " " << me.second << " ";
-            complete << p.first << " " << p.second << " " << rlme.first << " " << rlme.second << std::endl;
+            complete_segpairs.append(k);
         }
+    }
+
+    QFuture<std::pair<float,int> > f_me = QtConcurrent::mapped(complete_segpairs, me_helper);
+    QFuture<std::pair<float,int> > f_rlme = QtConcurrent::mapped(complete_segpairs, rlme_helper);
+
+    for (const auto & k: incomplete_segpairs) {
+        incomplete << k.first << " " << k.second << "\n";
+        writeEdge(k, edges, path);
+    }
+
+    auto me = f_me.results();
+    auto rlme = f_rlme.results();
+
+    for (int i = 0; i != complete_segpairs.size(); i++) {
+        const auto & p = complete_segpairs[i];
+        complete << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
+        complete << p.first << " " << p.second << " " << rlme[i].first << " " << rlme[i].second << std::endl;
     }
     incomplete.close();
     complete.close();
