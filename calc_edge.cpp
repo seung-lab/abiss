@@ -2,6 +2,7 @@
 #include "ReweightedLocalMeanEdge.hpp"
 #include <cstdint>
 #include <fstream>
+#include <iomanip>
 #include <boost/format.hpp>
 #include <QtConcurrent>
 
@@ -51,8 +52,8 @@ int main(int argc, char * argv[])
 
     for (int i = 0; i != complete_segpairs.size(); i++) {
         auto & p = complete_segpairs[i];
-        ofs << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
-        ofs << p.first << " " << p.second << " " << rlme[i].first << " " << rlme[i].second << "\n";
+        ofs << std::setprecision (17) << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
+        ofs << std::setprecision (17) << p.first << " " << p.second << " " << rlme[i].first << " " << rlme[i].second << "\n";
     }
     ofs.close();
 }

@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <array>
 #include <fstream>
+#include <iomanip>
 #include <boost/format.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <QtConcurrent>
@@ -83,8 +84,8 @@ void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinit
 
     for (int i = 0; i != complete_segpairs.size(); i++) {
         const auto & p = complete_segpairs[i];
-        complete << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
-        complete << p.first << " " << p.second << " " << rlme[i].first << " " << rlme[i].second << std::endl;
+        complete << std::setprecision (17) << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
+        complete << std::setprecision (17) << p.first << " " << p.second << " " << rlme[i].first << " " << rlme[i].second << std::endl;
     }
     incomplete.close();
     complete.close();
