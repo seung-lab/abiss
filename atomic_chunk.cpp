@@ -8,6 +8,7 @@
 #include <array>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <boost/format.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <QtConcurrent>
