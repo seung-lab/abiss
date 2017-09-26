@@ -30,30 +30,36 @@ int main(int argc, char * argv[])
     using namespace std::placeholders;
 
     int32_t seg1, seg2;
-    QList<SegPair<int32_t> > complete_segpairs;
+    std::vector<SegPair<int32_t> > complete_segpairs;
     std::unordered_map<SegPair<int32_t>, Edge<float>, boost::hash<SegPair<int32_t> > > edges;
     std::ifstream edge_list(argv[1]);
+    std::vector<std::pair<float,int> > me;
     while (edge_list >> seg1 >> seg2){
         auto p = std::make_pair(seg1, seg2);
-        complete_segpairs.append(p);
+        complete_segpairs.push_back(p);
         edges[p] = loadEdge<float, int32_t>(seg1, seg2);
+        me.push_back(meanAffinity<float, int>(edges.at(p)));
     }
     edge_list.close();
 
-    auto me_helper = std::bind(meanAffinity_helper<float, int>, _1, edges);
-    auto rlme_helper = std::bind (reweightedLocalMeanAffinity_helper<float, int>, _1, edges);
+    std::vector<int> areas(complete_segpairs.size(),0);
+    std::vector<float> affinities(complete_segpairs.size(),0);
+    std::vector<int> idx(complete_segpairs.size());
+    std::iota(idx.begin(), idx.end(), 1);
 
-    QFuture<std::pair<float,int> > f_me = QtConcurrent::mapped(complete_segpairs, me_helper);
-    QFuture<std::pair<float,int> > f_rlme = QtConcurrent::mapped(complete_segpairs, rlme_helper);
-    auto me = f_me.results();
-    auto rlme = f_rlme.results();
+    auto f_rlme = QtConcurrent::map(idx, [&](auto i)
+            {auto s = reweightedLocalMeanAffinity<float,int>(edges.at(complete_segpairs.at(i-1)));
+             affinities[i-1] = s.first;
+             areas[i-1] = s.second;
+             });
+    f_rlme.waitForFinished();
 
     std::ofstream ofs("new_edges.dat", std::ios_base::binary);
 
     for (int i = 0; i != complete_segpairs.size(); i++) {
         auto & p = complete_segpairs[i];
         ofs << std::setprecision (17) << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
-        ofs << std::setprecision (17) << p.first << " " << p.second << " " << rlme[i].first << " " << rlme[i].second << "\n";
+        ofs << std::setprecision (17) << p.first << " " << p.second << " " << affinities[i] << " " << areas[i] << "\n";
     }
     ofs.close();
 }

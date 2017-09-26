@@ -54,39 +54,46 @@ void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinit
     using namespace std::placeholders;
 
     auto incomplete_segments = processMetaData(affinityExtractor, path);
-    QList<SegPair<Ts> > incomplete_segpairs;
-    QList<SegPair<Ts> > complete_segpairs;
-    auto & edges = affinityExtractor.edges();
-    auto me_helper = std::bind(meanAffinity_helper<float, int>, _1, edges);
-    auto rlme_helper = std::bind(reweightedLocalMeanAffinity_helper<float, int>, _1, edges);
+
+    std::vector<SegPair<Ts> > incomplete_segpairs;
+    std::vector<SegPair<Ts> > complete_segpairs;
+    const auto & edges = affinityExtractor.edges();
 
     std::ofstream incomplete(str(boost::format("incomplete_edges_%1%.dat") % path), std::ios_base::binary);
     std::ofstream complete(str(boost::format("complete_edges_%1%.dat") % path), std::ios_base::binary);
 
+    std::vector<std::pair<float,int> > me;
     for (const auto & kv : edges) {
-        const auto & k = kv.first;
+        const auto k = kv.first;
         if (incomplete_segments.count(k.first) > 0 && incomplete_segments.count(k.second) > 0) {
-            incomplete_segpairs.append(k);
+            incomplete_segpairs.push_back(k);
         } else {
-            complete_segpairs.append(k);
+            complete_segpairs.push_back(k);
+            me.push_back(meanAffinity<float, int>(edges.at(k)));
         }
     }
+    std::vector<int64_t> areas(complete_segpairs.size(),0);
+    std::vector<Ta> affinities(complete_segpairs.size(),0);
+    std::vector<int64_t> idx(complete_segpairs.size());
+    std::iota(idx.begin(), idx.end(), 1);
 
-    QFuture<std::pair<float,int> > f_me = QtConcurrent::mapped(complete_segpairs, me_helper);
-    QFuture<std::pair<float,int> > f_rlme = QtConcurrent::mapped(complete_segpairs, rlme_helper);
+    auto f_rlme = QtConcurrent::map(idx, [&](auto i)
+            {auto s = reweightedLocalMeanAffinity<float,int>(edges.at(complete_segpairs.at(i-1)));
+             affinities[i-1] = s.first;
+             areas[i-1] = s.second;
+             });
 
     for (const auto & k: incomplete_segpairs) {
         incomplete << k.first << " " << k.second << "\n";
         writeEdge(k, edges, path);
     }
 
-    auto me = f_me.results();
-    auto rlme = f_rlme.results();
+    f_rlme.waitForFinished();
 
     for (int i = 0; i != complete_segpairs.size(); i++) {
         const auto & p = complete_segpairs[i];
         complete << std::setprecision (17) << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
-        complete << std::setprecision (17) << p.first << " " << p.second << " " << rlme[i].first << " " << rlme[i].second << std::endl;
+        complete << std::setprecision (17) << p.first << " " << p.second << " " << affinities[i]<< " " << areas[i] << std::endl;
     }
     incomplete.close();
     complete.close();
