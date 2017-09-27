@@ -75,12 +75,12 @@ void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinit
     std::vector<int64_t> areas(complete_segpairs.size(),0);
     std::vector<Ta> affinities(complete_segpairs.size(),0);
     std::vector<int64_t> idx(complete_segpairs.size());
-    std::iota(idx.begin(), idx.end(), 1);
+    std::iota(idx.begin(), idx.end(), 0);
 
     auto f_rlme = QtConcurrent::map(idx, [&](auto i)
-            {auto s = reweightedLocalMeanAffinity<float,int>(edges.at(complete_segpairs.at(i-1)));
-             affinities[i-1] = s.first;
-             areas[i-1] = s.second;
+            {auto s = reweightedLocalMeanAffinity<float,int>(edges.at(complete_segpairs.at(i)));
+             affinities[i] = s.first;
+             areas[i] = s.second;
              });
 
     for (const auto & k: incomplete_segpairs) {
