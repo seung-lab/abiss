@@ -48,13 +48,16 @@ void traverseSegments(const Ts& seg, bool overlappingChunk, Ta& ... extractors)
 {
     auto base = seg.index_bases();
     auto shape = seg.shape();
+    auto c = Coord({0,0,0});
     for (int z = base[2]; z != base[2]+shape[2]; z++) {
+        c[2] = z;
         for (int y = base[1]; y != base[1]+shape[1]; y++) {
+            c[1] = y;
             for (int x = base[0]; x != base[0]+shape[0]; x++) {
                 if (seg[x][y][z] == 0) {
                     continue;
                 }
-                auto c = Coord({x,y,z});
+                c[0] = x;
                 for (int i = 0; i < 3; i++) {
                     if (c[i] == base[i]) {
                         (extractors.collectBoundary(i, c, seg[x][y][z]), ...);
