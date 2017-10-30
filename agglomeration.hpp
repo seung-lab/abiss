@@ -2,10 +2,11 @@
 
 #include "types.hpp"
 
-#include <zi/disjoint_sets/disjoint_sets.hpp>
+#include <boost/pending/disjoint_sets.hpp>
 #include <map>
 #include <vector>
 #include <set>
+#include <iostream>
 
 template< typename ID, typename F, typename L, typename M >
 inline void merge_segments( const volume_ptr<ID>& seg_ptr,
@@ -14,7 +15,12 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
                             const L& tholds,
                             const M& lowt )
 {
-    zi::disjoint_sets<ID> sets(counts.size());
+    std::vector<ID> rank(counts.size());
+    std::vector<ID> parent(counts.size());
+    boost::disjoint_sets<ID*, ID*> sets(&rank[0], &parent[0]);
+    for (ID i = 0; i < counts.size(); i++) {
+        sets.make_set(i);
+    }
 
     typename region_graph<ID,F>::iterator rit = rg_ptr->begin();
 
@@ -36,7 +42,8 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
                 {
                     counts[s1] += counts[s2];
                     counts[s2]  = 0;
-                    ID s = sets.join(s1,s2);
+                    sets.link(s1, s2);
+                    ID s = sets.find_set(s1);
                     std::swap(counts[s], counts[s1]);
                 }
             }
