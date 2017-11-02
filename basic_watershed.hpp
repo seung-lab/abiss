@@ -4,13 +4,13 @@
 
 #include <iostream>
 
-#define QW_FOR_2( type, v1, f1, t1, v2, f2, t2 )                \
+#define CW_FOR_2( type, v1, f1, t1, v2, f2, t2 )                \
     for ( type v1 = f1; v1 < t1; ++v1 )                         \
         for ( type v2 = f2; v2 < t2; ++v2 )
 
 
-#define QW_FOR_3( type, v1, f1, t1, v2, f2, t2, v3, f3, t3 )    \
-    QW_FOR_2( type, v1, f1, t1, v2, f2, t2 )                    \
+#define CW_FOR_3( type, v1, f1, t1, v2, f2, t2, v3, f3, t3 )    \
+    CW_FOR_2( type, v1, f1, t1, v2, f2, t2 )                    \
     for ( type v3 = f3; v3 < t3; ++v3 )
 
 template< typename ID, typename F, typename L, typename H >
@@ -44,7 +44,7 @@ watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv )
 
     id_t* seg_raw = seg.data();
 
-    QW_FOR_3( index, z, 0, zdim, y, 0, ydim, x, 0, xdim )
+    CW_FOR_3( index, z, 0, zdim, y, 0, ydim, x, 0, xdim )
     {
         id_t& id = seg[x][y][z] = 0;
 
@@ -80,7 +80,7 @@ watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv )
         index  bfs_start = 0;
         index  bfs_end   = 0;
 
-        QW_FOR_3( index, iz, 0, zdim, iy, 0, ydim, ix, 0, xdim )
+        CW_FOR_3( index, iz, 0, zdim, iy, 0, ydim, ix, 0, xdim )
         {
             index idx = &seg[ix][iy][iz] - seg_raw;
 
