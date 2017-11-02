@@ -25,11 +25,11 @@ watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv )
     affinity_t low  = static_cast<affinity_t>(lowv);
     affinity_t high = static_cast<affinity_t>(highv);
 
-    std::ptrdiff_t xdim = aff_ptr->shape()[0];
-    std::ptrdiff_t ydim = aff_ptr->shape()[1];
-    std::ptrdiff_t zdim = aff_ptr->shape()[2];
+    index xdim = aff_ptr->shape()[0];
+    index ydim = aff_ptr->shape()[1];
+    index zdim = aff_ptr->shape()[2];
 
-    std::ptrdiff_t size = xdim * ydim * zdim;
+    index size = xdim * ydim * zdim;
 
     std::tuple< volume_ptr<id_t>, std::vector<std::size_t> > result
         ( volume_ptr<id_t>( new volume<id_t>(boost::extents[xdim][ydim][zdim],
@@ -69,7 +69,7 @@ watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv )
     }
 
 
-    const std::ptrdiff_t dir[6] = { -1, -xdim, -xdim*ydim, 1, xdim, xdim*ydim };
+    const index dir[6] = { -1, -xdim, -xdim*ydim, 1, xdim, xdim*ydim };
     const id_t dirmask[6]  = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20 };
     const id_t idirmask[6] = { 0x08, 0x10, 0x20, 0x01, 0x02, 0x04 };
 
@@ -145,7 +145,7 @@ watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv )
 
     counts.resize(next_id,0);
 
-    for ( std::ptrdiff_t idx = 0; idx < size; ++idx )
+    for ( index idx = 0; idx < size; ++idx )
     {
         if (seg_raw[idx] & traits::high_bit) {
             seg_raw[idx] &= traits::mask;
