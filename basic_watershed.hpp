@@ -4,6 +4,15 @@
 
 #include <iostream>
 
+#define QW_FOR_2( type, v1, f1, t1, v2, f2, t2 )                \
+    for ( type v1 = f1; v1 < t1; ++v1 )                         \
+        for ( type v2 = f2; v2 < t2; ++v2 )
+
+
+#define QW_FOR_3( type, v1, f1, t1, v2, f2, t2, v3, f3, t3 )    \
+    QW_FOR_2( type, v1, f1, t1, v2, f2, t2 )                    \
+    for ( type v3 = f3; v3 < t3; ++v3 )
+
 template< typename ID, typename F, typename L, typename H >
 inline std::tuple< volume_ptr<ID>, std::vector<std::size_t> >
 watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv )
@@ -11,6 +20,7 @@ watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv )
     using affinity_t = F;
     using id_t       = ID;
     using traits     = watershed_traits<id_t>;
+    using index = std::ptrdiff_t;
 
     affinity_t low  = static_cast<affinity_t>(lowv);
     affinity_t high = static_cast<affinity_t>(highv);
@@ -34,160 +44,116 @@ watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv )
 
     id_t* seg_raw = seg.data();
 
-    for ( std::ptrdiff_t z = 0; z < zdim; ++z )
-        for ( std::ptrdiff_t y = 0; y < ydim; ++y )
-            for ( std::ptrdiff_t x = 0; x < xdim; ++x )
-            {
-                id_t& id = seg[x][y][z] = 0;
+    QW_FOR_3( index, z, 0, zdim, y, 0, ydim, x, 0, xdim )
+    {
+        id_t& id = seg[x][y][z] = 0;
 
-                F negx = (x>0) ? aff[x][y][z][0] : low;
-                F negy = (y>0) ? aff[x][y][z][1] : low;
-                F negz = (z>0) ? aff[x][y][z][2] : low;
-                F posx = (x<(xdim-1)) ? aff[x+1][y][z][0] : low;
-                F posy = (y<(ydim-1)) ? aff[x][y+1][z][1] : low;
-                F posz = (z<(zdim-1)) ? aff[x][y][z+1][2] : low;
+        F negx = (x>0) ? aff[x][y][z][0] : low;
+        F negy = (y>0) ? aff[x][y][z][1] : low;
+        F negz = (z>0) ? aff[x][y][z][2] : low;
+        F posx = (x<(xdim-1)) ? aff[x+1][y][z][0] : low;
+        F posy = (y<(ydim-1)) ? aff[x][y+1][z][1] : low;
+        F posz = (z<(zdim-1)) ? aff[x][y][z+1][2] : low;
 
-                F m = std::max({negx,negy,negz,posx,posy,posz});
+        F m = std::max({negx,negy,negz,posx,posy,posz});
 
-                if ( m > low )
-                {
-                    if ( negx == m || negx >= high ) { id |= 0x01; }
-                    if ( negy == m || negy >= high ) { id |= 0x02; }
-                    if ( negz == m || negz >= high ) { id |= 0x04; }
-                    if ( posx == m || posx >= high ) { id |= 0x08; }
-                    if ( posy == m || posy >= high ) { id |= 0x10; }
-                    if ( posz == m || posz >= high ) { id |= 0x20; }
-                }
-            }
+        if ( m > low )
+        {
+            if ( negx == m || negx >= high ) { id |= 0x01; }
+            if ( negy == m || negy >= high ) { id |= 0x02; }
+            if ( negz == m || negz >= high ) { id |= 0x04; }
+            if ( posx == m || posx >= high ) { id |= 0x08; }
+            if ( posy == m || posy >= high ) { id |= 0x10; }
+            if ( posz == m || posz >= high ) { id |= 0x20; }
+        }
+    }
 
 
     const std::ptrdiff_t dir[6] = { -1, -xdim, -xdim*ydim, 1, xdim, xdim*ydim };
     const id_t dirmask[6]  = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20 };
     const id_t idirmask[6] = { 0x08, 0x10, 0x20, 0x01, 0x02, 0x04 };
 
-    // get plato corners
-
-    std::vector<std::ptrdiff_t> bfs;
-
-    for ( std::ptrdiff_t idx = 0; idx < size; ++idx )
-    {
-        for ( std::ptrdiff_t d = 0; d < 6; ++d )
-        {
-            if ( seg_raw[idx] & dirmask[d] )
-            {
-                if ( !(seg_raw[idx+dir[d]] & idirmask[d]) )
-                {
-                    seg_raw[idx] |= 0x40;
-                    bfs.push_back(idx);
-                    d = 6; // break;
-                }
-            }
-        }
-    }
-
-    // divide the plateaus
-
-    std::size_t bfs_index = 0;
-
-    while ( bfs_index < bfs.size() )
-    {
-        std::ptrdiff_t idx = bfs[bfs_index];
-
-        id_t to_set = 0;
-
-        for ( std::ptrdiff_t d = 0; d < 6; ++d )
-        {
-            if ( seg_raw[idx] & dirmask[d] )
-            {
-                if ( seg_raw[idx+dir[d]] & idirmask[d] )
-                {
-                    if ( !( seg_raw[idx+dir[d]] & 0x40 ) )
-                    {
-                        bfs.push_back(idx+dir[d]);
-                        seg_raw[idx+dir[d]] |= 0x40;
-                    }
-                }
-                else
-                {
-                    to_set = dirmask[d];
-                }
-            }
-        }
-        seg_raw[idx] = to_set;
-        ++bfs_index;
-    }
-
-    bfs.clear();
-
-    // main watershed logic
-
     id_t next_id = 1;
-
-    for ( std::ptrdiff_t idx = 0; idx < size; ++idx )
     {
-        if ( seg_raw[idx] == 0 )
-        {
-            seg_raw[idx] |= traits::high_bit;
-            ++counts[0];
-        }
+        std::vector<index> bfs(size+1,0);
+        index  bfs_index = 0;
+        index  bfs_start = 0;
+        index  bfs_end   = 0;
 
-        if ( !( seg_raw[idx] & traits::high_bit ) && seg_raw[idx] )
+        QW_FOR_3( index, iz, 0, zdim, iy, 0, ydim, ix, 0, xdim )
         {
-            bfs.push_back(idx);
-            bfs_index = 0;
-            seg_raw[idx] |= 0x40;
+            index idx = &seg[ix][iy][iz] - seg_raw;
 
-            while ( bfs_index < bfs.size() )
+            if ( !(seg_raw[ idx ] & traits::high_bit) )
             {
-                std::ptrdiff_t me = bfs[bfs_index];
+                bfs[ bfs_end++ ] = idx;
+                if (seg_raw[idx] == 0) {
+                    seg_raw[idx] |= traits::high_bit;
+                    bfs_start = bfs_end;
+                    bfs_index = bfs_end;
+                } else {
+                    seg_raw[ idx ] |= 0x40;
+                }
 
-                for ( std::ptrdiff_t d = 0; d < 6; ++d )
+                while ( bfs_index != bfs_end )
                 {
-                    if ( seg_raw[me] & dirmask[d] )
+                    index y = bfs[ bfs_index++ ];
+
+                    for ( index d = 0; d < 6; ++d )
                     {
-                        std::ptrdiff_t him = me + dir[d];
-                        if ( seg_raw[him] & traits::high_bit )
+                        if ( seg_raw[ y ] & dirmask[ d ] )
                         {
-                            counts[ seg_raw[him] & ~traits::high_bit ]
-                                += bfs.size();
+                            index z = y + dir[ d ];
 
-                            for ( auto& it: bfs )
+                            if ( seg_raw[ z ] & traits::high_bit )
                             {
-                                seg_raw[it] = seg_raw[him];
+                                const id_t seg_id = seg_raw[ z ];
+                                while ( bfs_start != bfs_end )
+                                {
+                                    seg_raw[ bfs[ bfs_start++ ] ] = seg_id;
+                                }
+                                bfs_index = bfs_end;
+                                d = 6; // (break)
                             }
-
-                            bfs.clear();
-                            d = 6; // break
-                        }
-                        else if ( !( seg_raw[him] & 0x40 ) )
-                        {
-                            seg_raw[him] |= 0x40;
-                            bfs.push_back( him );
-
+                            else if ( !( seg_raw[ z ] & 0x40) )
+                            {
+                                seg_raw[ z ] |= 0x40;
+                                if ( !( seg_raw[ z ] & idirmask[ d ] ) )  // dfs now
+                                {
+                                    bfs_index = bfs_end;
+                                    d = 6; // (break)
+                                }
+                                bfs[ bfs_end++ ] = z;
+                            }
                         }
                     }
                 }
-                ++bfs_index;
-            }
 
-            if ( bfs.size() )
-            {
-                counts.push_back( bfs.size() );
-                for ( auto& it: bfs )
+                if ( bfs_start != bfs_end )
                 {
-                    seg_raw[it] = traits::high_bit | next_id;
+                    while ( bfs_start != bfs_end )
+                    {
+                        seg_raw[ bfs[ bfs_start++ ] ] = traits::high_bit | next_id;
+                    }
+                    ++next_id;
                 }
-                ++next_id;
-                bfs.clear();
             }
         }
     }
 
     std::cout << "found: " << (next_id-1) << " components\n";
 
+    counts.resize(next_id,0);
+
     for ( std::ptrdiff_t idx = 0; idx < size; ++idx )
     {
-        seg_raw[idx] &= traits::mask;
+        if (seg_raw[idx] & traits::high_bit) {
+            seg_raw[idx] &= traits::mask;
+        } else {
+            std::cout << "not assigned" << std::endl;
+            seg_raw[idx] = 0;
+        }
+        ++counts[seg_raw[idx]];
     }
 
     return result;
