@@ -25,14 +25,19 @@
 #include <chrono>
 #include <ctime>
 
-int main()
+int main(int argc, char* argv[])
 {
     // load the ground truth and the affinity graph
 
+    int xdim,ydim,zdim;
+    std::ifstream param_file(argv[1]);
+    param_file >> xdim >> ydim >> zdim;
+    std::cout << xdim << " " << ydim << " " << zdim << std::endl;
+
     clock_t begin = clock();
     affinity_graph_ptr<float> aff =
-        read_affinity_graph<float>("aff.dat",
-                                   4801, 3751, 192);
+        read_affinity_graph<float>(argv[2],
+                                   xdim, ydim, zdim);
                                    //2050, 2050, 258);
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
