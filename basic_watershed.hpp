@@ -15,7 +15,7 @@
 
 template< typename ID, typename F, typename L, typename H >
 inline std::tuple< volume_ptr<ID>, std::vector<std::size_t> >
-watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv )
+watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv , const std::array<bool,6> & boundary_flags)
 {
     using affinity_t = F;
     using id_t       = ID;
@@ -44,16 +44,41 @@ watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv )
 
     id_t* seg_raw = seg.data();
 
-    CW_FOR_3( index, z, 0, zdim, y, 0, ydim, x, 0, xdim )
+    const id_t front_x_border = boundary_flags[0] ? 0x0 : 0x08;
+    const id_t front_y_border = boundary_flags[1] ? 0x0 : 0x10;
+    const id_t front_z_border = boundary_flags[2] ? 0x0 : 0x20;
+    const id_t back_x_border  = boundary_flags[3] ? 0x0 : 0x01;
+    const id_t back_y_border  = boundary_flags[4] ? 0x0 : 0x02;
+    const id_t back_z_border  = boundary_flags[5] ? 0x0 : 0x04;
+
+    CW_FOR_2( index, z, 1, zdim-1, y, 1, ydim-1 )
+    {
+        seg[0][y][z]      = aff[1][y][z][0]      >= high ? front_x_border : 0x0;
+        seg[xdim-1][y][z] = aff[xdim-1][y][z][0] >= high ? back_x_border  : 0x0;
+    }
+
+    CW_FOR_2( index, z, 1, zdim-1, x, 1, xdim-1 )
+    {
+        seg[x][0][z]      = aff[x][1][z][1]      >= high ? front_y_border : 0x0;
+        seg[x][ydim-1][z] = aff[x][ydim-1][z][1] >= high ? back_y_border  : 0x0;
+    }
+
+    CW_FOR_2( index, y, 1, ydim-1, x, 1, xdim-1 )
+    {
+        seg[x][y][0]      = aff[x][y][1][2]      >= high ? front_z_border : 0x0;
+        seg[x][y][zdim-1] = aff[x][y][zdim-1][2] >= high ? back_z_border  : 0x0;
+    }
+
+    CW_FOR_3( index, z, 1, zdim-1, y, 1, ydim-1, x, 1, xdim-1 )
     {
         id_t& id = seg[x][y][z] = 0;
 
-        F negx = (x>0) ? aff[x][y][z][0] : low;
-        F negy = (y>0) ? aff[x][y][z][1] : low;
-        F negz = (z>0) ? aff[x][y][z][2] : low;
-        F posx = (x<(xdim-1)) ? aff[x+1][y][z][0] : low;
-        F posy = (y<(ydim-1)) ? aff[x][y+1][z][1] : low;
-        F posz = (z<(zdim-1)) ? aff[x][y][z+1][2] : low;
+        F negx = (x>boundary_flags[0]) ? aff[x][y][z][0] : low;
+        F negy = (y>boundary_flags[1]) ? aff[x][y][z][1] : low;
+        F negz = (z>boundary_flags[2]) ? aff[x][y][z][2] : low;
+        F posx = (x<(xdim-1-boundary_flags[3])) ? aff[x+1][y][z][0] : low;
+        F posy = (y<(ydim-1-boundary_flags[4])) ? aff[x][y+1][z][1] : low;
+        F posz = (z<(zdim-1-boundary_flags[5])) ? aff[x][y][z+1][2] : low;
 
         F m = std::max({negx,negy,negz,posx,posy,posz});
 
