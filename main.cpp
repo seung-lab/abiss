@@ -4,6 +4,7 @@
 #include "basic_watershed.hpp"
 #include "types.hpp"
 #include "utils.hpp"
+#include "mmap_array.hpp"
 
 
 #include <memory>
@@ -29,16 +30,18 @@ int main(int argc, char* argv[])
 {
     // load the ground truth and the affinity graph
 
-    int xdim,ydim,zdim;
+    size_t xdim,ydim,zdim;
     std::ifstream param_file(argv[1]);
     param_file >> xdim >> ydim >> zdim;
     std::cout << xdim << " " << ydim << " " << zdim << std::endl;
 
     clock_t begin = clock();
-    affinity_graph_ptr<float> aff =
-        read_affinity_graph<float>(argv[2],
-                                   xdim, ydim, zdim);
-                                   //2050, 2050, 258);
+    std::array<size_t, 4> aff_dim({xdim,ydim,zdim,3});
+    MMArray<float, 4> aff_data(argv[2], aff_dim);
+    affinity_graph_ptr<float> aff = aff_data.data();
+    //    read_affinity_graph<float>(argv[2],
+    //                               xdim, ydim, zdim);
+    //                               //2050, 2050, 258);
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "loaded affinity map in " << elapsed_secs << " seconds" << std::endl;
