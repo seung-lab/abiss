@@ -32,21 +32,6 @@ write_to_file( const std::string& fname,
 
 
 template < typename T >
-inline affinity_graph_ptr<T>
-read_affinity_graph( const std::string& fname,
-                     std::size_t xsize,
-                     std::size_t ysize,
-                     std::size_t zsize )
-{
-    affinity_graph_ptr<T> aff(new affinity_graph<T>
-                              (boost::extents[xsize][ysize][zsize][3],
-                               boost::fortran_storage_order()));
-
-    if ( !read_from_file(fname, aff->data(), xsize*ysize*zsize*3) ) throw 0;
-    return aff;
-}
-
-template < typename T >
 inline volume_ptr<T>
 read_volume( const std::string& fname, std::size_t wsize )
 {
