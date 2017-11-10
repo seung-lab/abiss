@@ -11,7 +11,7 @@
 
 #define CW_FOR_3( type, v1, f1, t1, v2, f2, t2, v3, f3, t3 )    \
     CW_FOR_2( type, v1, f1, t1, v2, f2, t2 )                    \
-    for ( type v3 = f3; v3 < t3; ++v3 )
+        for ( type v3 = f3; v3 < t3; ++v3 )
 
 template< typename ID, typename F, typename L, typename H >
 inline std::tuple< volume_ptr<ID>, std::vector<std::size_t> >
