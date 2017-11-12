@@ -18,10 +18,6 @@ get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
     using id_pair = std::pair<ID,ID>;
     affinity_t low  = static_cast<affinity_t>(lowv);
 
-    auto my_hash = [](const id_pair & p) {
-                return (size_t)p.first << 32 | p.second;;
-    };
-
     std::ptrdiff_t xdim = aff_ptr->shape()[0];
     std::ptrdiff_t ydim = aff_ptr->shape()[1];
     std::ptrdiff_t zdim = aff_ptr->shape()[2];
@@ -35,10 +31,8 @@ get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
 
     std::vector<id_pair> pairs;
 
-    //std::unordered_map<id_pair, F, boost::hash<id_pair> > edges(max_segid*10);
-    //emilib::HashMap<id_pair, F, boost::hash<id_pair> > edges;
-    //emilib::HashMap<id_pair, F, boost::hash<id_pair> > edges;
-    std::vector<emilib::HashMap<ID, F> > edges(max_segid);
+    std::vector<std::unordered_map<ID, F> > edges(max_segid);
+    //std::vector<emilib::HashMap<ID, F> > edges(max_segid);
     for (auto & h : edges) {
         h.reserve(10);
     }
