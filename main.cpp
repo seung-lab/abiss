@@ -63,7 +63,6 @@ int main(int argc, char* argv[])
     std::vector<std::size_t> counts;
 
     begin = clock();
-    std::array<bool,6> flags({true,true,true,true,true,true});
     std::tie(seg , counts) = watershed<uint32_t>(aff, 0.0001, 0.999988, flags);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
