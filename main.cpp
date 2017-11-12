@@ -63,18 +63,18 @@ int main(int argc, char* argv[])
     std::vector<std::size_t> counts;
 
     begin = clock();
-    std::tie(seg , counts) = watershed<uint32_t>(aff, 0.0001, 0.999988, flags);
+    std::tie(seg , counts) = watershed<uint64_t>(aff, 0.00005, 0.9998, flags);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "finished watershed in " << elapsed_secs << " seconds" << std::endl;
     begin = clock();
-    auto rg = get_region_graph(aff, seg , counts.size()-1, 0.0001);
+    auto rg = get_region_graph(aff, seg , counts.size()-1, 0.00005);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "finished region graph in " << elapsed_secs << " seconds" << std::endl;
 
     std::vector<std::pair<std::size_t, double>> tholds;
-    tholds.push_back(std::make_pair(600,0.0001));
+    tholds.push_back(std::make_pair(600,0.00005));
 
     begin = clock();
     merge_segments(seg, rg, counts, tholds, 600, offset);
