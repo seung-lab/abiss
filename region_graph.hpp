@@ -6,7 +6,6 @@
 #include <iostream>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
-#include "hash_map.hpp"
 
 template< typename ID, typename F, typename L>
 inline region_graph_ptr<ID,F>
