@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <fstream>
 #include <type_traits>
+#include <boost/format.hpp>
+#include <boost/iostreams/device/mapped_file.hpp>
 
 template < typename T >
 inline bool read_from_file( const std::string& fname, T* data, std::size_t n )
@@ -105,6 +107,46 @@ inline std::tuple<volume_ptr<ID>, std::vector<std::size_t>>
     }
 
     return result;
+}
+
+template<typename T, size_t N>
+void write_multi_array(const std::string & fn, boost::multi_array<T,N> slice){
+    namespace bio = boost::iostreams;
+    bio::mapped_file_params f_param;
+    bio::mapped_file_sink f;
+    size_t bytes = sizeof(T)*slice.num_elements();
+    f_param.path = fn;
+    f_param.new_file_size = bytes;
+    f.open(f_param);
+    memcpy(f.data(), slice.data(), bytes);
+    f.close();
+}
+
+template<typename ID, typename F>
+void write_chunk_boundaries(const volume_ptr<ID>& seg_ptr, const affinity_graph_ptr<F>&  aff_ptr, const char * tag)
+{
+    using range = boost::multi_array_types::index_range;
+
+    affinity_graph<F>& aff = *aff_ptr;
+    write_multi_array(str(boost::format("aff_x1_%1%.data") % tag), boost::multi_array<F,2>(aff[boost::indices[1][range()][range()][0]], boost::fortran_storage_order()));
+    write_multi_array(str(boost::format("aff_y1_%1%.data") % tag), boost::multi_array<F,2>(aff[boost::indices[range()][1][range()][1]], boost::fortran_storage_order()));
+    write_multi_array(str(boost::format("aff_z1_%1%.data") % tag), boost::multi_array<F,2>(aff[boost::indices[range()][range()][1][2]], boost::fortran_storage_order()));
+
+    volume<ID>& seg = *seg_ptr;
+    auto shape = seg.shape();
+    write_multi_array(str(boost::format("seg_fx0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[0][range()][range()]], boost::fortran_storage_order()));
+    write_multi_array(str(boost::format("seg_fx1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[1][range()][range()]], boost::fortran_storage_order()));
+    write_multi_array(str(boost::format("seg_fy0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range()][0][range()]], boost::fortran_storage_order()));
+    write_multi_array(str(boost::format("seg_fy1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range()][1][range()]], boost::fortran_storage_order()));
+    write_multi_array(str(boost::format("seg_fz0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range()][range()][0]], boost::fortran_storage_order()));
+    write_multi_array(str(boost::format("seg_fz1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range()][range()][1]], boost::fortran_storage_order()));
+
+    write_multi_array(str(boost::format("seg_bx0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[shape[0]-2][range()][range()]], boost::fortran_storage_order()));
+    write_multi_array(str(boost::format("seg_bx1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[shape[0]-1][range()][range()]], boost::fortran_storage_order()));
+    write_multi_array(str(boost::format("seg_by0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range()][shape[1]-2][range()]], boost::fortran_storage_order()));
+    write_multi_array(str(boost::format("seg_by1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range()][shape[1]-1][range()]], boost::fortran_storage_order()));
+    write_multi_array(str(boost::format("seg_bz0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range()][range()][shape[2]-2]], boost::fortran_storage_order()));
+    write_multi_array(str(boost::format("seg_bz1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range()][range()][shape[2]-1]], boost::fortran_storage_order()));
 }
 
 

@@ -20,6 +20,7 @@
 #include <vector>
 #include <chrono>
 #include <ctime>
+#include <boost/format.hpp>
 
 int main(int argc, char* argv[])
 {
@@ -29,6 +30,7 @@ int main(int argc, char* argv[])
     int flag;
     uint64_t offset;
     std::ifstream param_file(argv[1]);
+    const char * tag = argv[3];
     param_file >> xdim >> ydim >> zdim;
     std::cout << xdim << " " << ydim << " " << zdim << std::endl;
     std::array<bool,6> flags({true,true,true,true,true,true});
@@ -78,7 +80,8 @@ int main(int argc, char* argv[])
     std::cout << "finished agglomeration in " << elapsed_secs << " seconds" << std::endl;
 
     begin = clock();
-    write_volume("seg.dat", seg);
+    write_volume(str(boost::format("seg_%1%.data") % tag), seg);
+    write_chunk_boundaries(seg, aff, tag);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "finished writing in " << elapsed_secs << " seconds" << std::endl;
