@@ -82,6 +82,10 @@ int main(int argc, char* argv[])
     begin = clock();
     write_volume(str(boost::format("seg_%1%.data") % tag), seg);
     write_chunk_boundaries(seg, aff, tag);
+    auto c = write_counts(counts, offset, tag);
+    auto d = write_vector(str(boost::format("dend_%1%.data") % tag), *rg);
+    std::cout << "num of sv:" << c << std::endl;
+    std::cout << "size of rg:" << d << std::endl;
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "finished writing in " << elapsed_secs << " seconds" << std::endl;

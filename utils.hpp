@@ -8,6 +8,8 @@
 #include <boost/format.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 
+namespace bio = boost::iostreams;
+
 template < typename T >
 inline bool read_from_file( const std::string& fname, T* data, std::size_t n )
 {
@@ -109,9 +111,32 @@ inline std::tuple<volume_ptr<ID>, std::vector<std::size_t>>
     return result;
 }
 
+template <typename T>
+size_t write_vector(const std::string & fn, std::vector<T> & v)
+{
+    bio::mapped_file_params f_param;
+    bio::mapped_file_sink f;
+    size_t bytes = sizeof(T)*v.size();
+    f_param.path = fn;
+    f_param.new_file_size = bytes;
+    f.open(f_param);
+    memcpy(f.data(), v.data(), bytes);
+    f.close();
+    return v.size();
+}
+
+template <typename T>
+size_t write_counts(std::vector<size_t> & counts, T & offset, const char * tag)
+{
+    std::vector<std::pair<T, size_t> > output;
+    for (T i = 1; i != counts.size(); i++) {
+        output.emplace_back(i+offset, counts[i]);
+    }
+    return write_vector(str(boost::format("counts_%1%.data") % tag), output);
+}
+
 template<typename T, size_t N>
 void write_multi_array(const std::string & fn, boost::multi_array<T,N> slice){
-    namespace bio = boost::iostreams;
     bio::mapped_file_params f_param;
     bio::mapped_file_sink f;
     size_t bytes = sizeof(T)*slice.num_elements();
