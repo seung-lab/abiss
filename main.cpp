@@ -12,20 +12,14 @@
 
 #include <iostream>
 #include <fstream>
-#include <cstdio>
 #include <cstddef>
 #include <cstdint>
-#include <queue>
 #include <vector>
 #include <algorithm>
 #include <tuple>
-#include <map>
-#include <list>
-#include <set>
 #include <vector>
 #include <chrono>
 #include <ctime>
-#include <cstdint>
 
 int main(int argc, char* argv[])
 {
