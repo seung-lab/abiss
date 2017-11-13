@@ -75,21 +75,6 @@ get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
         rg.emplace_back(v, p.first, p.second);
     }
 
-    //size_t n = edges.bucket_count();
-    //size_t dup = 0;
-    //size_t empty = 0;
-    //for (size_t i = 0; i < n; i++) {
-    //    auto s = edges.bucket_size(i);
-    //    if (s > 1) {
-    //        dup++;
-    //    }
-    //    if (s == 0) {
-    //        empty++;
-    //    }
-    //}
-    //std::cout << "empty buckets:" << empty << std::endl;
-    //std::cout << "filled buckets:" << dup << std::endl;
-
     std::cout << "Region graph size: " << rg.size() << std::endl;
 
     std::stable_sort(std::begin(rg), std::end(rg), [](auto & a, auto & b) { return std::get<0>(a) > std::get<0>(b); });
