@@ -105,7 +105,7 @@ watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv ,
         index  bfs_start = 0;
         index  bfs_end   = 0;
 
-        CW_FOR_3( index, iz, 0, zdim, iy, 0, ydim, ix, 0, xdim )
+        CW_FOR_3( index, iz, 1, zdim-1, iy, 1, ydim-1, ix, 1, xdim-1 )
         {
             index idx = &seg[ix][iy][iz] - seg_raw;
 
