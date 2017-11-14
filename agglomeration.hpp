@@ -16,6 +16,7 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
                             const M& lowt,
                             const ID& offset)
 {
+    using traits = watershed_traits<id_t>;
     std::vector<ID> rank(counts.size());
     std::vector<ID> parent(counts.size());
     boost::disjoint_sets<ID*, ID*> sets(&rank[0], &parent[0]);
@@ -41,11 +42,17 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
             {
                 if ( (counts[s1] < size) || (counts[s2] < size) )
                 {
-                    counts[s1] += counts[s2];
-                    counts[s2]  = 0;
-                    sets.link(s1, s2);
-                    ID s = sets.find_set(s1);
-                    std::swap(counts[s], counts[s1]);
+                    if ((traits::on_border&(counts[s1]|counts[s2]))==0) {
+                        counts[s1] += counts[s2];
+                        counts[s2]  = 0;
+                        sets.link(s1, s2);
+                        ID s = sets.find_set(s1);
+                        std::swap(counts[s], counts[s1]);
+                    }
+                    else {
+                        counts[s1] |= counts[s2]&traits::on_border;
+                        counts[s2] |= counts[s1]&traits::on_border;
+                    }
                 }
             }
             ++rit;
@@ -56,6 +63,9 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
 
     std::vector<ID> remaps(counts.size());
 
+    counts[0] &= ~traits::on_border;
+    remaps[0] = 0;
+
     ID next_id = 1;
 
     std::size_t low = static_cast<std::size_t>(lowt);
@@ -63,11 +73,17 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
     for ( ID id = 0; id < counts.size(); ++id )
     {
         ID s = sets.find_set(id);
-        if ( s && (remaps[s] == 0) && (counts[s] >= low) )
-        {
-            remaps[s] = next_id;
-            counts[next_id] = counts[s];
-            ++next_id;
+        if ( counts[s]&(~traits::on_border) ) {
+            if ( s && (counts[s] >= low) )
+            {
+                if (remaps[s] == 0) {
+                    remaps[s] = next_id;
+                    counts[next_id] = counts[s]&(~traits::on_border);
+                    ++next_id;
+                }
+            } else {
+                counts[s] = remaps[s] = 0;
+            }
         }
     }
 

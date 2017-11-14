@@ -15,6 +15,7 @@ template <> struct watershed_traits<uint32_t>
     static const uint32_t mask     = 0x7FFFFFFF;
     static const uint32_t visited  = 0x00001000;
     static const uint32_t dir_mask = 0x0000007F;
+    static const size_t on_border = (1ul<<(std::numeric_limits<std::size_t>::digits-1));
 };
 
 template <> struct watershed_traits<uint64_t>
@@ -23,6 +24,7 @@ template <> struct watershed_traits<uint64_t>
     static const uint64_t mask     = 0x7FFFFFFFFFFFFFFFLL;
     static const uint64_t visited  = 0x0000000000001000LL;
     static const uint64_t dir_mask = 0x000000000000007FLL;
+    static const size_t on_border = (1ul<<(std::numeric_limits<std::size_t>::digits-1));
 };
 
 template < typename T >

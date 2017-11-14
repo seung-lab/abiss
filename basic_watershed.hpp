@@ -181,5 +181,56 @@ watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv ,
         ++counts[seg_raw[idx]];
     }
 
+    CW_FOR_2( index, z, 1, zdim-1, y, 1, ydim-1 )
+    {
+        --counts[ seg[0][y][z] ];
+        --counts[ seg[xdim-1][y][z] ];
+        if ( !boundary_flags[0] )
+        {
+            counts[ seg[0][y][z] ] |= traits::on_border;
+            counts[ seg[1][y][z] ] |= traits::on_border;
+        }
+
+        if ( !boundary_flags[3] )
+        {
+            counts[ seg[xdim-2][y][z] ] |= traits::on_border;
+            counts[ seg[xdim-1][y][z] ] |= traits::on_border;
+        }
+    }
+
+    CW_FOR_2( index, z, 1, zdim-1, x, 1, xdim-1 )
+    {
+        --counts[ seg[x][0][z] ];
+        --counts[ seg[x][ydim-1][z] ];
+        if ( !boundary_flags[1] )
+        {
+            counts[ seg[x][0][z] ] |= traits::on_border;
+            counts[ seg[x][1][z] ] |= traits::on_border;
+        }
+
+        if ( !boundary_flags[4] )
+        {
+            counts[ seg[x][ydim-2][z] ] |= traits::on_border;
+            counts[ seg[x][ydim-1][z] ] |= traits::on_border;
+        }
+    }
+
+    CW_FOR_2( index, y, 1, ydim-1, x, 1, xdim-1 )
+    {
+        --counts[ seg[x][y][0] ];
+        --counts[ seg[x][y][zdim-1] ];
+        if ( !boundary_flags[2] )
+        {
+            counts[ seg[x][y][0] ] |= traits::on_border;
+            counts[ seg[x][y][1] ] |= traits::on_border;
+        }
+
+        if ( !boundary_flags[5] )
+        {
+            counts[ seg[x][y][zdim-2] ] |= traits::on_border;
+            counts[ seg[x][y][zdim-1] ] |= traits::on_border;
+        }
+    }
+
     return result;
 }
