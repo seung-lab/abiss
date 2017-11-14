@@ -175,7 +175,6 @@ watershed( const affinity_graph_ptr<F>& aff_ptr, const L& lowv, const H& highv ,
         if (seg_raw[idx] & traits::high_bit) {
             seg_raw[idx] &= traits::mask;
         } else {
-            std::cout << "not assigned" << std::endl;
             seg_raw[idx] = 0;
         }
         ++counts[seg_raw[idx]];
