@@ -148,30 +148,48 @@ void write_multi_array(const std::string & fn, boost::multi_array<T,N> slice){
 }
 
 template<typename ID, typename F>
-void write_chunk_boundaries(const volume_ptr<ID>& seg_ptr, const affinity_graph_ptr<F>&  aff_ptr, const char * tag)
+void write_chunk_boundaries(const volume_ptr<ID>& seg_ptr, const affinity_graph_ptr<F>&  aff_ptr, std::array<bool,6> & boundary_flags, const char * tag)
 {
     using range = boost::multi_array_types::index_range;
 
     affinity_graph<F>& aff = *aff_ptr;
     volume<ID>& seg = *seg_ptr;
     auto shape = seg.shape();
-    write_multi_array(str(boost::format("aff_x1_%1%.data") % tag), boost::multi_array<F,2>(aff[boost::indices[1][range(1,shape[1]-1)][range(1,shape[2]-1)][0]], boost::fortran_storage_order()));
-    write_multi_array(str(boost::format("aff_y1_%1%.data") % tag), boost::multi_array<F,2>(aff[boost::indices[range(1,shape[0]-1)][1][range(1,shape[2]-1)][1]], boost::fortran_storage_order()));
-    write_multi_array(str(boost::format("aff_z1_%1%.data") % tag), boost::multi_array<F,2>(aff[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][1][2]], boost::fortran_storage_order()));
+    if (!boundary_flags[0]) {
+        write_multi_array(str(boost::format("aff_i_0_%1%.data") % tag), boost::multi_array<F,2>(aff[boost::indices[1][range(1,shape[1]-1)][range(1,shape[2]-1)][0]], boost::fortran_storage_order()));
+    }
+    if (!boundary_flags[1]) {
+        write_multi_array(str(boost::format("aff_i_1_%1%.data") % tag), boost::multi_array<F,2>(aff[boost::indices[range(1,shape[0]-1)][1][range(1,shape[2]-1)][1]], boost::fortran_storage_order()));
+    }
+    if (!boundary_flags[2]) {
+        write_multi_array(str(boost::format("aff_i_2_%1%.data") % tag), boost::multi_array<F,2>(aff[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][1][2]], boost::fortran_storage_order()));
+    }
 
-    write_multi_array(str(boost::format("seg_fx0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[0][range(1,shape[1]-1)][range(1,shape[2]-1)]], boost::fortran_storage_order()));
-    write_multi_array(str(boost::format("seg_fx1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[1][range(1,shape[1]-1)][range(1,shape[2]-1)]], boost::fortran_storage_order()));
-    write_multi_array(str(boost::format("seg_fy0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][0][range(1,shape[2]-1)]], boost::fortran_storage_order()));
-    write_multi_array(str(boost::format("seg_fy1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][1][range(1,shape[2]-1)]], boost::fortran_storage_order()));
-    write_multi_array(str(boost::format("seg_fz0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][0]], boost::fortran_storage_order()));
-    write_multi_array(str(boost::format("seg_fz1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][1]], boost::fortran_storage_order()));
+    if (!boundary_flags[0]) {
+        write_multi_array(str(boost::format("seg_o_0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[0][range(1,shape[1]-1)][range(1,shape[2]-1)]], boost::fortran_storage_order()));
+        write_multi_array(str(boost::format("seg_i_0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[1][range(1,shape[1]-1)][range(1,shape[2]-1)]], boost::fortran_storage_order()));
+    }
+    if (!boundary_flags[1]) {
+        write_multi_array(str(boost::format("seg_o_1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][0][range(1,shape[2]-1)]], boost::fortran_storage_order()));
+        write_multi_array(str(boost::format("seg_i_1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][1][range(1,shape[2]-1)]], boost::fortran_storage_order()));
+    }
+    if (!boundary_flags[2]) {
+        write_multi_array(str(boost::format("seg_o_2_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][0]], boost::fortran_storage_order()));
+        write_multi_array(str(boost::format("seg_i_2_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][1]], boost::fortran_storage_order()));
+    }
 
-    write_multi_array(str(boost::format("seg_bx0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[shape[0]-2][range(1,shape[1]-1)][range(1,shape[2]-1)]], boost::fortran_storage_order()));
-    write_multi_array(str(boost::format("seg_bx1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[shape[0]-1][range(1,shape[1]-1)][range(1,shape[2]-1)]], boost::fortran_storage_order()));
-    write_multi_array(str(boost::format("seg_by0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][shape[1]-2][range(1,shape[2]-1)]], boost::fortran_storage_order()));
-    write_multi_array(str(boost::format("seg_by1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][shape[1]-1][range(1,shape[2]-1)]], boost::fortran_storage_order()));
-    write_multi_array(str(boost::format("seg_bz0_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][shape[2]-2]], boost::fortran_storage_order()));
-    write_multi_array(str(boost::format("seg_bz1_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][shape[2]-1]], boost::fortran_storage_order()));
+    if (!boundary_flags[3]) {
+        write_multi_array(str(boost::format("seg_i_3_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[shape[0]-2][range(1,shape[1]-1)][range(1,shape[2]-1)]], boost::fortran_storage_order()));
+        write_multi_array(str(boost::format("seg_o_3_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[shape[0]-1][range(1,shape[1]-1)][range(1,shape[2]-1)]], boost::fortran_storage_order()));
+    }
+    if (!boundary_flags[4]) {
+        write_multi_array(str(boost::format("seg_i_4_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][shape[1]-2][range(1,shape[2]-1)]], boost::fortran_storage_order()));
+        write_multi_array(str(boost::format("seg_o_4_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][shape[1]-1][range(1,shape[2]-1)]], boost::fortran_storage_order()));
+    }
+    if (!boundary_flags[5]) {
+        write_multi_array(str(boost::format("seg_i_5_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][shape[2]-2]], boost::fortran_storage_order()));
+        write_multi_array(str(boost::format("seg_o_5_%1%.data") % tag), boost::multi_array<ID,2>(seg[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][shape[2]-1]], boost::fortran_storage_order()));
+    }
 }
 
 
