@@ -109,13 +109,23 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
 
     std::vector<std::set<ID>> in_rg(next_id);
 
+    std::vector<ID> rank_mst(next_id);
+    std::vector<ID> parent_mst(next_id);
+    boost::disjoint_sets<ID*, ID*> mst(&rank_mst[0], &parent_mst[0]);
+    for (ID i = 0; i < next_id; i++) {
+        mst.make_set(i);
+    }
+
     for ( auto& it: rg )
     {
         ID s1 = remaps[sets.find_set(std::get<1>(it))];
         ID s2 = remaps[sets.find_set(std::get<2>(it))];
+        ID a1 = mst.find_set(s1);
+        ID a2 = mst.find_set(s2);
 
-        if ( s1 != s2 && s1 && s2 )
+        if ( a1 != a2 && a1 && a2 )
         {
+            mst.link(a1, a2);
             auto mm = std::minmax(s1,s2);
             if ( in_rg[mm.first].count(mm.second) == 0 )
             {
