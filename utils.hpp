@@ -47,20 +47,6 @@ read_volume( const std::string& fname, std::size_t wsize )
     return vol;
 }
 
-template < typename T >
-inline bool
-write_volume( const std::string& fname,
-              const volume_ptr<T>& vol )
-{
-    std::ofstream f(fname.c_str(), (std::ios::out | std::ios::binary) );
-    if ( !f ) return false;
-
-    f.write( reinterpret_cast<char*>(vol->data()),
-             vol->shape()[0] * vol->shape()[1] * vol->shape()[2] * sizeof(T));
-    return true;
-}
-
-
 template< typename ID, typename F >
 inline bool write_region_graph( const std::string& fname,
                                 const region_graph<ID,F>& rg )
@@ -145,6 +131,19 @@ void write_multi_array(const std::string & fn, boost::multi_array<T,N> slice){
     f.open(f_param);
     memcpy(f.data(), slice.data(), bytes);
     f.close();
+}
+
+template < typename T >
+inline bool
+write_volume( const std::string& fname,
+              const volume_ptr<T>& seg_ptr)
+{
+    using range = boost::multi_array_types::index_range;
+
+    volume<T>& seg = *seg_ptr;
+    auto shape = seg.shape();
+    write_multi_array(fname, boost::multi_array<T,3>(seg[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][range(1,shape[2]-1)]], boost::fortran_storage_order()));
+    return true;
 }
 
 template<typename ID, typename F>
