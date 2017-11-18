@@ -70,11 +70,8 @@ int main(int argc, char* argv[])
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "finished region graph in " << elapsed_secs << " seconds" << std::endl;
 
-    std::vector<std::pair<std::size_t, float>> tholds;
-    tholds.push_back(std::make_pair(SIZE_THRESHOLD, LOW_THRESHOLD));
-
     begin = clock();
-    merge_segments(seg, rg, counts, tholds, SIZE_THRESHOLD, offset);
+    merge_segments(seg, rg, counts, std::make_pair(SIZE_THRESHOLD, LOW_THRESHOLD), SIZE_THRESHOLD, offset);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 

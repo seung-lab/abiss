@@ -28,35 +28,32 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
 
     region_graph<ID,F>& rg  = *rg_ptr;
 
-    for ( auto& it: tholds )
+    std::size_t size = static_cast<std::size_t>(tholds.first);
+    //F           thld = static_cast<F>(it.second);
+
+    while ( (rit != rg.end()) && ( std::get<0>(*rit) > tholds.second) )
     {
-        std::size_t size = static_cast<std::size_t>(it.first);
-        //F           thld = static_cast<F>(it.second);
+        ID s1 = sets.find_set(std::get<1>(*rit));
+        ID s2 = sets.find_set(std::get<2>(*rit));
 
-        while ( (rit != rg.end()) && ( std::get<0>(*rit) > it.second) )
+        if ( s1 != s2 && s1 && s2 )
         {
-            ID s1 = sets.find_set(std::get<1>(*rit));
-            ID s2 = sets.find_set(std::get<2>(*rit));
-
-            if ( s1 != s2 && s1 && s2 )
+            if ( (counts[s1] < size) || (counts[s2] < size) )
             {
-                if ( (counts[s1] < size) || (counts[s2] < size) )
-                {
-                    if ((traits::on_border&(counts[s1]|counts[s2]))==0) {
-                        counts[s1] += counts[s2];
-                        counts[s2]  = 0;
-                        sets.link(s1, s2);
-                        ID s = sets.find_set(s1);
-                        std::swap(counts[s], counts[s1]);
-                    }
-                    else {
-                        counts[s1] |= counts[s2]&traits::on_border;
-                        counts[s2] |= counts[s1]&traits::on_border;
-                    }
+                if ((traits::on_border&(counts[s1]|counts[s2]))==0) {
+                    counts[s1] += counts[s2];
+                    counts[s2]  = 0;
+                    sets.link(s1, s2);
+                    ID s = sets.find_set(s1);
+                    std::swap(counts[s], counts[s1]);
+                }
+                else {
+                    counts[s1] |= counts[s2]&traits::on_border;
+                    counts[s2] |= counts[s1]&traits::on_border;
                 }
             }
-            ++rit;
         }
+        ++rit;
     }
 
     std::cout << "Done with merging" << std::endl;
