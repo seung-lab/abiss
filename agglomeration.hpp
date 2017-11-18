@@ -70,7 +70,7 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
     for ( ID id = 0; id < counts.size(); ++id )
     {
         ID s = sets.find_set(id);
-        if ( counts[s]&(~traits::on_border) ) {
+        if ( counts[id]&(~traits::on_border) ) {
             if ( s && (counts[s] >= low) )
             {
                 if (remaps[s] == 0) {
