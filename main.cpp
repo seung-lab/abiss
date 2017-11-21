@@ -7,7 +7,6 @@
 #include "utils.hpp"
 #include "mmap_array.hpp"
 
-
 #include <memory>
 #include <type_traits>
 

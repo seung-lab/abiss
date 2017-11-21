@@ -28,10 +28,13 @@ template <> struct watershed_traits<uint64_t>
 };
 
 template < typename T >
+using id_pair = std::pair<T, T>;
+
+template < typename T >
 using volume = boost::multi_array<T,3>;
 
 template < typename T >
-using affinity_graph = boost::const_multi_array_ref<T,4,const T*>;
+using affinity_graph = boost::multi_array_ref<T,4>;
 
 template < typename T >
 using volume_ptr = std::shared_ptr<volume<T>>;
