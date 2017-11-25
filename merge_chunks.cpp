@@ -1,6 +1,7 @@
 #include "defines.h"
 #include "types.hpp"
 #include "utils.hpp"
+#include "agglomeration.hpp"
 #include "mmap_array.hpp"
 #include <vector>
 #include <tuple>
@@ -197,19 +198,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         }
 
         if ( v1 != v2 && v1 && v2 ) {
-            if ( (sizes[v1] < SIZE_THRESHOLD) || (sizes[v2] < SIZE_THRESHOLD) ) {
-                if ((traits::on_border&(sizes[v1]|sizes[v2]))==0) {
-                    sizes[v1] += sizes[v2];
-                    sizes[v2]  = 0;
-                    sets.link(v1, v2);
-                    ID vr = sets.find_set(v1);
-                    std::swap(sizes[vr], sizes[v1]);
-                }
-                else {
-                    sizes[v1] |= sizes[v2]&traits::on_border;
-                    sizes[v2] |= sizes[v1]&traits::on_border;
-                }
-            }
+            try_merge(sizes, sets, v1, v2, SIZE_THRESHOLD);
         }
     }
 

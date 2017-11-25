@@ -8,6 +8,32 @@
 #include <set>
 #include <iostream>
 
+template<typename C, typename S, typename T>
+inline void try_merge(C & counts, S & sets, T s1, T s2, size_t size_threshold)
+{
+    if ( (counts[s1] >= size_threshold) && (counts[s2] >= size_threshold) ) {
+        return;
+    }
+    using traits = watershed_traits<T>;
+    auto real_size_s1 = counts[s1]&(~traits::on_border);
+    auto real_size_s2 = counts[s2]&(~traits::on_border);
+    if (((traits::on_border&(counts[s1]|counts[s2]))==0)
+          || (real_size_s1 >= size_threshold && counts[s2] < size_threshold)
+          || (real_size_s2 >= size_threshold && counts[s1] < size_threshold)) {
+    //if ((traits::on_border&(counts[s1]|counts[s2]))==0) {
+        counts[s1] += counts[s2]&(~traits::on_border);
+        counts[s1] |= counts[s2]&traits::on_border;
+        counts[s2]  = 0;
+        sets.link(s1, s2);
+        T s = sets.find_set(s1);
+        std::swap(counts[s], counts[s1]);
+    }
+    else {
+        counts[s1] |= counts[s2]&traits::on_border;
+        counts[s2] |= counts[s1]&traits::on_border;
+    }
+}
+
 template< typename ID, typename F, typename L, typename M >
 inline void merge_segments( const volume_ptr<ID>& seg_ptr,
                             const region_graph_ptr<ID,F> rg_ptr,
@@ -38,20 +64,7 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
 
         if ( s1 != s2 && s1 && s2 )
         {
-            if ( (counts[s1] < size) || (counts[s2] < size) )
-            {
-                if ((traits::on_border&(counts[s1]|counts[s2]))==0) {
-                    counts[s1] += counts[s2];
-                    counts[s2]  = 0;
-                    sets.link(s1, s2);
-                    ID s = sets.find_set(s1);
-                    std::swap(counts[s], counts[s1]);
-                }
-                else {
-                    counts[s1] |= counts[s2]&traits::on_border;
-                    counts[s2] |= counts[s1]&traits::on_border;
-                }
-            }
+            try_merge(counts, sets, s1, s2, size);
         }
         ++rit;
     }
