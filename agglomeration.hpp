@@ -136,7 +136,7 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
         ID a1 = mst.find_set(s1);
         ID a2 = mst.find_set(s2);
 
-        if ( a1 != a2 && a1 && a2 )
+        if ( a1 != a2 && a1 && a2 && std::get<0>(it) > tholds.second)
         {
             mst.link(a1, a2);
             auto mm = std::minmax(s1,s2);
