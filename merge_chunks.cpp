@@ -14,8 +14,7 @@ template<typename T>
 std::unordered_map<T, size_t> load_sizes(size_t data_size)
 {
     MMArray<std::pair<T, size_t>, 1> count_data("counts.data",std::array<size_t, 1>({data_size}));
-    auto count_ptr = count_data.data();
-    auto & counts = *count_ptr;
+    auto counts = count_data.data();
     std::unordered_map<T, size_t> sizes(data_size);
     for (size_t i = 0; i != data_size; i++) {
         sizes[counts[i].first] = counts[i].second;
@@ -28,8 +27,7 @@ region_graph<ID,F> load_dend(size_t data_size)
 {
     region_graph<ID, F> rg;
     MMArray<std::tuple<F, ID, ID>, 1> dend_data("dend.data",std::array<size_t, 1>({data_size}));
-    auto dend_ptr = dend_data.data();
-    auto & dend_tuple = *dend_ptr;
+    auto dend_tuple = dend_data.data();
     for (size_t i = 0; i != data_size; i++) {
         rg.push_back(dend_tuple[i]);
     }
@@ -66,18 +64,11 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     auto bo_data = MMArray<ID, 1>("seg_bo.data", std::array<size_t, 1>({face_size}));
     auto conn_data = MMArray<F, 1>("aff_b.data", std::array<size_t, 1>({face_size}));
 
-    auto fi_ptr = fi_data.data();
-    auto fo_ptr = fo_data.data();
-    auto bi_ptr = bi_data.data();
-    auto bo_ptr = bo_data.data();
-    auto conn_ptr = conn_data.data();
-
-
-    auto & fi = *fi_ptr;
-    auto & fo = *fo_ptr;
-    auto & bi = *bi_ptr;
-    auto & bo = *bo_ptr;
-    auto & conn = *conn_ptr;
+    auto fi = fi_data.data();
+    auto fo = fo_data.data();
+    auto bi = bi_data.data();
+    auto bo = bo_data.data();
+    auto conn = conn_data.data();
 
     for (size_t idx = 0; idx != face_size; idx++) {
         if ( fi[idx] && bi[idx] ) {
@@ -276,8 +267,7 @@ void mark_border_supervoxels(std::unordered_map<T, size_t> & sizes, const std::a
             auto fn = str(boost::format("seg_i_%1%_%2%.data") % i % tag);
             std::cout << "loading: " << fn << std::endl;
             MMArray<T, 1> face_array(fn,std::array<size_t, 1>({face_dims[i]}));
-            auto face_ptr = face_array.data();
-            auto & face_data = *face_ptr;
+            auto face_data = face_array.data();
             for (size_t j = 0; j != face_dims[i]; j++) {
                 if (sizes.count(face_data[j]) != 0 && face_data[j]!=0) {
                     sizes[face_data[j]] |= traits::on_border;
@@ -301,8 +291,7 @@ void update_border_supervoxels(const std::unordered_map<T, T> & remaps, const st
             auto fi = str(boost::format("seg_i_%1%_%2%.data") % i % tag);
             std::cout << "update: " << fi << ",size:" << face_dims[i] << std::endl;
             MMArray<T, 1> face_i_array(fi,std::array<size_t, 1>({face_dims[i]}));
-            auto face_i_ptr = face_i_array.data();
-            auto & face_i_data = *face_i_ptr;
+            auto face_i_data = face_i_array.data();
             for (size_t j = 0; j != face_dims[i]; j++) {
                 if (remaps.count(face_i_data[j]) > 0) {
                     face_i_data[j] = remaps.at(face_i_data[j]);
@@ -311,8 +300,7 @@ void update_border_supervoxels(const std::unordered_map<T, T> & remaps, const st
             auto fo = str(boost::format("seg_o_%1%_%2%.data") % i % tag);
             std::cout << "update: " << fo << ",size:" << face_dims[i] << std::endl;
             MMArray<T, 1> face_o_array(fo,std::array<size_t, 1>({face_dims[i]}));
-            auto face_o_ptr = face_o_array.data();
-            auto & face_o_data = *face_o_ptr;
+            auto face_o_data = face_o_array.data();
             for (size_t j = 0; j != face_dims[i]; j++) {
                 if (remaps.count(face_o_data[j]) > 0) {
                     face_o_data[j] = remaps.at(face_o_data[j]);

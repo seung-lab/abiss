@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
     clock_t begin = clock();
     std::array<size_t, 4> aff_dim({xdim,ydim,zdim,3});
     MMArray<float, 4> aff_data(argv[2], aff_dim);
-    affinity_graph_ptr<float> aff = aff_data.data();
+    affinity_graph_ptr<float> aff = aff_data.data_ptr();
     //    read_affinity_graph<float>(argv[2],
     //                               xdim, ydim, zdim);
     //                               //2050, 2050, 258);
