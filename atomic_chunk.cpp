@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
     write_chunk_boundaries(seg, aff, flags, tag);
     auto c = write_counts(counts, offset, tag);
     auto d = write_vector(str(boost::format("dend_%1%.data") % tag), *rg);
-    std::vector<size_t> meta({xdim,ydim,zdim,c,d});
+    std::vector<size_t> meta({xdim,ydim,zdim,c,d,0});
     write_vector(str(boost::format("meta_%1%.data") % tag), meta);
     std::cout << "num of sv:" << c << std::endl;
     std::cout << "size of rg:" << d << std::endl;

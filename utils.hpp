@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <fstream>
 #include <type_traits>
+#include <unordered_map>
 #include <boost/format.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 
@@ -119,6 +120,16 @@ size_t write_counts(std::vector<size_t> & counts, T & offset, const char * tag)
         output.emplace_back(i+offset, counts[i]);
     }
     return write_vector(str(boost::format("counts_%1%.data") % tag), output);
+}
+
+template <typename K, typename V>
+size_t write_remap(const std::unordered_map<K, V> & map, const char * tag)
+{
+    std::vector<std::pair<K, V> > output;
+    for (const auto & kv : map) {
+        output.push_back(kv);
+    }
+    return write_vector(str(boost::format("remap_%1%.data") % tag), output);
 }
 
 template<typename T, size_t N>

@@ -359,7 +359,8 @@ int main(int argc, char* argv[])
     update_border_supervoxels(remaps, flags, std::array<size_t, 6>({ydim*zdim, xdim*zdim, xdim*ydim, ydim*zdim, xdim*zdim, xdim*ydim}), tag);
     auto c = write_vector(str(boost::format("counts_%1%.data") % tag), new_sizes);
     auto d = write_vector(str(boost::format("dend_%1%.data") % tag), rg);
-    std::vector<size_t> meta({xdim,ydim,zdim,c,d});
+    auto m = write_remap(remaps, tag);
+    std::vector<size_t> meta({xdim,ydim,zdim,c,d,m});
     write_vector(str(boost::format("meta_%1%.data") % tag), meta);
     std::cout << "num of sv:" << c << std::endl;
     std::cout << "size of rg:" << d << std::endl;
