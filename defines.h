@@ -1,8 +1,8 @@
 #ifndef WS_DEFINE_H
 #define WS_DEFINE_H
 
-#define HIGH_THRESHOLD 0.9998f
-#define LOW_THRESHOLD 0.00005f
+#define HIGH_THRESHOLD 0.999988f
+#define LOW_THRESHOLD 0.0001f
 #define SIZE_THRESHOLD 600
 
 #endif
