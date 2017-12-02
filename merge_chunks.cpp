@@ -352,4 +352,5 @@ int main(int argc, char* argv[])
     write_vector(str(boost::format("meta_%1%.data") % tag), meta);
     std::cout << "num of sv:" << c << std::endl;
     std::cout << "size of rg:" << d << std::endl;
+    std::cout << "num of remaps:" << m << std::endl;
 }
