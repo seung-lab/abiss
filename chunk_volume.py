@@ -26,7 +26,9 @@ def process_composite_chunks(c):
         json.dump(output, fp, indent=2)
 
 
-v = ChunkIterator([0,0,0,2048,2048,256],[512,512,100])
+data_bbox = [10240,14336,10,19000,23000,1800]
+chunk_size = [1024,1024,512]
+v = ChunkIterator(data_bbox,chunk_size)
 
 for c in v:
     if c.mip_level() == 0:

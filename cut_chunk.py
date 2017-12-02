@@ -62,12 +62,12 @@ bbox = param["bbox"]
 boundary_flags = param["boundary_flags"]
 
 aff = load_data('gs://neuroglancer/drosophila_v0/affinitymap-aligned')
-seg = load_data('gs://neuroglancer/ranl/watershed_13')
-
 aff_cutout = cut_data(aff, bbox, boundary_flags)
-seg_cutout = cut_data(seg, bbox, boundary_flags)
-
 save_raw_data("aff.raw", aff_cutout, "float32")
+del aff_cutout
+
+seg = load_data('gs://neuroglancer/ranl/watershed_13')
+seg_cutout = cut_data(seg, bbox, boundary_flags)
 save_raw_data("seg.raw", seg_cutout, "uint64")
 #save_data("aff.h5", aff_cutout)
 #save_data("seg.h5", seg_cutout)
