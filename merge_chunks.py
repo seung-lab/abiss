@@ -24,14 +24,14 @@ def merge_files(target, fnList):
                 with open(fn, "rb") as infile:
                     outfile.write(infile.read())
             except IOError:
-                print fn, " does not exist"
+                print(fn, " does not exist")
                 pass
 
 def generate_subface_keys(idx):
     pos = idx % 3
-    offset = idx / 3
+    offset = idx // 3
     faces = [[i,j] for i in range(2) for j in range(2)]
-    map(lambda l: l.insert(pos, offset), faces)
+    list(map(lambda l: l.insert(pos, offset), faces))
     return ["_".join([str(i) for i in l]) for l in faces]
 
 def load_incomplete_edges(p):
@@ -89,7 +89,7 @@ def merge_face(p,idx,subFaces):
 
 def merge_faces(p, faceMaps):
     incomplete_edges = load_incomplete_edges(p)
-    print faceMaps
+    print(faceMaps)
     frozen_segs = set()
     for k in faceMaps:
         frozen_segs |= merge_face(p,k,faceMaps[k])
@@ -114,7 +114,7 @@ def merge_chunks(p):
 param = read_inputs(sys.argv[1])
 
 if param["mip_level"] == 0:
-    print "atomic chunk, nothing to merge"
+    print("atomic chunk, nothing to merge")
 else:
-    print "mip level:", param["mip_level"]
+    print("mip level:", param["mip_level"])
     merge_chunks(param)
