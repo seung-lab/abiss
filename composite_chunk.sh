@@ -14,9 +14,9 @@ for fn in $(cat filelist.txt)
 do
     just_in_case rm -rf $fn
     try gsutil cp $DIST/incomplete_edges/incomplete_edges_"${fn}".tar.bz2 .
-    try tar jxf incomplete_edges_"${fn}".tar.bz2
+    try tar --use-compress-prog=pbzip2 -xf incomplete_edges_"${fn}".tar.bz2
     try gsutil cp $DIST/region_graph/"${fn}".tar.bz2 .
-    try tar jxf "${fn}".tar.bz2
+    try tar --use-compress-prog=pbzip2 -xf "${fn}".tar.bz2
 done
 try python3 $SCRIPT_PATH/merge_chunks.py $1
 
