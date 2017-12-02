@@ -4,7 +4,7 @@ import json
 import numpy
 
 def load_data(url):
-    return CloudVolume(url)
+    return CloudVolume(url, fill_missing=True)
 
 def save_raw_data(fn,data, data_type):
     f = numpy.memmap(fn, dtype=data_type, mode='w+', order='F', shape=data.shape)
