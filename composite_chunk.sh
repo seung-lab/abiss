@@ -30,7 +30,7 @@ do
     cat boundary_"$i"_"$output".dat >> frozen.dat
 done
 
-try $BIN_PATH/agg 0.2 input_rg.dat frozen.dat
+try $BIN_PATH/agg $THRESHOLD input_rg.dat frozen.dat
 try mv residual_rg.dat residual_rg_"$output".dat
 try cat mst.dat >> mst_"$output".dat
 

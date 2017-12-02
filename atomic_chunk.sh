@@ -9,7 +9,16 @@ try python3 $SCRIPT_PATH/cut_chunk.py aff.h5 seg.h5 $1
 try mkdir $output
 try $BIN_PATH/ac param.txt $output
 try cp complete_edges_"$output".dat input_rg.dat
-try $SCRIPT_PATH/agglomerate.sh $output
+
+for i in {0..5}
+do
+    cat boundary_"$i"_"$output".dat >> frozen.dat
+done
+
+try $BIN_PATH/agg $THRESHOLD input_rg.dat frozen.dat
+try mv residual_rg.dat residual_rg_"$output".dat
+try cat mst.dat >> mst_"$output".dat
+
 try find $output -name '*.dat' -print > /tmp/test_"${output}".manifest
 try tar --use-compress-prog=pbzip2 -cf incomplete_edges_"${output}".tar.bz2 --files-from /tmp/test_"${output}".manifest
 try tar --use-compress-prog=pbzip2 -cf "${output}".tar.bz2 *_"${output}".dat

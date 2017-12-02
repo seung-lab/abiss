@@ -8,6 +8,7 @@ just_in_case() { "$@" || true; }
 SCRIPT_PATH="../scripts"
 BIN_PATH="../build"
 DIST="gs://ranl/agglomeration"
+THRESHOLD=0.2
 
 #try . /root/google-cloud-sdk/path.bash.inc
 just_in_case rm *.dat
