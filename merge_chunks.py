@@ -19,6 +19,10 @@ def read_seg_ids(fn):
         return set([l.strip() for l in f])
 
 def merge_files(target, fnList):
+    if len(fnList) == 1:
+        shutil.move(fnList[0],target)
+        return
+
     with open(target,"wb") as outfile:
         for fn in fnList:
             try:
