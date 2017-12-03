@@ -1,6 +1,7 @@
 import json
 import sys
 import shutil
+import os
 from multiprocessing.dummy import Pool as ThreadPool
 
 def read_inputs(fn):
@@ -21,13 +22,14 @@ def read_seg_ids(fn):
 
 def merge_files(target, fnList):
     if len(fnList) == 1:
-        shutil.move(fnList[0],target)
+        os.rename(fnList[0],target)
         return
 
     with open(target,"wb") as outfile:
         for fn in fnList:
             try:
                 shutil.copyfileobj(open(fn, 'rb'), outfile)
+                os.remove(fn)
             except IOError:
                 print(fn, " does not exist")
                 pass
