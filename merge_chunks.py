@@ -1,6 +1,7 @@
 import json
 import sys
 import shutil
+from multiprocessing.dummy import Pool as ThreadPool
 
 def read_inputs(fn):
     with open(fn) as f:
@@ -56,7 +57,8 @@ def merge_edge(dirname, e, incomplete_edges):
         if e in incomplete_edges[k]:
             fnList.append(k+"/"+edge_name)
 
-    merge_files(dirname+"/"+edge_name, fnList)
+    #merge_files(dirname+"/"+edge_name, fnList)
+    return (dirname+"/"+edge_name, fnList)
 
 def merge_and_process_edges(p, incomplete_edges, frozen_segs):
     target_edges = set()
@@ -68,13 +70,19 @@ def merge_and_process_edges(p, incomplete_edges, frozen_segs):
 
     incomplete_edges_dirname = chunk_tag(p["mip_level"], p["indices"])
     process_edges_dirname = "edges"
+    incomplete_fl = []
+    process_fl = []
+    pool = ThreadPool()
     for e in target_edges:
         if e[0] in frozen_segs and e[1] in frozen_segs:
             incomplete_edges_list.write("%s %s\n"%e)
-            merge_edge(incomplete_edges_dirname, e, incomplete_edges)
+            incomplete_fl.append(merge_edge(incomplete_edges_dirname, e, incomplete_edges))
         else:
             process_edges_list.write("%s %s\n"%e)
-            merge_edge(process_edges_dirname, e, incomplete_edges)
+            process_fl.append(merge_edge(process_edges_dirname, e, incomplete_edges))
+
+    pool.starmap(merge_files, process_fl)
+    pool.starmap(merge_files, incomplete_fl)
 
 def merge_face(p,idx,subFaces):
     mip_c = p["mip_level"]-1
