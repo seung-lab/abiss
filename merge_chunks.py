@@ -1,5 +1,6 @@
 import json
 import sys
+import shutil
 
 def read_inputs(fn):
     with open(fn) as f:
@@ -21,8 +22,7 @@ def merge_files(target, fnList):
     with open(target,"wb") as outfile:
         for fn in fnList:
             try:
-                with open(fn, "rb") as infile:
-                    outfile.write(infile.read())
+                shutil.copyfileobj(open(fn, 'rb'), outfile)
             except IOError:
                 print(fn, " does not exist")
                 pass
