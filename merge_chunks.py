@@ -74,7 +74,7 @@ def merge_and_process_edges(p, incomplete_edges, frozen_segs):
     process_edges_dirname = "edges"
     incomplete_fl = []
     process_fl = []
-    pool = ThreadPool()
+    pool = ThreadPool(16)
     for e in target_edges:
         if e[0] in frozen_segs and e[1] in frozen_segs:
             incomplete_edges_list.write("%s %s\n"%e)
