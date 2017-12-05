@@ -222,7 +222,8 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
 
     auto c = write_vector(str(boost::format("counts_%1%.data") % tag), counts);
     std::cout << "number of supervoxels:" << remaps.size() << "," << next_id << std::endl;
-    std::vector<std::pair<ID, size_t> >().swap(counts);
+    counts.clear();
+    counts.shrink_to_fit();
 
     region_graph<ID,F> new_rg;
 
