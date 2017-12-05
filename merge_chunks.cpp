@@ -35,8 +35,8 @@ region_graph<ID,F> load_dend(size_t data_size)
 }
 
 template<typename ID, typename F>
-std::tuple<std::unordered_map<ID, ID>, std::vector<std::pair<ID, size_t> >, region_graph<ID,F> >
-process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, region_graph<ID, F> & rg)
+std::tuple<std::unordered_map<ID, ID>, size_t, size_t>
+process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, region_graph<ID, F> & rg, const std::string & tag)
 {
     using traits = watershed_traits<ID>;
     using rank_t = std::unordered_map<ID,std::size_t>;
@@ -219,7 +219,10 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             ++next_id;
         }
     }
+
+    auto c = write_vector(str(boost::format("counts_%1%.data") % tag), counts);
     std::cout << "number of supervoxels:" << remaps.size() << "," << next_id << std::endl;
+    std::vector<std::pair<ID, size_t> >().swap(counts);
 
     region_graph<ID,F> new_rg;
 
@@ -255,7 +258,8 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             }
         }
     }
-    return std::make_tuple(remaps, counts, new_rg);
+    auto d = write_vector(str(boost::format("dend_%1%.data") % tag), new_rg);
+    return std::make_tuple(remaps, c, d);
 }
 
 template<typename T>
@@ -340,13 +344,11 @@ int main(int argc, char* argv[])
     auto dend = load_dend<uint64_t, float>(dend_size);
 
     std::unordered_map<uint64_t, uint64_t> remaps;
-    std::vector<std::pair<uint64_t, size_t> > new_sizes;
-    region_graph<uint64_t,float> rg;
+    size_t c = 0;
+    size_t d = 0;
 
-    std::tie(remaps, new_sizes, rg) = process_chunk_borders<uint64_t, float>(face_size, sizes, dend);
+    std::tie(remaps, c, d) = process_chunk_borders<uint64_t, float>(face_size, sizes, dend, tag);
     update_border_supervoxels(remaps, flags, std::array<size_t, 6>({ydim*zdim, xdim*zdim, xdim*ydim, ydim*zdim, xdim*zdim, xdim*ydim}), tag);
-    auto c = write_vector(str(boost::format("counts_%1%.data") % tag), new_sizes);
-    auto d = write_vector(str(boost::format("dend_%1%.data") % tag), rg);
     auto m = write_remap(remaps, tag);
     std::vector<size_t> meta({xdim,ydim,zdim,c,d,m});
     write_vector(str(boost::format("meta_%1%.data") % tag), meta);
