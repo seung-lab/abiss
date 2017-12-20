@@ -17,7 +17,7 @@ Edge<Ta> loadEdge(Ts seg1, Ts seg2)
         in.read(reinterpret_cast<char *>(&x), sizeof(x));
         in.read(reinterpret_cast<char *>(&y), sizeof(y));
         in.read(reinterpret_cast<char *>(&z), sizeof(z));
-        in.read(reinterpret_cast<char *>(&affinity), sizeof(z));
+        in.read(reinterpret_cast<char *>(&affinity), sizeof(affinity));
         Coord coord({x,y,z});
         edge[i][coord] = affinity;
     }
