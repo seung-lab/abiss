@@ -13,10 +13,10 @@ try python3 $SCRIPT_PATH/generate_children.py $1|tee filelist.txt
 for fn in $(cat filelist.txt)
 do
     just_in_case rm -rf $fn
-    try gsutil cp $DIST/incomplete_edges/incomplete_edges_"${fn}".tar.bz2 .
+    try gsutil cp $FILE_PATH/incomplete_edges/incomplete_edges_"${fn}".tar.bz2 .
     try tar --use-compress-prog=pbzip2 -xf incomplete_edges_"${fn}".tar.bz2
     try rm incomplete_edges_"${fn}".tar.bz2
-    try gsutil cp $DIST/region_graph/"${fn}".tar.bz2 .
+    try gsutil cp $FILE_PATH/region_graph/"${fn}".tar.bz2 .
     try tar --use-compress-prog=pbzip2 -xf "${fn}".tar.bz2
     try rm "${fn}".tar.bz2
 done
@@ -39,8 +39,8 @@ try cat mst.dat >> mst_"$output".dat
 try find $output -name '*.dat' -print > /tmp/test_"${output}".manifest
 try tar --use-compress-prog=pbzip2 -cf incomplete_edges_"${output}".tar.bz2 --files-from /tmp/test_"${output}".manifest
 try tar --use-compress-prog=pbzip2 -cf "${output}".tar.bz2 *_"${output}".dat
-try gsutil cp incomplete_edges_"${output}".tar.bz2 $DIST/incomplete_edges/incomplete_edges_"${output}".tar.bz2
-try gsutil cp "${output}".tar.bz2 $DIST/region_graph/"${output}".tar.bz2
+try gsutil cp incomplete_edges_"${output}".tar.bz2 $FILE_PATH/incomplete_edges/incomplete_edges_"${output}".tar.bz2
+try gsutil cp "${output}".tar.bz2 $FILE_PATH/region_graph/"${output}".tar.bz2
 try rm -rf $output
 try rm -rf edges
 for fn in $(cat filelist.txt)

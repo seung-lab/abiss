@@ -7,10 +7,9 @@ just_in_case() { "$@" || true; }
 
 SCRIPT_PATH="/root/agg/scripts"
 BIN_PATH="/root/agg/build"
-DIST="gs://ranl/flyem_agglomeration_0"
 THRESHOLD=0.2
 
-try . /root/google-cloud-sdk/path.bash.inc
+#try . /root/google-cloud-sdk/path.bash.inc
 just_in_case rm *.dat
 just_in_case rm *.bz2
 just_in_case rm *.raw
