@@ -27,6 +27,9 @@ template <> struct watershed_traits<uint64_t>
     static const size_t on_border = (1ul<<(std::numeric_limits<std::size_t>::digits-1));
 };
 
+using aff_t = float;
+using seg_t = uint64_t;
+
 template < typename T >
 using id_pair = std::pair<T, T>;
 

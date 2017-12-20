@@ -80,7 +80,8 @@ int main(int argc, char* argv[])
     param_file >> xdim >> ydim >> zdim;
     std::cout << xdim << " " << ydim << " " << zdim << std::endl;
     param_file >> remap_size;
-    auto map = generate_remap<uint64_t>("remap.data", remap_size);
+    auto map = generate_remap<seg_t>("remap.data", remap_size);
+    std::cout << "generated remap" << std::endl;
     update_supervoxels(map, xdim*ydim*zdim, argv[2]);
 
 }

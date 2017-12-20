@@ -340,15 +340,15 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "supervoxel id offset:" << face_size << " " << counts << " " << dend_size << std::endl;
-    auto sizes = load_sizes<uint64_t>(counts);
+    auto sizes = load_sizes<seg_t>(counts);
     mark_border_supervoxels(sizes, flags, std::array<size_t, 6>({ydim*zdim, xdim*zdim, xdim*ydim, ydim*zdim, xdim*zdim, xdim*ydim}), tag);
-    auto dend = load_dend<uint64_t, float>(dend_size);
+    auto dend = load_dend<seg_t, aff_t>(dend_size);
 
-    std::unordered_map<uint64_t, uint64_t> remaps;
+    std::unordered_map<seg_t, seg_t> remaps;
     size_t c = 0;
     size_t d = 0;
 
-    std::tie(remaps, c, d) = process_chunk_borders<uint64_t, float>(face_size, sizes, dend, tag);
+    std::tie(remaps, c, d) = process_chunk_borders<seg_t, aff_t>(face_size, sizes, dend, tag);
     update_border_supervoxels(remaps, flags, std::array<size_t, 6>({ydim*zdim, xdim*zdim, xdim*ydim, ydim*zdim, xdim*zdim, xdim*ydim}), tag);
     auto m = write_remap(remaps, tag);
     std::vector<size_t> meta({xdim,ydim,zdim,c,d,m});

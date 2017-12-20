@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
 
     size_t xdim,ydim,zdim;
     int flag;
-    uint64_t offset;
+    seg_t offset;
     std::ifstream param_file(argv[1]);
     const char * tag = argv[3];
     param_file >> xdim >> ydim >> zdim;
@@ -46,8 +46,8 @@ int main(int argc, char* argv[])
 
     clock_t begin = clock();
     std::array<size_t, 4> aff_dim({xdim,ydim,zdim,3});
-    MMArray<float, 4> aff_data(argv[2], aff_dim);
-    affinity_graph_ptr<float> aff = aff_data.data_ptr();
+    MMArray<aff_t, 4> aff_data(argv[2], aff_dim);
+    affinity_graph_ptr<aff_t> aff = aff_data.data_ptr();
     //    read_affinity_graph<float>(argv[2],
     //                               xdim, ydim, zdim);
     //                               //2050, 2050, 258);
@@ -55,11 +55,11 @@ int main(int argc, char* argv[])
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "loaded affinity map in " << elapsed_secs << " seconds" << std::endl;
 
-    volume_ptr<uint64_t>     seg   ;
+    volume_ptr<seg_t>     seg   ;
     std::vector<std::size_t> counts;
 
     begin = clock();
-    std::tie(seg , counts) = watershed<uint64_t>(aff, LOW_THRESHOLD, HIGH_THRESHOLD, flags);
+    std::tie(seg , counts) = watershed<seg_t>(aff, LOW_THRESHOLD, HIGH_THRESHOLD, flags);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "finished watershed in " << elapsed_secs << " seconds" << std::endl;
