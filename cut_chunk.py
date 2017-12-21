@@ -2,6 +2,7 @@ from cloudvolume import CloudVolume
 import sys
 import json
 import numpy
+import os
 
 def load_data(url):
     return CloudVolume(url, fill_missing=True)
