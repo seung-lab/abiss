@@ -1,3 +1,4 @@
+#include "Types.h"
 #include "MeanEdge.hpp"
 #include "ReweightedLocalMeanEdge.hpp"
 #include <cstdint>
@@ -29,26 +30,26 @@ int main(int argc, char * argv[])
 {
     using namespace std::placeholders;
 
-    uint64_t seg1, seg2;
-    std::vector<SegPair<uint64_t> > complete_segpairs;
-    std::unordered_map<SegPair<uint64_t>, Edge<float>, boost::hash<SegPair<uint64_t> > > edges;
+    seg_t seg1, seg2;
+    std::vector<SegPair<seg_t> > complete_segpairs;
+    std::unordered_map<SegPair<seg_t>, Edge<aff_t>, boost::hash<SegPair<seg_t> > > edges;
     std::ifstream edge_list(argv[1]);
-    std::vector<std::pair<float,uint64_t> > me;
+    std::vector<std::pair<aff_t, seg_t> > me;
     while (edge_list >> seg1 >> seg2){
         auto p = std::make_pair(seg1, seg2);
         complete_segpairs.push_back(p);
-        edges[p] = loadEdge<float, uint64_t>(seg1, seg2);
-        me.push_back(meanAffinity<float, uint64_t>(edges.at(p)));
+        edges[p] = loadEdge<aff_t, seg_t>(seg1, seg2);
+        me.push_back(meanAffinity<aff_t, seg_t>(edges.at(p)));
     }
     edge_list.close();
 
-    std::vector<uint64_t> areas(complete_segpairs.size(),0);
-    std::vector<float> affinities(complete_segpairs.size(),0);
-    std::vector<uint64_t> idx(complete_segpairs.size());
+    std::vector<size_t> areas(complete_segpairs.size(),0);
+    std::vector<aff_t> affinities(complete_segpairs.size(),0);
+    std::vector<size_t> idx(complete_segpairs.size());
     std::iota(idx.begin(), idx.end(), 1);
 
     auto f_rlme = QtConcurrent::map(idx, [&](auto i)
-            {auto s = reweightedLocalMeanAffinity<float,uint64_t>(edges.at(complete_segpairs.at(i-1)));
+            {auto s = reweightedLocalMeanAffinity<aff_t,seg_t>(edges.at(complete_segpairs.at(i-1)));
              affinities[i-1] = s.first;
              areas[i-1] = s.second;
              });

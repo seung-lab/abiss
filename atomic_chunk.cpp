@@ -62,23 +62,23 @@ void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinit
     std::ofstream incomplete(str(boost::format("incomplete_edges_%1%.dat") % path), std::ios_base::binary);
     std::ofstream complete(str(boost::format("complete_edges_%1%.dat") % path), std::ios_base::binary);
 
-    std::vector<std::pair<float,uint64_t> > me;
+    std::vector<std::pair<Ta, Ts> > me;
     for (const auto & kv : edges) {
         const auto k = kv.first;
         if (incomplete_segments.count(k.first) > 0 && incomplete_segments.count(k.second) > 0) {
             incomplete_segpairs.push_back(k);
         } else {
             complete_segpairs.push_back(k);
-            me.push_back(meanAffinity<float, uint64_t>(edges.at(k)));
+            me.push_back(meanAffinity<Ta, Ts>(edges.at(k)));
         }
     }
-    std::vector<int64_t> areas(complete_segpairs.size(),0);
+    std::vector<size_t> areas(complete_segpairs.size(),0);
     std::vector<Ta> affinities(complete_segpairs.size(),0);
-    std::vector<int64_t> idx(complete_segpairs.size());
+    std::vector<size_t> idx(complete_segpairs.size());
     std::iota(idx.begin(), idx.end(), 0);
 
     auto f_rlme = QtConcurrent::map(idx, [&](auto i)
-            {auto s = reweightedLocalMeanAffinity<float,uint64_t>(edges.at(complete_segpairs.at(i)));
+            {auto s = reweightedLocalMeanAffinity<Ta,Ts>(edges.at(complete_segpairs.at(i)));
              affinities[i] = s.first;
              areas[i] = s.second;
              });
@@ -114,18 +114,18 @@ int main(int argc, char * argv[])
 
     //FIXME: wrap these in classes
     bio::mapped_file_source seg_file;
-    size_t seg_bytes = sizeof(uint64_t)*dim[0]*dim[1]*dim[2];
+    size_t seg_bytes = sizeof(seg_t)*dim[0]*dim[1]*dim[2];
     seg_file.open("seg.raw", seg_bytes);
-    ConstChunkRef<uint64_t,3> seg_chunk (reinterpret_cast<const uint64_t*>(seg_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])], boost::fortran_storage_order());
+    ConstChunkRef<seg_t, 3> seg_chunk (reinterpret_cast<const seg_t*>(seg_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])], boost::fortran_storage_order());
     std::cout << "mmap seg data" << std::endl;
 
     bio::mapped_file_source aff_file;
-    size_t aff_bytes = sizeof(float)*dim[0]*dim[1]*dim[2]*3;
+    size_t aff_bytes = sizeof(aff_t)*dim[0]*dim[1]*dim[2]*3;
     aff_file.open("aff.raw", aff_bytes);
-    ConstChunkRef<float,4> aff_chunk (reinterpret_cast<const float*>(aff_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])][3], boost::fortran_storage_order());
+    ConstChunkRef<aff_t,4> aff_chunk (reinterpret_cast<const aff_t*>(aff_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])][3], boost::fortran_storage_order());
     std::cout << "mmap aff data" << std::endl;
 
-    AffinityExtractor<uint64_t, float, ConstChunkRef<float,4> > affinity_extractor(aff_chunk);
+    AffinityExtractor<seg_t, aff_t, ConstChunkRef<aff_t, 4> > affinity_extractor(aff_chunk);
     traverseSegments(seg_chunk, true, affinity_extractor);
     processData(affinity_extractor, output_path);
     std::cout << "finished" << std::endl;
