@@ -62,12 +62,12 @@ param = read_inputs(sys.argv[3])
 bbox = param["bbox"]
 boundary_flags = param["boundary_flags"]
 
-aff = load_data('gs://neuroglancer/drosophila_v0/affinitymap-aligned_z32')
+aff = load_data(os.environ['AFF_PATH'])
 aff_cutout = cut_data(aff, bbox, boundary_flags)
 save_raw_data("aff.raw", aff_cutout, "float32")
 del aff_cutout
 
-seg = load_data('gs://neuroglancer/ranl/flyem_watershed_0')
+seg = load_data(os.environ['SEG_PATH'])
 seg_cutout = cut_data(seg, bbox, boundary_flags)
 save_raw_data("seg.raw", seg_cutout, "uint64")
 #save_data("aff.h5", aff_cutout)
