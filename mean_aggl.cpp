@@ -127,10 +127,10 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
     }
 
     std::ofstream of_mst;
-    of_mst.open("mst.dat", std::ofstream::out | std::ofstream::trunc);
+    of_mst.open("mst.data", std::ofstream::out | std::ofstream::trunc);
 
     std::ofstream of_res;
-    of_res.open("residual_rg.dat", std::ofstream::out | std::ofstream::trunc);
+    of_res.open("residual_rg.data", std::ofstream::out | std::ofstream::trunc);
 
     while (heap.size() && comp(heap.top()->edge.w, threshold))
     {
