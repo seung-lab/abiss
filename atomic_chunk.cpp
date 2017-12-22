@@ -92,8 +92,16 @@ void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinit
 
     for (size_t i = 0; i != complete_segpairs.size(); i++) {
         const auto & p = complete_segpairs[i];
-        complete << std::setprecision (17) << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
-        complete << std::setprecision (17) << p.first << " " << p.second << " " << affinities[i]<< " " << areas[i] << std::endl;
+        complete.write(reinterpret_cast<const char *>(&(p.first)), sizeof(Ts));
+        complete.write(reinterpret_cast<const char *>(&(p.second)), sizeof(Ts));
+        complete.write(reinterpret_cast<const char *>(&(me[i].first)), sizeof(Ta));
+        complete.write(reinterpret_cast<const char *>(&(me[i].second)), sizeof(size_t));
+        complete.write(reinterpret_cast<const char *>(&(p.first)), sizeof(Ts));
+        complete.write(reinterpret_cast<const char *>(&(p.second)), sizeof(Ts));
+        complete.write(reinterpret_cast<const char *>(&(affinities[i])), sizeof(Ta));
+        complete.write(reinterpret_cast<const char *>(&(areas[i])), sizeof(size_t));
+        //complete << std::setprecision (17) << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
+        //complete << std::setprecision (17) << p.first << " " << p.second << " " << affinities[i]<< " " << areas[i] << std::endl;
     }
     incomplete.close();
     complete.close();

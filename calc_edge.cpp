@@ -59,8 +59,14 @@ int main(int argc, char * argv[])
 
     for (size_t i = 0; i != complete_segpairs.size(); i++) {
         auto & p = complete_segpairs[i];
-        ofs << std::setprecision (17) << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
-        ofs << std::setprecision (17) << p.first << " " << p.second << " " << affinities[i] << " " << areas[i] << "\n";
+        ofs.write(reinterpret_cast<const char *>(&(p.first)), sizeof(seg_t));
+        ofs.write(reinterpret_cast<const char *>(&(p.second)), sizeof(seg_t));
+        ofs.write(reinterpret_cast<const char *>(&(me[i].first)), sizeof(aff_t));
+        ofs.write(reinterpret_cast<const char *>(&(me[i].second)), sizeof(size_t));
+        ofs.write(reinterpret_cast<const char *>(&(p.first)), sizeof(seg_t));
+        ofs.write(reinterpret_cast<const char *>(&(p.second)), sizeof(seg_t));
+        ofs.write(reinterpret_cast<const char *>(&(affinities[i])), sizeof(aff_t));
+        ofs.write(reinterpret_cast<const char *>(&(areas[i])), sizeof(size_t));
     }
     ofs.close();
 }
