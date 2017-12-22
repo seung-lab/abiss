@@ -13,7 +13,7 @@ Edge<Ta> loadEdge(Ts seg1, Ts seg2)
     int i,x,y,z;
     Ta affinity;
     Edge<Ta> edge;
-    std::ifstream in(str(boost::format("edges/%1%_%2%.dat") % seg1 % seg2));
+    std::ifstream in(str(boost::format("edges/%1%_%2%.data") % seg1 % seg2));
     while (in.read(reinterpret_cast<char *>(&i), sizeof(i))) {
         in.read(reinterpret_cast<char *>(&x), sizeof(x));
         in.read(reinterpret_cast<char *>(&y), sizeof(y));
@@ -55,7 +55,7 @@ int main(int argc, char * argv[])
              });
     f_rlme.waitForFinished();
 
-    std::ofstream ofs("new_edges.dat", std::ios_base::binary);
+    std::ofstream ofs("new_edges.data", std::ios_base::binary);
 
     for (size_t i = 0; i != complete_segpairs.size(); i++) {
         auto & p = complete_segpairs[i];

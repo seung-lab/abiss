@@ -20,7 +20,7 @@ std::unordered_set<Ts> processMetaData(const AffinityExtractor<Ts, Ta, ConstChun
 {
     std::unordered_set<Ts> incomplete_segments;
     for (int i= 0; i != 6; i++) {
-        std::ofstream out(str(boost::format("boundary_%1%_%2%.dat") % i % tag), std::ios_base::binary);
+        std::ofstream out(str(boost::format("boundary_%1%_%2%.data") % i % tag), std::ios_base::binary);
         for (auto x : affinityExtractor.boundarySupervoxels(i)) {
             incomplete_segments.insert(x);
             out << x << "\n";
@@ -34,7 +34,7 @@ std::unordered_set<Ts> processMetaData(const AffinityExtractor<Ts, Ta, ConstChun
 template<typename Ta, typename Ts>
 void writeEdge(const SegPair<Ts> & p, const std::unordered_map<SegPair<Ts>, Edge<Ta>, boost::hash<SegPair<Ts> > > & edges, const char * path)
 {
-    std::ofstream out(str(boost::format("%1%/%2%_%3%.dat") % path % p.first % p.second), std::ios_base::binary);
+    std::ofstream out(str(boost::format("%1%/%2%_%3%.data") % path % p.first % p.second), std::ios_base::binary);
     const auto & edge = edges.at(p);
     for (int i = 0; i != 3; i++) {
         for (const auto & kv : edge[i]) {
@@ -59,8 +59,8 @@ void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinit
     std::vector<SegPair<Ts> > complete_segpairs;
     const auto & edges = affinityExtractor.edges();
 
-    std::ofstream incomplete(str(boost::format("incomplete_edges_%1%.dat") % path), std::ios_base::binary);
-    std::ofstream complete(str(boost::format("complete_edges_%1%.dat") % path), std::ios_base::binary);
+    std::ofstream incomplete(str(boost::format("incomplete_edges_%1%.data") % path), std::ios_base::binary);
+    std::ofstream complete(str(boost::format("complete_edges_%1%.data") % path), std::ios_base::binary);
 
     std::vector<std::pair<Ta, Ts> > me;
     for (const auto & kv : edges) {
