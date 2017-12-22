@@ -22,23 +22,23 @@ do
 done
 try python3 $SCRIPT_PATH/merge_chunks.py $1
 
-try cp residual_rg_"$output".dat input_rg.dat
-try $BIN_PATH/me process_edges.dat
-try cat new_edges.dat >> input_rg.dat
-try cat new_edges.dat >> complete_edges_"$output".dat
+try cp residual_rg_"$output".data input_rg.data
+try $BIN_PATH/me process_edges.data
+try cat new_edges.data >> input_rg.data
+try cat new_edges.data >> complete_edges_"$output".data
 
 for i in {0..5}
 do
-    cat boundary_"$i"_"$output".dat >> frozen.dat
+    cat boundary_"$i"_"$output".data >> frozen.data
 done
 
-try $BIN_PATH/agg $THRESHOLD input_rg.dat frozen.dat
-try mv residual_rg.dat residual_rg_"$output".dat
-try cat mst.dat >> mst_"$output".dat
+try $BIN_PATH/agg $THRESHOLD input_rg.data frozen.data
+try mv residual_rg.data residual_rg_"$output".data
+try cat mst.data >> mst_"$output".data
 
-try find $output -name '*.dat' -print > /tmp/test_"${output}".manifest
+try find $output -name '*.data' -print > /tmp/test_"${output}".manifest
 try tar --use-compress-prog=pbzip2 -cf incomplete_edges_"${output}".tar.bz2 --files-from /tmp/test_"${output}".manifest
-try tar --use-compress-prog=pbzip2 -cf "${output}".tar.bz2 *_"${output}".dat
+try tar --use-compress-prog=pbzip2 -cf "${output}".tar.bz2 *_"${output}".data
 try gsutil cp incomplete_edges_"${output}".tar.bz2 $FILE_PATH/incomplete_edges/incomplete_edges_"${output}".tar.bz2
 try gsutil cp "${output}".tar.bz2 $FILE_PATH/region_graph/"${output}".tar.bz2
 try rm -rf $output

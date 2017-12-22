@@ -48,13 +48,13 @@ def load_incomplete_edges(p):
     incomplete_edges = {}
     for k in d:
         tag = chunk_tag(mip_c, d[k])
-        fn = prefix+tag+".dat"
+        fn = prefix+tag+".data"
         incomplete_edges[tag] = read_seg_pairs(fn)
     return incomplete_edges
 
 def merge_edge(dirname, e, incomplete_edges):
     fnList = []
-    edge_name = "_".join(e)+".dat"
+    edge_name = "_".join(e)+".data"
     for k in incomplete_edges:
         if e in incomplete_edges[k]:
             fnList.append(k+"/"+edge_name)
@@ -67,8 +67,8 @@ def merge_and_process_edges(p, incomplete_edges, frozen_segs):
     for k in incomplete_edges:
         target_edges |= incomplete_edges[k]
 
-    incomplete_edges_list = open("incomplete_edges_"+chunk_tag(p["mip_level"], p["indices"])+".dat","w")
-    process_edges_list = open("process_edges.dat","w")
+    incomplete_edges_list = open("incomplete_edges_"+chunk_tag(p["mip_level"], p["indices"])+".data","w")
+    process_edges_list = open("process_edges.data","w")
 
     incomplete_edges_dirname = chunk_tag(p["mip_level"], p["indices"])
     process_edges_dirname = "edges"
@@ -91,10 +91,10 @@ def merge_face(p,idx,subFaces):
     prefix = "boundary_"
     frozen_segs = set()
     for f in subFaces:
-        fn = prefix+str(idx)+"_"+chunk_tag(mip_c,f)+".dat"
+        fn = prefix+str(idx)+"_"+chunk_tag(mip_c,f)+".data"
         frozen_segs |= read_seg_ids(fn)
 
-    with open(prefix+str(idx)+"_"+chunk_tag(p["mip_level"],p["indices"])+".dat","w") as f:
+    with open(prefix+str(idx)+"_"+chunk_tag(p["mip_level"],p["indices"])+".data","w") as f:
         for s in frozen_segs:
             f.write(s)
             f.write("\n")
@@ -113,8 +113,8 @@ def merge_faces(p, faceMaps):
 def merge_intermediate_outputs(p, prefix):
     d = p["children"]
     mip_c = p["mip_level"]-1
-    inputs = [prefix+"_"+chunk_tag(mip_c, d[k])+".dat" for k in d]
-    output = prefix+"_"+chunk_tag(p["mip_level"], p["indices"])+".dat"
+    inputs = [prefix+"_"+chunk_tag(mip_c, d[k])+".data" for k in d]
+    output = prefix+"_"+chunk_tag(p["mip_level"], p["indices"])+".data"
     merge_files(output, inputs)
 
 def merge_chunks(p):
