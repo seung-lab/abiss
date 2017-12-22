@@ -30,10 +30,13 @@
 #include <iomanip>
 #include <boost/pending/disjoint_sets.hpp>
 
+using seg_t = uint64_t;
+using aff_t = float;
+
 template <class T>
 struct edge_t
 {
-    uint64_t v0, v1;
+    seg_t v0, v1;
     T        w;
 };
 
@@ -92,8 +95,8 @@ private:
 
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
           class Limits = std::numeric_limits<T>>
-inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uint64_t> & frozen_supervoxels,
-                                         T const& threshold, std::unordered_set<uint64_t> const & supervoxels)
+inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg_t> & frozen_supervoxels,
+                                         T const& threshold, std::unordered_set<seg_t> const & supervoxels)
 {
     Compare comp;
     Plus    plus;
@@ -101,8 +104,8 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
 
     auto n = supervoxels.size();
 
-    typedef std::unordered_map<uint64_t,std::size_t> rank_t;
-    typedef std::unordered_map<uint64_t,uint64_t> parent_t;
+    typedef std::unordered_map<seg_t,std::size_t> rank_t;
+    typedef std::unordered_map<seg_t,seg_t> parent_t;
     rank_t rank_map;
     parent_t parent_map;
 
@@ -111,11 +114,11 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
 
     boost::disjoint_sets<boost::associative_property_map<rank_t>, boost::associative_property_map<parent_t> > sets(rank_pmap, parent_pmap);
 
-    for (uint64_t s : supervoxels) {
+    for (seg_t s : supervoxels) {
         sets.make_set(s);
     }
 
-    incident_matrix<uint64_t, std::map<uint64_t, heapable_edge<T, Compare>* > > incident;
+    incident_matrix<seg_t, std::map<seg_t, heapable_edge<T, Compare>* > > incident;
 
     std::vector<heapable_edge<T, Compare>> edges(rg.size());
     for (std::size_t i = 0; i < rg.size(); ++i)
@@ -148,13 +151,17 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
                 auto s1 = sets.find_set(v1);
                 if (frozen_supervoxels.count(s0) > 0) {
                     frozen_supervoxels.insert(s1);
-                    of_res << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
+                    of_res.write(reinterpret_cast<const char *>(&(s0)), sizeof(seg_t));
+                    of_res.write(reinterpret_cast<const char *>(&(s1)), sizeof(seg_t));
+                    write_edge(of_res, e->edge.w);
                     continue;
                 }
 
                 if (frozen_supervoxels.count(s1) > 0) {
                     frozen_supervoxels.insert(s0);
-                    of_res << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
+                    of_res.write(reinterpret_cast<const char *>(&(s0)), sizeof(seg_t));
+                    of_res.write(reinterpret_cast<const char *>(&(s1)), sizeof(seg_t));
+                    write_edge(of_res, e->edge.w);
                     continue;
                 }
 
@@ -164,7 +171,10 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
                 // std::cout << "Joined " << s0 << " and " << s1 << " to " << s
                 //           << " at " << e->edge.w << "\n";
                 if (s0 != s1) {
-                    of_mst << std::setprecision (17) << s0 << " " << s1 << " " << s << " " << e->edge.w << std::endl;
+                    of_mst.write(reinterpret_cast<const char *>(&(s0)), sizeof(seg_t));
+                    of_mst.write(reinterpret_cast<const char *>(&(s1)), sizeof(seg_t));
+                    of_mst.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+                    write_edge(of_mst, e->edge.w);
                 }
             }
 
@@ -229,7 +239,9 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
         auto v1 = e->edge.v1;
         auto s0 = sets.find_set(v0);
         auto s1 = sets.find_set(v1);
-        of_res << std::setprecision (17) << s0 << " " << s1 << " " << e->edge.w << std::endl;
+        of_res.write(reinterpret_cast<const char *>(&(s0)), sizeof(seg_t));
+        of_res.write(reinterpret_cast<const char *>(&(s1)), sizeof(seg_t));
+        write_edge(of_res, e->edge.w);
     }
     of_res.close();
 
@@ -238,11 +250,11 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<uin
 
 typedef struct atomic_edge
 {
-    uint64_t u1;
-    uint64_t u2;
+    seg_t u1;
+    seg_t u2;
     double sum_aff;
     double area;
-    explicit constexpr atomic_edge(uint64_t w1 = 0, uint64_t w2 = 0, double s_a = 0.0, double a = 0)
+    explicit constexpr atomic_edge(seg_t w1 = 0, seg_t w2 = 0, double s_a = 0.0, double a = 0)
         : u1(w1)
         , u2(w2)
         , sum_aff(s_a)
@@ -302,11 +314,27 @@ operator<<(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
     return os;
 }
 
+template <class CharT, class Traits>
+void write_edge(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
+{
+    aff_t aff = v.sum;
+    aff_t aff_rw = v.repr->sum_aff;
+    size_t num = v.num;
+    size_t area = v.repr->area;
+
+    os.write(reinterpret_cast<const char *>(&(aff)), sizeof(aff_t));
+    os.write(reinterpret_cast<const char *>(&(num)), sizeof(size_t));
+    os.write(reinterpret_cast<const char *>(&(v.repr->u1)), sizeof(seg_t));
+    os.write(reinterpret_cast<const char *>(&(v.repr->u2)), sizeof(seg_t));
+    os.write(reinterpret_cast<const char *>(&(aff_rw)), sizeof(aff_t));
+    os.write(reinterpret_cast<const char *>(&(area)), sizeof(size_t));
+}
+
 int main(int argc, char *argv[])
 {
     std::vector<edge_t<mean_edge>> rg;
-    std::unordered_set<uint64_t> frozen_supervoxels;
-    std::unordered_set<uint64_t> supervoxels;
+    std::unordered_set<seg_t> frozen_supervoxels;
+    std::unordered_set<seg_t> supervoxels;
     double th = atof(argv[1]);
     std::ifstream rg_file(argv[2]);
     if (!rg_file.is_open()) {
@@ -319,17 +347,25 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    uint64_t v1, v2;
+    seg_t v1, v2;
+    aff_t aff;
+    size_t area;
 
-    while (rg_file >> v1 >> v2)
+    while (rg_file.read(reinterpret_cast<char *>(&v1), sizeof(v1)))
     {
+        rg_file.read(reinterpret_cast<char *>(&v2), sizeof(v2));
+        rg_file.read(reinterpret_cast<char *>(&(aff)), sizeof(aff));
+        rg_file.read(reinterpret_cast<char *>(&(area)), sizeof(area));
         edge_t<mean_edge> e;
         e.v0 = v1;
         e.v1 = v2;
-        uint64_t u1, u2;
-        double sum_aff, area;
-        rg_file >> e.w.sum >> e.w.num >> u1 >> u2 >> sum_aff >> area;
-        atomic_edge_t * ae = new atomic_edge_t(u1,u2,sum_aff,area);
+        e.w.sum = aff;
+        e.w.num = area;
+        rg_file.read(reinterpret_cast<char *>(&v1), sizeof(v1));
+        rg_file.read(reinterpret_cast<char *>(&v2), sizeof(v2));
+        rg_file.read(reinterpret_cast<char *>(&(aff)), sizeof(aff));
+        rg_file.read(reinterpret_cast<char *>(&(area)), sizeof(area));
+        atomic_edge_t * ae = new atomic_edge_t(v1,v2,aff,area);
         e.w.repr = ae;
         //std::cout << e.v0 <<" " << e.v1 <<" " << e.w.sum <<" " << e.w.num<<" "  << u1<<" "  << u2<<" "  << sum_aff<<" "  << area << std::endl;
         rg.push_back(e);
@@ -337,7 +373,7 @@ int main(int argc, char *argv[])
         supervoxels.insert(e.v1);
     }
 
-    uint64_t sv;
+    seg_t sv;
     while (frozen_file >> sv) {
         frozen_supervoxels.insert(sv);
     }
