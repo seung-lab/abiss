@@ -39,7 +39,7 @@ int main(int argc, char * argv[])
         auto p = std::make_pair(seg1, seg2);
         complete_segpairs.push_back(p);
         edges[p] = loadEdge<aff_t, seg_t>(seg1, seg2);
-        me.push_back(meanAffinity<aff_t, seg_t>(edges.at(p)));
+        me.push_back(meanAffinity<aff_t, size_t>(edges.at(p)));
     }
     edge_list.close();
 
@@ -49,7 +49,7 @@ int main(int argc, char * argv[])
     std::iota(idx.begin(), idx.end(), 1);
 
     auto f_rlme = QtConcurrent::map(idx, [&](auto i)
-            {auto s = reweightedLocalMeanAffinity<aff_t,seg_t>(edges.at(complete_segpairs.at(i-1)));
+            {auto s = reweightedLocalMeanAffinity<aff_t,size_t>(edges.at(complete_segpairs.at(i-1)));
              affinities[i-1] = s.first;
              areas[i-1] = s.second;
              });
