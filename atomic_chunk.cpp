@@ -23,8 +23,8 @@ std::unordered_set<Ts> processMetaData(const AffinityExtractor<Ts, Ta, ConstChun
         std::ofstream out(str(boost::format("boundary_%1%_%2%.data") % i % tag), std::ios_base::binary);
         for (auto x : affinityExtractor.boundarySupervoxels(i)) {
             incomplete_segments.insert(x);
-            out << x << "\n";
-            //out.write(reinterpret_cast<const char *>(&x), sizeof(x));
+            //out << x << "\n";
+            out.write(reinterpret_cast<const char *>(&x), sizeof(x));
         }
         out.close();
     }
