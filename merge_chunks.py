@@ -2,6 +2,7 @@ import json
 import sys
 import shutil
 import os
+import numpy as np
 from multiprocessing.dummy import Pool as ThreadPool
 
 def read_inputs(fn):
@@ -17,8 +18,8 @@ def read_seg_pairs(fn):
         return set([tuple(l.split()) for l in f])
 
 def read_seg_ids(fn):
-    with open(fn) as f:
-        return set([l.strip() for l in f])
+    ids = np.fromfile(fn,dtype="uint64")
+    return set(ids)
 
 def merge_files(target, fnList):
     if len(fnList) == 1:
@@ -76,7 +77,7 @@ def merge_and_process_edges(p, incomplete_edges, frozen_segs):
     process_fl = []
     pool = ThreadPool(16)
     for e in target_edges:
-        if e[0] in frozen_segs and e[1] in frozen_segs:
+        if int(e[0]) in frozen_segs and int(e[1]) in frozen_segs:
             incomplete_edges_list.write("%s %s\n"%e)
             incomplete_fl.append(merge_edge(incomplete_edges_dirname, e, incomplete_edges))
         else:
@@ -94,10 +95,8 @@ def merge_face(p,idx,subFaces):
         fn = prefix+str(idx)+"_"+chunk_tag(mip_c,f)+".data"
         frozen_segs |= read_seg_ids(fn)
 
-    with open(prefix+str(idx)+"_"+chunk_tag(p["mip_level"],p["indices"])+".data","w") as f:
-        for s in frozen_segs:
-            f.write(s)
-            f.write("\n")
+    seg_array = np.array(list(frozen_segs))
+    seg_array.tofile(prefix+str(idx)+"_"+chunk_tag(p["mip_level"],p["indices"])+".data")
 
     return frozen_segs
 
