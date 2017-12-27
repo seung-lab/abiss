@@ -13,4 +13,5 @@ THRESHOLD=0.2
 just_in_case rm *.data
 just_in_case rm *.bz2
 just_in_case rm *.raw
+just_in_case rm *.tmp
 just_in_case rm param.txt
