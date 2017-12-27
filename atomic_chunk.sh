@@ -21,7 +21,7 @@ try cat mst.data >> mst_"$output".data
 
 try find $output -name '*.data' -print > /tmp/test_"${output}".manifest
 try tar --use-compress-prog=pbzip2 -cf incomplete_edges_"${output}".tar.bz2 --files-from /tmp/test_"${output}".manifest
-try tar --use-compress-prog=pbzip2 -cf "${output}".tar.bz2 *_"${output}".data
+try tar --use-compress-prog=pbzip2 -cvf "${output}".tar.bz2 *_"${output}".data
 try gsutil cp incomplete_edges_"${output}".tar.bz2 $FILE_PATH/incomplete_edges/incomplete_edges_"${output}".tar.bz2
 try gsutil cp "${output}".tar.bz2 $FILE_PATH/region_graph/"${output}".tar.bz2
 try rm -rf $output
