@@ -12,8 +12,8 @@ THRESHOLD=0.2
 #try . /root/google-cloud-sdk/path.bash.inc
 just_in_case rm -rf meta
 just_in_case rm -rf remap
-just_in_case rm *.data
-just_in_case rm *.bz2
-just_in_case rm *.raw
-just_in_case rm *.tmp
-just_in_case rm param.txt
+just_in_case rm -rf *.data
+just_in_case rm -rf *.bz2
+just_in_case rm -rf *.raw
+just_in_case rm -rf *.tmp
+just_in_case rm -rf param.txt
