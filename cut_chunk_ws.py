@@ -5,8 +5,8 @@ import numpy
 import os
 
 def load_data(fn):
-    return numpy.memmap("aff64.raw", dtype='float64', mode='r', order='F', shape=(2048,2048,256,3))
-    #return CloudVolume(os.environ['AFF_PATH'])
+    #return numpy.memmap("aff64.raw", dtype='float64', mode='r', order='F', shape=(2048,2048,256,3))
+    return CloudVolume(os.environ['AFF_PATH'])
     #return CloudVolume('gs://neuroglancer/drosophila_v0/affinitymap-aligned_z32', fill_missing=True)
 
 def save_raw_data(fn,data):
