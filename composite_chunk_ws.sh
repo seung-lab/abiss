@@ -10,7 +10,7 @@ do
     try gsutil cp $FILE_PATH/dend/$fn.tar.bz2 .
     try tar jxf $fn.tar.bz2
 done
-try python3 $SCRIPT_PATH/merge_chunks.py $1
+try python3 $SCRIPT_PATH/merge_chunks_ws.py $1
 #try $BIN_PATH/ws2 param.txt $output >& debug_"${output}".log
 try $BIN_PATH/ws2 param.txt $output
 try pbzip2 remap_"${output}".data
