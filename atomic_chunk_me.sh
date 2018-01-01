@@ -5,7 +5,7 @@ INIT_PATH="$(dirname "$0")"
 output=`basename $1 .json`
 echo $output
 just_in_case rm -rf $output
-try python3 $SCRIPT_PATH/cut_chunk.py aff.h5 seg.h5 $1
+try python3 $SCRIPT_PATH/cut_chunk.py $1
 try $BIN_PATH/acme param.txt $output
 try cp complete_edges_"$output".data input_rg.data
 

@@ -4,7 +4,7 @@ INIT_PATH="$(dirname "$0")"
 
 output=`basename $1 .json`
 echo $output
-try python3 $SCRIPT_PATH/cut_chunk_ws.py aff.h5 $1
+try python3 $SCRIPT_PATH/cut_chunk_ws.py $1
 try $BIN_PATH/ws param.txt aff.raw $output
 try pbzip2 seg_"${output}".data
 try gsutil cp seg_"${output}".data.bz2 $FILE_PATH/seg/seg_"${output}".data.bz2
