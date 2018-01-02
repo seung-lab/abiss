@@ -28,7 +28,6 @@
 #include <vector>
 #include <unordered_set>
 #include <iomanip>
-#include <boost/pending/disjoint_sets.hpp>
 
 using seg_t = uint64_t;
 using aff_t = float;
@@ -89,9 +88,38 @@ public:
         }
         return *(d_pmap.at(k));
     }
+
+    std::unordered_set<key> neighbors(key k) {
+        std::unordered_set<key> nbs;
+        if (d_pmap.count(k) > 0) {
+            const auto & c = *(d_pmap.at(k));
+            nbs.reserve(c.size());
+            for (const auto & kv : c) {
+                nbs.insert(kv.first);
+            }
+        }
+        return nbs;
+    }
+
 private:
     std::unordered_map<key, container * > d_pmap;
 };
+
+template <typename id>
+int n_intersection(const std::unordered_set<id> & set1, const std::unordered_set<id> & set2)
+{
+    //Assuming set1 has smaller number of element, too lazy to add a helper function
+    if (set1.size() == 0 || set2.size() == 0) {
+        return 0;
+    }
+    int count = 0;
+    for (const auto & e : set1) {
+        if (set2.count(e) > 0) {
+            count += 1;
+        }
+    }
+    return count;
+}
 
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
           class Limits = std::numeric_limits<T>>
@@ -103,20 +131,6 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
     heap_type<T, Compare> heap;
 
     auto n = supervoxels.size();
-
-    typedef std::unordered_map<seg_t,std::size_t> rank_t;
-    typedef std::unordered_map<seg_t,seg_t> parent_t;
-    rank_t rank_map;
-    parent_t parent_map;
-
-    boost::associative_property_map<rank_t> rank_pmap(rank_map);
-    boost::associative_property_map<parent_t> parent_pmap(parent_map);
-
-    boost::disjoint_sets<boost::associative_property_map<rank_t>, boost::associative_property_map<parent_t> > sets(rank_pmap, parent_pmap);
-
-    for (seg_t s : supervoxels) {
-        sets.make_set(s);
-    }
 
     incident_matrix<seg_t, std::map<seg_t, heapable_edge<T, Compare>* > > incident;
 
@@ -150,50 +164,58 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
         {
 
             {
-                auto s0 = sets.find_set(v0);
-                auto s1 = sets.find_set(v1);
-                if (frozen_supervoxels.count(s0) > 0) {
-                    frozen_supervoxels.insert(s1);
-                    of_res.write(reinterpret_cast<const char *>(&(s0)), sizeof(seg_t));
-                    of_res.write(reinterpret_cast<const char *>(&(s1)), sizeof(seg_t));
+                auto s = v0;
+                if (frozen_supervoxels.count(v0) > 0 && frozen_supervoxels.count(v1) > 0) {
+                    of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+                    of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
                     write_edge(of_res, e->edge.w);
                     continue;
                 }
 
-                if (frozen_supervoxels.count(s1) > 0) {
-                    frozen_supervoxels.insert(s0);
-                    of_res.write(reinterpret_cast<const char *>(&(s0)), sizeof(seg_t));
-                    of_res.write(reinterpret_cast<const char *>(&(s1)), sizeof(seg_t));
-                    write_edge(of_res, e->edge.w);
-                    continue;
+                if (frozen_supervoxels.count(v0) > 0) {
+                    s = v0;
+                    if (n_intersection(incident.neighbors(v1), frozen_supervoxels) > 1) {
+                        frozen_supervoxels.insert(v1);
+                        of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+                        of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+                        write_edge(of_res, e->edge.w);
+                        continue;
+                    }
                 }
 
-                sets.link(s0, s1);
-                auto s = sets.find_set(v0);
+                if (frozen_supervoxels.count(v1) > 0) {
+                    s = v1;
+                    if (n_intersection(incident.neighbors(v0), frozen_supervoxels) > 1) {
+                        frozen_supervoxels.insert(v0);
+                        of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+                        of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+                        write_edge(of_res, e->edge.w);
+                        continue;
+                    }
+                }
 
                 // std::cout << "Joined " << s0 << " and " << s1 << " to " << s
                 //           << " at " << e->edge.w << "\n";
-                if (s0 != s1) {
-                    of_mst.write(reinterpret_cast<const char *>(&(s0)), sizeof(seg_t));
-                    of_mst.write(reinterpret_cast<const char *>(&(s1)), sizeof(seg_t));
+                if (v0 != v1) {
+                    of_mst.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+                    of_mst.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
                     of_mst.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
                     write_edge(of_mst, e->edge.w);
-                    if (s0 == s) {
-                        of_remap.write(reinterpret_cast<const char *>(&(s1)), sizeof(seg_t));
+                    if (v0 == s) {
+                        of_remap.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
                         of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
-                    } else if (s1 == s) {
-                        of_remap.write(reinterpret_cast<const char *>(&(s0)), sizeof(seg_t));
+                    } else if (v1 == s) {
+                        of_remap.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
                         of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
                     } else {
                         std::cout << "Something is wrong in the MST" << std::endl;
-                        std::cout << "s: " << s << ", s0: " << s0 << ", s1: " << s1 << std::endl;
+                        std::cout << "s: " << s << ", v0: " << v0 << ", v1: " << v1 << std::endl;
                     }
                 }
-            }
-
-            if (incident[v0].size() > incident[v1].size())
-            {
-                std::swap(v0, v1);
+                if (s == v0)
+                {
+                    std::swap(v0, v1);
+                }
             }
 
             // v0 is dissapearing from the graph
@@ -250,10 +272,8 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
         heap.pop();
         auto v0 = e->edge.v0;
         auto v1 = e->edge.v1;
-        auto s0 = sets.find_set(v0);
-        auto s1 = sets.find_set(v1);
-        of_res.write(reinterpret_cast<const char *>(&(s0)), sizeof(seg_t));
-        of_res.write(reinterpret_cast<const char *>(&(s1)), sizeof(seg_t));
+        of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+        of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
         write_edge(of_res, e->edge.w);
     }
     of_res.close();
