@@ -387,7 +387,7 @@ int main(int argc, char *argv[])
     }
 
     seg_t sv;
-    while (frozen_file >> sv) {
+    while (frozen_file.read(reinterpret_cast<char *>(&sv), sizeof(sv))) {
         frozen_supervoxels.insert(sv);
     }
 
