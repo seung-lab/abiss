@@ -27,7 +27,6 @@
 #include <map>
 #include <vector>
 #include <unordered_set>
-#include <iomanip>
 
 using seg_t = uint64_t;
 using aff_t = float;
@@ -124,13 +123,11 @@ int n_intersection(const std::unordered_set<id> & set1, const std::unordered_set
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
           class Limits = std::numeric_limits<T>>
 inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg_t> & frozen_supervoxels,
-                                         T const& threshold, std::unordered_set<seg_t> const & supervoxels)
+                                         T const& threshold)
 {
     Compare comp;
     Plus    plus;
     heap_type<T, Compare> heap;
-
-    auto n = supervoxels.size();
 
     incident_matrix<seg_t, std::map<seg_t, heapable_edge<T, Compare>* > > incident;
 
@@ -367,7 +364,6 @@ int main(int argc, char *argv[])
 {
     std::vector<edge_t<mean_edge>> rg;
     std::unordered_set<seg_t> frozen_supervoxels;
-    std::unordered_set<seg_t> supervoxels;
     double th = atof(argv[1]);
     std::ifstream rg_file(argv[2]);
     if (!rg_file.is_open()) {
@@ -402,8 +398,6 @@ int main(int argc, char *argv[])
         e.w.repr = ae;
         //std::cout << e.v0 <<" " << e.v1 <<" " << e.w.sum <<" " << e.w.num<<" "  << u1<<" "  << u2<<" "  << sum_aff<<" "  << area << std::endl;
         rg.push_back(e);
-        supervoxels.insert(e.v0);
-        supervoxels.insert(e.v1);
     }
 
     seg_t sv;
@@ -414,7 +408,7 @@ int main(int argc, char *argv[])
     rg_file.close();
     frozen_file.close();
     agglomerate<mean_edge, mean_edge_greater, mean_edge_plus,
-                           mean_edge_limits>(rg, frozen_supervoxels, mean_edge(th, 1), supervoxels);
+                           mean_edge_limits>(rg, frozen_supervoxels, mean_edge(th, 1));
 
     //for (auto& e : res)
     //{
