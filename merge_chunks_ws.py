@@ -2,13 +2,6 @@ import sys
 import struct
 import chunk_utils as cu
 
-def generate_subface_keys(idx):
-    pos = idx % 3
-    offset = idx // 3
-    faces = [[i,j] for i in range(2) for j in range(2)]
-    list(map(lambda l: l.insert(pos, offset), faces))
-    return ["_".join([str(i) for i in l]) for l in faces]
-
 def merge_outer_face(p,idx,subFaces):
     prefixes = ["seg_i_{}".format(idx), "seg_o_{}".format(idx)]
     if idx < 3:
@@ -61,20 +54,6 @@ def merge_faces(p, faceMaps):
         cu.merge_files(output, inputs)
     return size
 
-def lift_intermediate_outputs(p, prefix):
-    d = p["children"]
-    mip_c = p["mip_level"]-1
-    inputs = [prefix+"_"+cu.chunk_tag(mip_c, d[k])+".data" for k in d]
-    output = prefix+"_"+cu.chunk_tag(p["mip_level"], p["indices"])+".data"
-    cu.merge_files(output, inputs)
-
-def merge_intermediate_outputs(p, prefix):
-    d = p["children"]
-    mip_c = p["mip_level"]-1
-    inputs = [prefix+"_"+cu.chunk_tag(mip_c, d[k])+".data" for k in d]
-    output = prefix+".data"
-    cu.merge_files(output, inputs)
-
 def write_param(p, face_size):
     prefix = "meta"
     d = p["children"]
@@ -102,9 +81,9 @@ def write_param(p, face_size):
 def merge_chunks(p):
     d = p["children"]
     if (len(d) == 1):
-        lift_intermediate_outputs(p, "dend")
-        lift_intermediate_outputs(p, "counts")
-        lift_intermediate_outputs(p, "meta")
+        cu.lift_intermediate_outputs(p, "dend")
+        cu.lift_intermediate_outputs(p, "counts")
+        cu.lift_intermediate_outputs(p, "meta")
 
         f = "meta_"+cu.chunk_tag(p["mip_level"], p["indices"])+".data"
         data = open(f, "rb").read()
@@ -115,10 +94,10 @@ def merge_chunks(p):
         f = "remap_"+cu.chunk_tag(p["mip_level"], p["indices"])+".data"
         open(f, 'a').close()
     else:
-        merge_intermediate_outputs(p, "dend")
-        merge_intermediate_outputs(p, "counts")
+        cu.merge_intermediate_outputs(p, "dend")
+        cu.merge_intermediate_outputs(p, "counts")
 
-    face_maps = {i : [d[k] for k in generate_subface_keys(i) if k in d] for i in range(6)}
+    face_maps = {i : [d[k] for k in cu.generate_subface_keys(i) if k in d] for i in range(6)}
     s = merge_faces(p,face_maps)
     write_param(p,s)
 

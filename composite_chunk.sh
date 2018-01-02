@@ -22,7 +22,7 @@ do
 done
 try python3 $SCRIPT_PATH/merge_chunks.py $1
 
-try cp residual_rg_"$output".data input_rg.data
+try mv residual_rg.data input_rg.data
 try $BIN_PATH/me process_edges.data
 try cat new_edges.data >> input_rg.data
 try cat new_edges.data >> complete_edges_"$output".data
