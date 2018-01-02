@@ -132,6 +132,9 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
     std::ofstream of_mst;
     of_mst.open("mst.data", std::ofstream::out | std::ofstream::trunc);
 
+    std::ofstream of_remap;
+    of_remap.open("remap.data", std::ofstream::out | std::ofstream::trunc);
+
     std::ofstream of_res;
     of_res.open("residual_rg.data", std::ofstream::out | std::ofstream::trunc);
 
@@ -175,6 +178,16 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
                     of_mst.write(reinterpret_cast<const char *>(&(s1)), sizeof(seg_t));
                     of_mst.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
                     write_edge(of_mst, e->edge.w);
+                    if (s0 == s) {
+                        of_remap.write(reinterpret_cast<const char *>(&(s1)), sizeof(seg_t));
+                        of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+                    } else if (s1 == s) {
+                        of_remap.write(reinterpret_cast<const char *>(&(s0)), sizeof(seg_t));
+                        of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+                    } else {
+                        std::cout << "Something is wrong in the MST" << std::endl;
+                        std::cout << "s: " << s << ", s0: " << s0 << ", s1: " << s1 << std::endl;
+                    }
                 }
             }
 
