@@ -131,6 +131,10 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
 
     incident_matrix<seg_t, std::map<seg_t, heapable_edge<T, Compare>* > > incident;
 
+    size_t rg_size = rg.size();
+    size_t mst_size = 0;
+    size_t residue_size = 0;
+
     std::vector<heapable_edge<T, Compare>> edges(rg.size());
     for (std::size_t i = 0; i < rg.size(); ++i)
     {
@@ -166,6 +170,7 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
                     of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
                     of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
                     write_edge(of_res, e->edge.w);
+                    residue_size++;
                     continue;
                 }
 
@@ -176,6 +181,7 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
                         of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
                         of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
                         write_edge(of_res, e->edge.w);
+                        residue_size++;
                         continue;
                     }
                 }
@@ -187,6 +193,7 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
                         of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
                         of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
                         write_edge(of_res, e->edge.w);
+                        residue_size++;
                         continue;
                     }
                 }
@@ -197,6 +204,7 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
                     of_mst.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
                     of_mst.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
                     of_mst.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+                    mst_size++;
                     write_edge(of_mst, e->edge.w);
                     if (v0 == s) {
                         of_remap.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
@@ -261,6 +269,8 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
 
     of_mst.close();
 
+    of_remap.close();
+
     //std::cout << "Total of " << next << " segments\n";
 
     while (heap.size())
@@ -271,9 +281,21 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
         auto v1 = e->edge.v1;
         of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
         of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+        residue_size++;
         write_edge(of_res, e->edge.w);
     }
     of_res.close();
+
+    std::ofstream of_meta;
+    of_meta.open("meta.data", std::ofstream::out | std::ofstream::trunc);
+    size_t dummy = 0;
+    of_meta.write(reinterpret_cast<const char *>(&(dummy)), sizeof(size_t));
+    of_meta.write(reinterpret_cast<const char *>(&(dummy)), sizeof(size_t));
+    of_meta.write(reinterpret_cast<const char *>(&(dummy)), sizeof(size_t));
+    of_meta.write(reinterpret_cast<const char *>(&(rg_size)), sizeof(size_t));
+    of_meta.write(reinterpret_cast<const char *>(&(residue_size)), sizeof(size_t));
+    of_meta.write(reinterpret_cast<const char *>(&(mst_size)), sizeof(size_t));
+    of_meta.close();
 
     return;
 }
