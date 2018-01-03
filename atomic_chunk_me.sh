@@ -15,12 +15,20 @@ do
 done
 
 try $BIN_PATH/agg $THRESHOLD input_rg.data frozen.data
-try mv residual_rg.data residual_rg_"$output".data
-try cat mst.data >> mst_"$output".data
 
-#try find $output -name '*.data' -print > /tmp/test_"${output}".manifest
-#try tar --use-compress-prog=pbzip2 -cf incomplete_edges_"${output}".tar.bz2 --files-from /tmp/test_"${output}".manifest
+try mv meta.data meta_"$output".data
+try mv residual_rg.data residual_rg_"$output".data
+try mv mst.data mst_"$output".data
+try mv remap.data remap_"$output".data
+
+try pbzip2 mst_"${output}".data
+try pbzip2 remap_"${output}".data
+try pbzip2 complete_edges_"${output}".data
+
+try gsutil cp meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
+try gsutil cp mst_"${output}".data.bz2 $FILE_PATH/mst/mst_"${output}".data.bz2
+try gsutil cp remap_"${output}".data.bz2 $FILE_PATH/remap/remap_"${output}".data.bz2
+try gsutil cp complete_edges_"${output}".data.bz2 $FILE_PATH/region_graph/complete_edges_"${output}".data.bz2
+
 try tar --use-compress-prog=pbzip2 -cvf "${output}".tar.bz2 *_"${output}".data
-#try gsutil cp incomplete_edges_"${output}".tar.bz2 $FILE_PATH/incomplete_edges/incomplete_edges_"${output}".tar.bz2
-try gsutil cp "${output}".tar.bz2 $FILE_PATH/region_graph/"${output}".tar.bz2
-try rm -rf $output
+try gsutil cp "${output}".tar.bz2 $FILE_PATH/scratch/"${output}".tar.bz2
