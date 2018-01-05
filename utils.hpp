@@ -109,6 +109,12 @@ inline std::tuple<volume_ptr<ID>, std::vector<std::size_t>>
 template <typename T>
 size_t write_vector(const std::string & fn, std::vector<T> & v)
 {
+    if (v.empty()) {
+        std::ofstream fs;
+        fs.open(fn);
+        fs.close();
+        return 0;
+    }
     bio::mapped_file_params f_param;
     bio::mapped_file_sink f;
     size_t bytes = sizeof(T)*v.size();
