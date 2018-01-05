@@ -50,6 +50,8 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     boost::disjoint_sets<boost::associative_property_map<rank_t>, boost::associative_property_map<parent_t> > sets(rank_pmap, parent_pmap);
     std::unordered_map<ID, F> descent(sizes.size());
 
+    sets.make_set(0);
+
     for (auto & kv : sizes) {
         sets.make_set(kv.first);
         descent[kv.first] = HIGH_THRESHOLD;
@@ -236,6 +238,8 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     boost::associative_property_map<parent_t> parent_mst_pmap(parent_mst_map);
 
     boost::disjoint_sets<boost::associative_property_map<rank_t>, boost::associative_property_map<parent_t> > mst(rank_mst_pmap, parent_mst_pmap);
+
+    mst.make_set(0);
 
     for (auto & kv : sizes) {
         mst.make_set(kv.first);
