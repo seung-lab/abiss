@@ -206,9 +206,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         size_t size = kv.second;
         const ID s = sets.find_set(v);
         if (sizes[s] >= SIZE_THRESHOLD) {
-            if (v != s) {
-                remaps[v] = s;
-            }
+            remaps[v] = s;
         } else {
             remaps[v] = 0;
         }
@@ -247,8 +245,10 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
 
     for ( auto& it: rg )
     {
-        ID s1 = sets.find_set(std::get<1>(it));
-        ID s2 = sets.find_set(std::get<2>(it));
+        ID s1 = remaps[std::get<1>(it)];
+        ID s2 = remaps[std::get<2>(it)];
+        //ID s1 = sets.find_set(std::get<1>(it));
+        //ID s2 = sets.find_set(std::get<2>(it));
         ID a1 = mst.find_set(s1);
         ID a2 = mst.find_set(s2);
 
