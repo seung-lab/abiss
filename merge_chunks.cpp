@@ -197,7 +197,6 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
 
     std::cout << "done" << std::endl;
     parent_t remaps(sizes.size());
-    std::vector<std::pair<ID, size_t> > counts;
 
     ID next_id = 0;
 
@@ -215,19 +214,19 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             if (s != v) {
                 std::cout << "s("<<s<<") != v("<<v<<")" << std::endl;
             }
-            counts.emplace_back(s,size&(~traits::on_border));
             ++next_id;
         }
     }
 
-    auto c = write_vector(str(boost::format("counts_%1%.data") % tag), counts);
-    std::cout << "number of supervoxels:" << remaps.size() << "," << next_id << std::endl;
-    counts.clear();
-    counts.shrink_to_fit();
+    free_container(rank_map);
+    free_container(parent_map);
+
+    std::unordered_map<ID, std::set<ID> > in_rg;
+
+    std::unordered_set<ID> relevant_supervoxels;
 
     region_graph<ID,F> new_rg;
 
-    std::unordered_map<ID, std::set<ID> > in_rg;
 
     rank_t rank_mst_map;
     parent_t parent_mst_map;
@@ -256,14 +255,29 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         {
             mst.link(a1, a2);
             auto mm = std::minmax(s1,s2);
-            if ( in_rg[mm.first].count(mm.second) == 0 )
+            if ( in_rg[mm.first].count(mm.second) == 0 && ((sizes[a1] & traits::on_border) || (sizes[a2] & traits::on_border)))
             {
                 new_rg.emplace_back(std::get<0>(it), mm.first, mm.second);
                 in_rg[mm.first].insert(mm.second);
+                relevant_supervoxels.insert(mm.first);
+                relevant_supervoxels.insert(mm.second);
             }
         }
     }
+
     auto d = write_vector(str(boost::format("dend_%1%.data") % tag), new_rg);
+    free_container(in_rg);
+    free_container(new_rg);
+    free_container(rank_mst_map);
+    free_container(parent_mst_map);
+
+    std::vector<std::pair<ID, size_t> > counts;
+    for (const auto & s : relevant_supervoxels) {
+        counts.emplace_back(s,sizes[s]&(~traits::on_border));
+    }
+
+    auto c = write_vector(str(boost::format("counts_%1%.data") % tag), counts);
+    std::cout << "number of supervoxels:" << remaps.size() << "," << next_id << std::endl;
     return std::make_tuple(remaps, c, d);
 }
 
