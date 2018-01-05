@@ -196,7 +196,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     }
 
     std::cout << "done" << std::endl;
-    std::unordered_map<ID, ID> remaps(sizes.size());
+    parent_t remaps(sizes.size());
     std::vector<std::pair<ID, size_t> > counts;
 
     ID next_id = 0;
