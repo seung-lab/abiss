@@ -12,6 +12,14 @@
 namespace bio = boost::iostreams;
 
 template < typename T >
+inline void free_container(T& p_container)
+{
+    T empty;
+    using std::swap;
+    swap(p_container, empty);
+}
+
+template < typename T >
 inline bool read_from_file( const std::string& fname, T* data, std::size_t n )
 {
     FILE* f = std::fopen(fname.c_str(), "rbXS");
