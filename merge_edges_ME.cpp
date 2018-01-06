@@ -3,7 +3,7 @@
 #include "ReweightedLocalMeanEdge.hpp"
 #include <cstdint>
 #include <fstream>
-#include <iomanip>
+#include <iostream>
 #include <boost/format.hpp>
 
 template <typename Ts, typename Te>
