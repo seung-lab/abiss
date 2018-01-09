@@ -27,6 +27,7 @@ top_mip = root["mip_level"]
 mip = param["mip_level"]
 indices = param["indices"]
 ancestors = []
+ancestors.append(cu.chunk_tag(mip, indices))
 while mip < top_mip:
     mip += 1
     indices = cu.parent(indices)
