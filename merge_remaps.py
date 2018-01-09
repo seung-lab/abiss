@@ -17,8 +17,10 @@ def merge_remaps(ancestor_tags, expected):
     fnList = ["remap_"+t+".data" for t in ancestor_tags]
     cu.merge_files("remap.data", fnList)
     filesize = os.path.getsize("remap.data")
-    if filesize != expected:
+    if filesize != expected*16:
         print("Something is wrong in remap, got {0} while expecting {1}".format(filesize, expected))
+
+    return filesize
 
 param = cu.read_inputs(sys.argv[1])
 root = cu.read_inputs(sys.argv[2])
@@ -39,10 +41,11 @@ if param["mip_level"] == 0:
     bbox = param["bbox"]
     sizes = [bbox[i+3]-bbox[i] for i in range(3)]
     remaps = read_meta(ancestors)
-    merge_remaps(ancestors, remaps*16)
+    actual_size = merge_remaps(ancestors, remaps)//16
+    print(actual_size)
     with open("param.txt","w") as f:
         f.write(" ".join([str(i) for i in sizes]))
         f.write("\n")
-        f.write(str(remaps))
+        f.write(str(actual_size))
 else:
     print("only atomic chunks need remapping")
