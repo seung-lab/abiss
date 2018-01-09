@@ -210,7 +210,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             remaps[v] = 0;
         }
 
-        if ( (size & (~traits::on_border)) && size > SIZE_THRESHOLD  ) {
+        if ( (size & (~traits::on_border)) && size >= SIZE_THRESHOLD  ) {
             if (s != v) {
                 std::cout << "s("<<s<<") != v("<<v<<")" << std::endl;
             }
