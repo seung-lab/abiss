@@ -7,6 +7,8 @@ just_in_case() { "$@" || true; }
 
 SCRIPT_PATH="/root/agg/scripts"
 BIN_PATH="/root/agg/build"
+UPLOAD_CMD="gsutil cp"
+DOWNLOAD_CMD="gsutil cp"
 THRESHOLD=0.2
 
 #try . /root/google-cloud-sdk/path.bash.inc

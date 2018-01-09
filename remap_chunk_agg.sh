@@ -7,8 +7,8 @@ echo $output
 try python3 $SCRIPT_PATH/generate_ancestors.py $1 $2|tee filelist.txt
 for fn in $(cat filelist.txt)
 do
-    try gsutil cp $FILE_PATH/meta/meta_"${fn}".data .
-    try gsutil cp $FILE_PATH/remap/remap_"${fn}".data.bz2 .
+    try $UPLOAD_CMD $FILE_PATH/meta/meta_"${fn}".data .
+    try $UPLOAD_CMD $FILE_PATH/remap/remap_"${fn}".data.bz2 .
     try pbzip2 -d remap_"${fn}".data.bz2
 done
 try python3 $SCRIPT_PATH/cut_chunk_remap.py $1
