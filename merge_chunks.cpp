@@ -200,6 +200,8 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
 
     ID next_id = 0;
 
+    std::unordered_set<ID> relevant_supervoxels;
+
     for ( auto & kv : sizes ) {
         const ID v = kv.first;
         size_t size = kv.second;
@@ -214,6 +216,10 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             if (s != v) {
                 std::cout << "s("<<s<<") != v("<<v<<")" << std::endl;
             }
+            if (size & traits::on_border) {
+                relevant_supervoxels.insert(s);
+            }
+
             ++next_id;
         }
     }
@@ -222,8 +228,6 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     free_container(parent_map);
 
     std::unordered_map<ID, std::set<ID> > in_rg;
-
-    std::unordered_set<ID> relevant_supervoxels;
 
     region_graph<ID,F> new_rg;
 
