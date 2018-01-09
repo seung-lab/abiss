@@ -15,4 +15,4 @@ try python3 $SCRIPT_PATH/cut_chunk_remap.py $1
 try python3 $SCRIPT_PATH/merge_remaps.py $1 $2
 try $BIN_PATH/ws3 param.txt seg.raw
 try mv seg.raw seg_"${output}".data
-try python3 $SCRIPT_PATH/upload_chunk.py $1
+try python3 $SCRIPT_PATH/upload_chunk.py $1 $SEG_PATH

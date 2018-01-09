@@ -15,4 +15,4 @@ try $DOWNLOAD_CMD $FILE_PATH/seg/seg_"${output}".data.bz2 seg_"${output}".data.b
 try pbzip2 -d seg_"${output}".data.bz2
 try python3 $SCRIPT_PATH/merge_remaps.py $1 $2
 try $BIN_PATH/ws3 param.txt seg_"${output}".data
-try python3 $SCRIPT_PATH/upload_chunk.py $1
+try python3 $SCRIPT_PATH/upload_chunk.py $1 $WS_PATH

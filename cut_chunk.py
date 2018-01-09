@@ -29,7 +29,7 @@ aff_cutout = cut_data(aff, start_coord, end_coord, boundary_flags)
 save_raw_data("aff.raw", aff_cutout, aff.dtype)
 del aff_cutout
 
-seg = load_data(os.environ['SEG_PATH'])
+seg = load_data(os.environ['WS_PATH'])
 seg_cutout = cut_data(seg, start_coord, end_coord, boundary_flags)
 save_raw_data("seg.raw", seg_cutout, seg.dtype)
 #save_data("aff.h5", aff_cutout)
