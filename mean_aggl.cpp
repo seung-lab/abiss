@@ -153,7 +153,7 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
     std::ofstream of_res;
     of_res.open("residual_rg.data", std::ofstream::out | std::ofstream::trunc);
 
-    while (heap.size() && comp(heap.top()->edge.w, threshold))
+    while (!heap.empty() && comp(heap.top()->edge.w, threshold))
     {
         auto e = heap.top();
         heap.pop();
@@ -272,8 +272,10 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
     of_remap.close();
 
     //std::cout << "Total of " << next << " segments\n";
+    std::ofstream of_frg;
+    of_frg.open("final_rg.data", std::ofstream::out | std::ofstream::trunc);
 
-    while (heap.size())
+    while (!heap.empty())
     {
         auto e = heap.top();
         heap.pop();
@@ -284,9 +286,16 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
             of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
             residue_size++;
             write_edge(of_res, e->edge.w);
+        } else {
+            of_frg.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+            of_frg.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+            write_edge(of_frg, e->edge.w);
+
         }
     }
+
     of_res.close();
+    of_frg.close();
 
     std::ofstream of_meta;
     of_meta.open("meta.data", std::ofstream::out | std::ofstream::trunc);
