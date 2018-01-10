@@ -20,7 +20,7 @@ do
     try tar --use-compress-prog=pbzip2 -xf "${fn}".tar.bz2
     try rm "${fn}".tar.bz2
 done
-try python3 $SCRIPT_PATH/merge_chunks.py $1
+try python3 $SCRIPT_PATH/merge_chunks_rlme.py $1
 
 try mv residual_rg.data input_rg.data
 try $BIN_PATH/me process_edges.data
