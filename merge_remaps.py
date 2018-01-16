@@ -23,9 +23,8 @@ def merge_remaps(ancestor_tags, expected):
     return filesize
 
 param = cu.read_inputs(sys.argv[1])
-root = cu.read_inputs(sys.argv[2])
 
-top_mip = root["mip_level"]
+top_mip = param["top_mip_level"]
 mip = param["mip_level"]
 indices = param["indices"]
 ancestors = []
