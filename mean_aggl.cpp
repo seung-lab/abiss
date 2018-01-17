@@ -166,6 +166,9 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
 
             {
                 auto s = v0;
+                if (incident[v0].size() < incident[v1].size()) {
+                    s = v1;
+                }
                 if (frozen_supervoxels.count(v0) > 0 && frozen_supervoxels.count(v1) > 0) {
                     of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
                     of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
