@@ -357,10 +357,12 @@ struct mean_edge_plus
     mean_edge operator()(mean_edge const& a, mean_edge const& b) const
     {
         atomic_edge_t * new_repr = NULL;
-        if (a.repr->area > b.repr->area)
+        if (a.repr->area > b.repr->area) {
             new_repr = a.repr;
-        else
+        }
+        else {
             new_repr = b.repr;
+        }
         return mean_edge(a.sum + b.sum, a.num + b.num, new_repr);
     }
 };
