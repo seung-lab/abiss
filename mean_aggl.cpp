@@ -135,6 +135,9 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
     size_t mst_size = 0;
     size_t residue_size = 0;
 
+    float print_th = 1.0 - 0.01;
+    size_t num_of_edges = 0;
+
     std::vector<heapable_edge<T, Compare>> edges(rg.size());
     for (std::size_t i = 0; i < rg.size(); ++i)
     {
@@ -155,11 +158,17 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
 
     while (!heap.empty() && comp(heap.top()->edge.w, threshold))
     {
+        num_of_edges += 1;
         auto e = heap.top();
         heap.pop();
 
         auto v0 = e->edge.v0;
         auto v1 = e->edge.v1;
+        if (e->edge.w.sum/e->edge.w.num < print_th) {
+            std::cout << "Processing threshold: " << print_th << std::endl;
+            std::cout << "Numer of edges: " << num_of_edges << "(" << rg_size << ")"<< std::endl;
+            print_th -= 0.01;
+        }
 
         if (v0 != v1)
         {
