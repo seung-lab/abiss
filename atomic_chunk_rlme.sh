@@ -22,21 +22,23 @@ try mv final_rg.data final_rg_"$output".data
 try mv mst.data mst_"$output".data
 try mv remap.data remap_"$output".data
 
-try pbzip2 mst_"${output}".data
-try pbzip2 remap_"${output}".data
-try pbzip2 complete_edges_"${output}".data
-try pbzip2 final_rg_"${output}".data
+try $COMPRESS_CMD mst_"${output}".data
+try $COMPRESS_CMD remap_"${output}".data
+try $COMPRESS_CMD complete_edges_"${output}".data
+try $COMPRESS_CMD final_rg_"${output}".data
 
 try $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
-try $UPLOAD_CMD mst_"${output}".data.bz2 $FILE_PATH/mst/mst_"${output}".data.bz2
-try $UPLOAD_CMD remap_"${output}".data.bz2 $FILE_PATH/remap/remap_"${output}".data.bz2
-try $UPLOAD_CMD complete_edges_"${output}".data.bz2 $FILE_PATH/region_graph/complete_edges_"${output}".data.bz2
-try $UPLOAD_CMD final_rg_"${output}".data.bz2 $FILE_PATH/region_graph/final_rg_"${output}".data.bz2
+try $UPLOAD_CMD mst_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/mst/mst_"${output}".data."${COMPRESSED_EXT}"
+try $UPLOAD_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/remap_"${output}".data."${COMPRESSED_EXT}"
+try $UPLOAD_CMD complete_edges_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/complete_edges_"${output}".data."${COMPRESSED_EXT}"
+try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/final_rg_"${output}".data."${COMPRESSED_EXT}"
 
 
 try find $output -name '*.data' -print > /tmp/test_"${output}".manifest
-try tar --use-compress-prog=pbzip2 -cf incomplete_edges_"${output}".tar.bz2 --files-from /tmp/test_"${output}".manifest
-try tar --use-compress-prog=pbzip2 -cvf "${output}".tar.bz2 *_"${output}".data
-try $UPLOAD_CMD incomplete_edges_"${output}".tar.bz2 $FILE_PATH/incomplete_edges/incomplete_edges_"${output}".tar.bz2
-try $UPLOAD_CMD "${output}".tar.bz2 $FILE_PATH/region_graph/"${output}".tar.bz2
+try tar -cf incomplete_edges_"${output}".tar --files-from /tmp/test_"${output}".manifest
+try $COMPRESS_CMD incomplete_edges_"${output}".tar
+try tar -cvf "${output}".tar *_"${output}".data
+try $COMPRESS_CMD "${output}".tar
+try $UPLOAD_CMD incomplete_edges_"${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/incomplete_edges/incomplete_edges_"${output}".tar."${COMPRESSED_EXT}"
+try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/region_graph/"${output}".tar."${COMPRESSED_EXT}"
 try rm -rf $output

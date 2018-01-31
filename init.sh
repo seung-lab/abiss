@@ -9,13 +9,16 @@ SCRIPT_PATH="/root/agg/scripts"
 BIN_PATH="/root/agg/build"
 UPLOAD_CMD="gsutil cp"
 DOWNLOAD_CMD="gsutil cp"
+COMPRESS_CMD="zstd -9 --rm -T8"
+COMPRESSED_EXT="zst"
 THRESHOLD=0.2
 
 #try . /root/google-cloud-sdk/path.bash.inc
 just_in_case rm -rf meta
 just_in_case rm -rf remap
 just_in_case rm -rf *.data
-just_in_case rm -rf *.bz2
+just_in_case rm -rf *.tar
+just_in_case rm -rf *.zst
 just_in_case rm -rf *.raw
 just_in_case rm -rf *.tmp
 just_in_case rm -rf param.txt
