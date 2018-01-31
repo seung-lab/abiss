@@ -1,7 +1,7 @@
 #include "Types.h"
 #include "Utils.hpp"
 #include "SizeExtractor.hpp"
-#include "AffinityExtractor.hpp"
+#include "AffinityExtractorME.hpp"
 #include "MeanEdge.hpp"
 #include "ReweightedLocalMeanEdge.hpp"
 #include <cstdint>
@@ -15,7 +15,7 @@
 namespace bio = boost::iostreams;
 
 template<typename Ta, typename Ts>
-std::unordered_set<Ts> processMetaData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinityExtractor, const char * tag)
+std::unordered_set<Ts> processMetaData(const AffinityExtractorME<Ts, Ta, ConstChunkRef<Ta,4> > & affinityExtractor, const char * tag)
 {
     std::unordered_set<Ts> incomplete_segments;
     for (int i= 0; i != 6; i++) {
@@ -31,7 +31,7 @@ std::unordered_set<Ts> processMetaData(const AffinityExtractor<Ts, Ta, ConstChun
 }
 
 template<typename Ta, typename Ts>
-void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinityExtractor, const char * path)
+void processData(const AffinityExtractorME<Ts, Ta, ConstChunkRef<Ta,4> > & affinityExtractor, const char * path)
 {
     using namespace std::placeholders;
 
@@ -50,10 +50,10 @@ void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinit
         const auto k = kv.first;
         if (incomplete_segments.count(k.first) > 0 && incomplete_segments.count(k.second) > 0) {
             incomplete_segpairs.push_back(k);
-            me_incomplete.push_back(meanAffinity<Ta, size_t>(edges.at(k)));
+            me_incomplete.push_back(kv.second);
         } else {
             complete_segpairs.push_back(k);
-            me_complete.push_back(meanAffinity<Ta, size_t>(edges.at(k)));
+            me_complete.push_back(kv.second);
         }
     }
 
@@ -105,7 +105,7 @@ int main(int argc, char * argv[])
     ConstChunkRef<aff_t,4> aff_chunk (reinterpret_cast<const aff_t*>(aff_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])][3], boost::fortran_storage_order());
     std::cout << "mmap aff data" << std::endl;
 
-    AffinityExtractor<seg_t, aff_t, ConstChunkRef<aff_t, 4> > affinity_extractor(aff_chunk);
+    AffinityExtractorME<seg_t, aff_t, ConstChunkRef<aff_t, 4> > affinity_extractor(aff_chunk);
     traverseSegments(seg_chunk, true, affinity_extractor);
     processData(affinity_extractor, output_path);
     std::cout << "finished" << std::endl;
