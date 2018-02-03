@@ -25,6 +25,9 @@ std::unordered_map<T,T> generate_remap(std::string filename, size_t data_size)
     auto remap = remap_data.data();
     std::unordered_set<T> nodes(data_size);
     for (size_t i = 0; i != data_size; i++) {
+        if ((i+1) % 100000000 == 0) {
+            std::cout << i << " remaps processed" << std::endl;
+        }
         T s1 = remap[i].first;
         T s2 = remap[i].second;
         if (nodes.count(s1) == 0) {

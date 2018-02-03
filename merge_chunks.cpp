@@ -9,6 +9,8 @@
 #include <unordered_set>
 #include <boost/functional/hash.hpp>
 #include <boost/pending/disjoint_sets.hpp>
+#include <ctime>
+#include <boost/format.hpp>
 
 template<typename T>
 std::unordered_map<T, size_t> load_sizes(size_t data_size)
@@ -72,6 +74,8 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     auto bo = bo_data.data();
     auto conn = conn_data.data();
 
+    clock_t begin = clock();
+
     for (size_t idx = 0; idx != face_size; idx++) {
         if ( fi[idx] && bi[idx] ) {
             bool needs_an_edge = false;
@@ -128,15 +132,27 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             }
         }
     }
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+    std::cout << "merge faces in " << elapsed_secs << " seconds" << std::endl;
+
     std::cout << edges.size() << " edges and " << same.size() << " mergers" << std::endl;
+    begin = clock();
     for (auto & kv : edges) {
         auto & p = kv.first;
         rg.emplace_back(kv.second, p.first, p.second);
     }
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "populate region graph in " << elapsed_secs << " seconds" << std::endl;
 
-    std::cout << "sort" << std::endl;
+    begin = clock();
     std::stable_sort(std::begin(rg), std::end(rg), [](auto & a, auto & b) { return std::get<0>(a) > std::get<0>(b); });
-    std::cout << "plateau" << std::endl;
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "sort region graph in " << elapsed_secs << " seconds" << std::endl;
+    begin = clock();
     for (auto & p : same) {
         const ID v1 = sets.find_set( p.first );
         const ID v2 = sets.find_set( p.second );
@@ -150,8 +166,11 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             descent[vr] = HIGH_THRESHOLD;
         }
     }
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "merge plateau in " << elapsed_secs << " seconds" << std::endl;
 
-    std::cout << "descent" << std::endl;
+    begin = clock();
     for (auto & t : rg) {
         const F val = std::get<0>(t);
         const ID v1 = sets.find_set( std::get<1>(t) );
@@ -179,8 +198,12 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             }
         }
     }
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "merge descent in " << elapsed_secs << " seconds" << std::endl;
 
     std::cout << "merge" << std::endl;
+    begin = clock();
     for (auto & t : rg) {
         const F val = std::get<0>(t);
         const ID v1 = sets.find_set( std::get<1>(t) );
@@ -194,13 +217,17 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             try_merge(sizes, sets, v1, v2, SIZE_THRESHOLD);
         }
     }
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "merge region graph in " << elapsed_secs << " seconds" << std::endl;
 
-    std::cout << "done" << std::endl;
     parent_t remaps(sizes.size());
 
     ID next_id = 0;
 
     std::unordered_set<ID> relevant_supervoxels;
+
+    begin = clock();
 
     for ( auto & kv : sizes ) {
         const ID v = kv.first;
@@ -227,6 +254,10 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     free_container(rank_map);
     free_container(parent_map);
 
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "generate remap in " << elapsed_secs << " seconds" << std::endl;
+
     std::unordered_map<ID, std::set<ID> > in_rg;
 
     region_graph<ID,F> new_rg;
@@ -239,6 +270,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     boost::associative_property_map<parent_t> parent_mst_pmap(parent_mst_map);
 
     boost::disjoint_sets<boost::associative_property_map<rank_t>, boost::associative_property_map<parent_t> > mst(rank_mst_pmap, parent_mst_pmap);
+    begin = clock();
 
     mst.make_set(0);
 
@@ -275,12 +307,21 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     free_container(rank_mst_map);
     free_container(parent_mst_map);
 
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "generate MST in " << elapsed_secs << " seconds" << std::endl;
+
+    begin = clock();
     std::vector<std::pair<ID, size_t> > counts;
     for (const auto & s : relevant_supervoxels) {
         counts.emplace_back(s,sizes[s]&(~traits::on_border));
     }
 
     auto c = write_vector(str(boost::format("counts_%1%.data") % tag), counts);
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "write supervoxel sizes in " << elapsed_secs << " seconds" << std::endl;
+
     std::cout << "number of supervoxels:" << remaps.size() << "," << next_id << std::endl;
     return std::make_tuple(remaps, c, d);
 }
@@ -363,8 +404,16 @@ int main(int argc, char* argv[])
 
     std::cout << "supervoxel id offset:" << face_size << " " << counts << " " << dend_size << std::endl;
     auto sizes = load_sizes<seg_t>(counts);
+    clock_t begin = clock();
     mark_border_supervoxels(sizes, flags, std::array<size_t, 6>({ydim*zdim, xdim*zdim, xdim*ydim, ydim*zdim, xdim*zdim, xdim*ydim}), tag);
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "mark boundary supervoxels in " << elapsed_secs << " seconds" << std::endl;
+    begin = clock();
     auto dend = load_dend<seg_t, aff_t>(dend_size);
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "load dend in " << elapsed_secs << " seconds" << std::endl;
 
     std::unordered_map<seg_t, seg_t> remaps;
     size_t c = 0;
