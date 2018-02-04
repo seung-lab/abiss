@@ -9,10 +9,10 @@
 #include <iostream>
 
 template<typename C, typename S, typename T>
-inline void try_merge(C & counts, S & sets, T s1, T s2, size_t size_threshold)
+inline bool try_merge(C & counts, S & sets, T s1, T s2, size_t size_threshold)
 {
     if ( (counts[s1] >= size_threshold) && (counts[s2] >= size_threshold) ) {
-        return;
+        return false;
     }
     using traits = watershed_traits<T>;
     auto real_size_s1 = counts[s1]&(~traits::on_border);
@@ -27,10 +27,12 @@ inline void try_merge(C & counts, S & sets, T s1, T s2, size_t size_threshold)
         sets.link(s1, s2);
         T s = sets.find_set(s1);
         std::swap(counts[s], counts[s1]);
+        return true;
     }
     else {
         counts[s1] |= counts[s2]&traits::on_border;
         counts[s2] |= counts[s1]&traits::on_border;
+        return false;
     }
 }
 
