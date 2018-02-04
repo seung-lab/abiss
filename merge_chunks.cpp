@@ -171,6 +171,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     std::cout << "merge plateau in " << elapsed_secs << " seconds" << std::endl;
 
     begin = clock();
+    size_t n_merger = 0;
     for (auto & t : rg) {
         const F val = std::get<0>(t);
         const ID v1 = sets.find_set( std::get<1>(t) );
@@ -192,6 +193,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             sizes[v2]  = 0;
             std::swap( sizes[vr], sizes[v1] );
             descent[vr] = std::max( descent[v1], descent[v2] );
+            n_merger += 1;
             if ( descent[vr] != val )
             {
                 descent[vr] = HIGH_THRESHOLD;
@@ -201,9 +203,11 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "merge descent in " << elapsed_secs << " seconds" << std::endl;
+    std::cout << n_merger << " mergers" << std::endl;
 
     std::cout << "merge" << std::endl;
     begin = clock();
+    n_merger = 0;
     for (auto & t : rg) {
         const F val = std::get<0>(t);
         const ID v1 = sets.find_set( std::get<1>(t) );
@@ -214,12 +218,14 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         }
 
         if ( v1 != v2 && v1 && v2 ) {
-            try_merge(sizes, sets, v1, v2, SIZE_THRESHOLD);
+            if (try_merge(sizes, sets, v1, v2, SIZE_THRESHOLD))
+                n_merger += 1;
         }
     }
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "merge region graph in " << elapsed_secs << " seconds" << std::endl;
+    std::cout << n_merger << " mergers" << std::endl;
 
     parent_t remaps(sizes.size());
 
