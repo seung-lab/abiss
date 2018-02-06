@@ -13,6 +13,20 @@
 #include <boost/format.hpp>
 
 template<typename T>
+std::vector<std::pair<T, T> > load_remaps(size_t data_size)
+{
+    std::vector<std::pair<T, T> > remap_vector;
+    if (data_size > 0) {
+        MMArray<std::pair<T, T>, 1> remap_data("ongoing.data", std::array<size_t, 1>({data_size}));
+        auto data = remap_data.data();
+        std::copy(std::begin(data), std::end(data), std::back_inserter(remap_vector));
+
+        std::stable_sort(std::begin(remap_vector), std::end(remap_vector), [](auto & a, auto & b) { return std::get<0>(a) < std::get<0>(b); });
+    }
+    return remap_vector;
+}
+
+template<typename T>
 std::unordered_map<T, size_t> load_sizes(size_t data_size)
 {
     MMArray<std::pair<T, size_t>, 1> count_data("counts.data",std::array<size_t, 1>({data_size}));
@@ -388,7 +402,7 @@ int main(int argc, char* argv[])
 {
     size_t xdim,ydim,zdim;
     int flag;
-    size_t face_size, counts, dend_size;
+    size_t face_size, counts, dend_size, remap_size, ac_offset;
     std::ifstream param_file(argv[1]);
     const char * tag = argv[2];
     param_file >> xdim >> ydim >> zdim;
@@ -401,7 +415,7 @@ int main(int argc, char* argv[])
             std::cout << "real boundary: " << i << std::endl;
         }
     }
-    param_file >> face_size >> counts >> dend_size;
+    param_file >> face_size >> counts >> dend_size >> remap_size >> ac_offset;
 
     if (face_size == 0) {
         std::cout << "Nothing to merge, exit!" << std::endl;
