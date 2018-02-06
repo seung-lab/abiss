@@ -11,12 +11,12 @@
 template<typename C, typename S, typename T>
 inline bool try_merge(C & counts, S & sets, T s1, T s2, size_t size_threshold)
 {
-    if ( (counts[s1] >= size_threshold) && (counts[s2] >= size_threshold) ) {
-        return false;
-    }
     using traits = watershed_traits<T>;
     auto real_size_s1 = counts[s1]&(~traits::on_border);
     auto real_size_s2 = counts[s2]&(~traits::on_border);
+    if ( (real_size_s1 >= size_threshold) && (real_size_s2 >= size_threshold) ) {
+        return false;
+    }
     if (((traits::on_border&(counts[s1]|counts[s2]))==0)
           || (real_size_s1 >= size_threshold && counts[s2] < size_threshold)
           || (real_size_s2 >= size_threshold && counts[s1] < size_threshold)) {
