@@ -315,12 +315,10 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         {
             mst.link(a1, a2);
             auto mm = std::minmax(s1,s2);
-            if ( in_rg[mm.first].count(mm.second) == 0 && ((sizes[a1] & traits::on_border) || (sizes[a2] & traits::on_border)))
+            if ( in_rg[mm.first].count(mm.second) == 0 && ((sizes[s1] & traits::on_border) && (sizes[s2] & traits::on_border)))
             {
                 new_rg.emplace_back(std::get<0>(it), mm.first, mm.second);
                 in_rg[mm.first].insert(mm.second);
-                relevant_supervoxels.insert(mm.first);
-                relevant_supervoxels.insert(mm.second);
             }
         }
     }
