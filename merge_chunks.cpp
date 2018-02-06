@@ -52,7 +52,7 @@ region_graph<ID,F> load_dend(size_t data_size)
 
 template<typename ID, typename F>
 std::tuple<std::unordered_map<ID, ID>, size_t, size_t>
-process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, region_graph<ID, F> & rg, const std::string & tag)
+process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, region_graph<ID, F> & rg, const std::string & tag, size_t remap_size, size_t ac_offset)
 {
     using traits = watershed_traits<ID>;
     using rank_t = std::unordered_map<ID,std::size_t>;
@@ -67,11 +67,15 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     std::unordered_map<ID, F> descent(sizes.size());
 
     sets.make_set(0);
+    std::vector<ID> segids(sizes.size());
 
     for (auto & kv : sizes) {
         sets.make_set(kv.first);
         descent[kv.first] = HIGH_THRESHOLD;
+        segids.push_back(kv.first);
     }
+
+    std::stable_sort(std::begin(segids), std::end(segids));
 
     std::unordered_set<id_pair<ID>, boost::hash<id_pair<ID> > > same;
     std::unordered_map<id_pair<ID>, F, boost::hash<id_pair<ID> > > edges;
@@ -342,6 +346,68 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "write supervoxel sizes in " << elapsed_secs << " seconds" << std::endl;
 
+    size_t current_ac = std::numeric_limits<std::size_t>::max();
+    std::ofstream of_done;
+    std::ofstream of_ongoing;
+    of_ongoing.open(str(boost::format("ongoing_%1%.data") % tag));
+
+    auto remap_vector = load_remaps<ID>(remap_size);
+
+    begin = clock();
+
+    for (auto & kv : remap_vector) {
+        auto & s = kv.first;
+        if (current_ac != (s - (s % ac_offset))) {
+            current_ac = s - (s % ac_offset);
+            if (of_done.is_open()) {
+                of_done.close();
+            }
+            of_done.open(str(boost::format("done_%1%_%2%.data") % tag % current_ac));
+        }
+        const auto seg = remaps[kv.second];
+        const auto size = sizes[seg];
+        if (relevant_supervoxels.count(seg) > 0) {
+            of_ongoing.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
+            of_ongoing.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
+        } else {
+            of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
+            of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
+        }
+    }
+
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "update remaps in " << elapsed_secs << " seconds" << std::endl;
+
+    current_ac = std::numeric_limits<std::size_t>::max();
+
+    begin = clock();
+    for (auto & s : segids) {
+        if (current_ac != (s - (s % ac_offset))) {
+            current_ac = s - (s % ac_offset);
+            if (of_done.is_open()) {
+                of_done.close();
+            }
+            of_done.open(str(boost::format("done_%1%_%2%.data") % tag % current_ac), std::ios_base::app);
+        }
+        const auto seg = remaps[s];
+        const auto size = sizes[seg];
+        if (relevant_supervoxels.count(seg) > 0) {
+            of_ongoing.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
+            of_ongoing.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
+        } else {
+            of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
+            of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
+        }
+    }
+
+    of_done.close();
+    of_ongoing.close();
+
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "generate new remap in " << elapsed_secs << " seconds" << std::endl;
+
     std::cout << "number of supervoxels:" << remaps.size() << "," << next_id << std::endl;
     return std::make_tuple(remaps, c, d);
 }
@@ -439,7 +505,7 @@ int main(int argc, char* argv[])
     size_t c = 0;
     size_t d = 0;
 
-    std::tie(remaps, c, d) = process_chunk_borders<seg_t, aff_t>(face_size, sizes, dend, tag);
+    std::tie(remaps, c, d) = process_chunk_borders<seg_t, aff_t>(face_size, sizes, dend, tag, remap_size, ac_offset);
     update_border_supervoxels(remaps, flags, std::array<size_t, 6>({ydim*zdim, xdim*zdim, xdim*ydim, ydim*zdim, xdim*zdim, xdim*ydim}), tag);
     auto m = write_remap(remaps, tag);
     std::vector<size_t> meta({xdim,ydim,zdim,c,d,m});
