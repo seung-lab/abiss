@@ -236,8 +236,9 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         }
 
         if ( v1 != v2 && v1 && v2 ) {
-            if (try_merge(sizes, sets, v1, v2, SIZE_THRESHOLD))
+            if (try_merge(sizes, sets, v1, v2, SIZE_THRESHOLD)) {
                 n_merger += 1;
+            }
         }
     }
     end = clock();
