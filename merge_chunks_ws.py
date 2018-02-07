@@ -1,6 +1,7 @@
 import sys
 import struct
 import chunk_utils as cu
+import os
 
 def merge_outer_face(p,idx,subFaces):
     prefixes = ["seg_i_{}".format(idx), "seg_o_{}".format(idx)]
@@ -64,19 +65,23 @@ def write_param(p, face_size):
     bbox = p["bbox"]
     flags = p["boundary_flags"]
     sizes = [bbox[i+3]-bbox[i] for i in range(3)]
+    remaps = 0
+    ac_offset = p["ac_offset"]
     if len(inputs) > 1:
+        remaps = os.stat("ongoing.data").st_size//16
         for f in inputs:
             data = open(f, "rb").read()
             meta_data = struct.unpack("llllll", data)
             counts += meta_data[3]
             dend += meta_data[4]
 
+
     with open("param.txt","w") as f:
         f.write(" ".join([str(i) for i in sizes]))
         f.write("\n")
         f.write(" ".join([str(i) for i in flags]))
         f.write("\n")
-        f.write("{} {} {}".format(face_size, counts, dend))
+        f.write("{} {} {} {} {}".format(face_size, counts, dend, remaps, ac_offset))
 
 def merge_chunks(p):
     d = p["children"]
@@ -84,6 +89,7 @@ def merge_chunks(p):
         cu.lift_intermediate_outputs(p, "dend")
         cu.lift_intermediate_outputs(p, "counts")
         cu.lift_intermediate_outputs(p, "meta")
+        cu.lift_intermediate_outputs(p, "ongoing")
 
         f = "meta_"+cu.chunk_tag(p["mip_level"], p["indices"])+".data"
         data = open(f, "rb").read()
@@ -93,9 +99,11 @@ def merge_chunks(p):
 
         f = "remap_"+cu.chunk_tag(p["mip_level"], p["indices"])+".data"
         open(f, 'a').close()
+
     else:
         cu.merge_intermediate_outputs(p, "dend")
         cu.merge_intermediate_outputs(p, "counts")
+        cu.merge_intermediate_outputs(p, "ongoing")
 
     face_maps = {i : [d[k] for k in cu.generate_subface_keys(i) if k in d] for i in range(6)}
     s = merge_faces(p,face_maps)
