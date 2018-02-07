@@ -14,9 +14,10 @@ def process_atomic_chunks(c, top_mip, idx):
     with open(fn, 'w') as fp:
         json.dump(output, fp, indent=2)
 
-def process_composite_chunks(c):
+def process_composite_chunks(c, top_mip):
     d = c.possible_children()
     output = {
+        "top_mip_level" : top_mip,
         "mip_level": c.mip_level(),
         "indices": c.coordinate(),
         "bbox": c.data_bbox(),
@@ -42,5 +43,5 @@ for c in v:
         process_atomic_chunks(c, top_mip, index)
         index+=offset
     else:
-        process_composite_chunks(c)
+        process_composite_chunks(c, top_mip)
     c.print_chunk_info()

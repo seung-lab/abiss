@@ -48,3 +48,34 @@ def merge_intermediate_outputs(p, prefix):
     output = prefix+".data"
     merge_files(output, inputs)
 
+def generate_ancestors(f):
+    p = read_inputs(f)
+    top_mip = p["top_mip_level"]
+    mip = p["mip_level"]
+    indices = p["indices"]
+    ancestor = []
+    while mip < top_mip:
+        mip += 1
+        indices = parent(indices)
+        ancestor.append(chunk_tag(mip, indices))
+    return ancestor
+
+def generate_descedants(f):
+    path = os.path.dirname(f)
+    p = read_inputs(f)
+    mip = p["mip_level"]
+    if mip == 0:
+        return []
+    else:
+        mip_c = mip - 1
+        d = p["children"]
+        descedants = []
+        for k in d:
+            tag = chunk_tag(mip_c, d[k])
+            descedants.append(tag)
+            f_c = tag+".json"
+            if path:
+                f_c = path+"/"+f_c
+            descedants += generate_descedants(f_c)
+        return descedants
+
