@@ -1,8 +1,9 @@
-from cloudvolume import CloudVolume
+from cloudvolume import CloudVolumeGSUtil
 import numpy
+import os
 
 def load_data(url):
-    return CloudVolume(url, fill_missing=True)
+    return CloudVolumeGSUtil(url, fill_missing=True, cache=os.environ['AIRFLOW_TMP_DIR']+"/cloudvolume/0")
 
 def save_raw_data(fn,data, data_type):
     f = numpy.memmap(fn, dtype=data_type, mode='w+', order='F', shape=data.shape)
