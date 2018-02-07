@@ -7,8 +7,8 @@ echo $output
 try python3 $SCRIPT_PATH/generate_ancestors.py $1 $2|tee filelist.txt
 for fn in $(cat filelist.txt)
 do
-    try $UPLOAD_CMD $FILE_PATH/meta/meta_"${fn}".data .
-    try $UPLOAD_CMD $FILE_PATH/remap/remap_"${fn}".data."${COMPRESSED_EXT}" .
+    try $DOWNLOAD_CMD $FILE_PATH/meta/meta_"${fn}".data .
+    try $DOWNLOAD_CMD $FILE_PATH/remap/remap_"${fn}".data."${COMPRESSED_EXT}" .
     try $COMPRESS_CMD -d remap_"${fn}".data."${COMPRESSED_EXT}"
 done
 try python3 $SCRIPT_PATH/cut_chunk_remap.py $1 $WS_PATH
