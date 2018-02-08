@@ -14,13 +14,9 @@ for fn in $(cat filelist.txt)
 do
     just_in_case rm -rf $fn
     try $DOWNLOAD_CMD $FILE_PATH/incomplete_edges/incomplete_edges_"${fn}".tar."${COMPRESSED_EXT}" .
-    try $COMPRESS_CMD -d incomplete_edges_"${fn}".tar."${COMPRESSED_EXT}"
-    try tar -xf incomplete_edges_"${fn}".tar
-    try rm incomplete_edges_"${fn}".tar
+    try $COMPRESS_CMD -d -c incomplete_edges_"${fn}".tar."${COMPRESSED_EXT}" |tar xf -
     try $DOWNLOAD_CMD $FILE_PATH/region_graph/"${fn}".tar."${COMPRESSED_EXT}" .
-    try $COMPRESS_CMD -d "${fn}".tar."${COMPRESSED_EXT}"
-    try tar -xf "${fn}".tar
-    try rm "${fn}".tar
+    try $COMPRESS_CMD -d -c "${fn}".tar."${COMPRESSED_EXT}"|tar xf -
 done
 try python3 $SCRIPT_PATH/merge_chunks_rlme.py $1
 
@@ -54,10 +50,8 @@ try $UPLOAD_CMD complete_edges_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/r
 try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/final_rg_"${output}".data."${COMPRESSED_EXT}"
 
 try find $output -name '*.data' -print > /tmp/test_"${output}".manifest
-try tar -cf incomplete_edges_"${output}".tar --files-from /tmp/test_"${output}".manifest
-try $COMPRESS_CMD incomplete_edges_"${output}".tar
-try tar -cf "${output}".tar *_"${output}".data
-try $COMPRESS_CMD "${output}".tar
+try tar -cf - --files-from /tmp/test_"${output}".manifest > incomplete_edges_"${output}".tar."${COMPRESSED_EXT}"
+try tar -cvf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD incomplete_edges_"${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/incomplete_edges/incomplete_edges_"${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/region_graph/"${output}".tar."${COMPRESSED_EXT}"
 try rm -rf $output

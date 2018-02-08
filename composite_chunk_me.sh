@@ -12,9 +12,7 @@ for fn in $(cat filelist.txt)
 do
     just_in_case rm -rf $fn
     try $DOWNLOAD_CMD $FILE_PATH/scratch/"${fn}".tar."${COMPRESSED_EXT}" .
-    try $COMPRESS_CMD -d "${fn}".tar."${COMPRESSED_EXT}"
-    try tar -xf "${fn}".tar
-    try rm "${fn}".tar
+    try $COMPRESS_CMD -d -c "${fn}".tar."${COMPRESSED_EXT}"|tar xf -
 done
 try python3 $SCRIPT_PATH/merge_chunks_me.py $1
 
@@ -47,8 +45,7 @@ try $UPLOAD_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/rema
 try $UPLOAD_CMD complete_edges_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/complete_edges_"${output}".data."${COMPRESSED_EXT}"
 try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/final_rg_"${output}".data."${COMPRESSED_EXT}"
 
-try tar -cf "${output}".tar *_"${output}".data
-try $COMPRESS_CMD "${output}".tar
+try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch/"${output}".tar."${COMPRESSED_EXT}"
 for fn in $(cat filelist.txt)
 do

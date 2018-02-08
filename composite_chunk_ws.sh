@@ -22,6 +22,5 @@ try $COMPRESS_CMD ongoing_"${output}".data
 try $UPLOAD_CMD ongoing_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/
 try $UPLOAD_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/remap_"${output}".data."${COMPRESSED_EXT}"
 try $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
-try tar -cf "${output}".tar *_"${output}".data
-try $COMPRESS_CMD "${output}".tar
+try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/dend/"${output}".tar."${COMPRESSED_EXT}"
