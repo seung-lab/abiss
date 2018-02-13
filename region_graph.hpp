@@ -8,7 +8,7 @@
 #include <boost/functional/hash.hpp>
 
 template< typename ID, typename F, typename L>
-inline region_graph_ptr<ID,F>
+inline region_graph<ID,F>
 get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
                   const volume_ptr<ID> seg_ptr,
                   std::size_t max_segid, const L& lowv, const std::array<bool,6> & boundary_flags)
@@ -24,9 +24,7 @@ get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
     volume<ID>& seg = *seg_ptr;
     affinity_graph<F> aff = *aff_ptr;
 
-    region_graph_ptr<ID,F> rg_ptr( new region_graph<ID,F> );
-
-    region_graph<ID,F>& rg = *rg_ptr;
+    region_graph<ID,F> rg;
 
     std::vector<id_pair> pairs;
 
@@ -80,5 +78,5 @@ get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
     std::stable_sort(std::begin(rg), std::end(rg), [](auto & a, auto & b) { return std::get<0>(a) > std::get<0>(b); });
 
     std::cout << "Sorted" << std::endl;
-    return rg_ptr;
+    return rg;
 }

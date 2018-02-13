@@ -38,7 +38,7 @@ inline bool try_merge(C & counts, S & sets, T s1, T s2, size_t size_threshold)
 
 template< typename ID, typename F, typename L, typename M >
 inline void merge_segments( const volume_ptr<ID>& seg_ptr,
-                            const region_graph_ptr<ID,F> rg_ptr,
+                            region_graph<ID,F>& rg,
                             std::vector<std::size_t>& counts,
                             const L& tholds,
                             const M& lowt,
@@ -52,9 +52,7 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
         sets.make_set(i);
     }
 
-    typename region_graph<ID,F>::iterator rit = rg_ptr->begin();
-
-    region_graph<ID,F>& rg  = *rg_ptr;
+    typename region_graph<ID,F>::iterator rit = rg.begin();
 
     std::size_t size = static_cast<std::size_t>(tholds.first);
     //F           thld = static_cast<F>(it.second);
