@@ -504,10 +504,10 @@ int main(int argc, char* argv[])
 
     std::tie(remaps, c, d) = process_chunk_borders<seg_t, aff_t>(face_size, sizes, dend, tag, remap_size, ac_offset);
     update_border_supervoxels(remaps, flags, std::array<size_t, 6>({ydim*zdim, xdim*zdim, xdim*ydim, ydim*zdim, xdim*zdim, xdim*ydim}), tag);
-    auto m = write_remap(remaps, tag);
-    std::vector<size_t> meta({xdim,ydim,zdim,c,d,m});
+    //auto m = write_remap(remaps, tag);
+    std::vector<size_t> meta({xdim,ydim,zdim,c,d,0});
     write_vector(str(boost::format("meta_%1%.data") % tag), meta);
     std::cout << "num of sv:" << c << std::endl;
     std::cout << "size of rg:" << d << std::endl;
-    std::cout << "num of remaps:" << m << std::endl;
+    //std::cout << "num of remaps:" << m << std::endl;
 }
