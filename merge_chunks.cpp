@@ -374,6 +374,8 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         }
     }
 
+    free_container(remap_vector);
+
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "update remaps in " << elapsed_secs << " seconds" << std::endl;
