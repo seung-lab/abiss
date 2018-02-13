@@ -250,8 +250,6 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
 
     ID next_id = 0;
 
-    std::unordered_set<ID> relevant_supervoxels;
-
     begin = clock();
 
     for ( auto & kv : sizes ) {
@@ -268,10 +266,6 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             if (s != v) {
                 std::cout << "s("<<s<<") != v("<<v<<")" << std::endl;
             }
-            if (size & traits::on_border) {
-                relevant_supervoxels.insert(s);
-            }
-
             ++next_id;
         }
     }
@@ -336,8 +330,10 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
 
     begin = clock();
     std::vector<std::pair<ID, size_t> > counts;
-    for (const auto & s : relevant_supervoxels) {
-        counts.emplace_back(s,sizes[s]&(~traits::on_border));
+    for (const auto & kv : sizes) {
+        if (kv.second & traits::on_border) {
+            counts.emplace_back(kv.first,kv.second&(~traits::on_border));
+        }
     }
 
     auto c = write_vector(str(boost::format("counts_%1%.data") % tag), counts);
@@ -365,7 +361,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         }
         const auto seg = remaps[kv.second];
         const auto size = sizes[seg];
-        if (relevant_supervoxels.count(seg) > 0) {
+        if (size & traits::on_border) {
             of_ongoing.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
             of_ongoing.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
         } else {
@@ -393,7 +389,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         }
         const auto seg = remaps[s];
         const auto size = sizes[seg];
-        if (relevant_supervoxels.count(seg) > 0) {
+        if (size & traits::on_border) {
             of_ongoing.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
             of_ongoing.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
         } else {
