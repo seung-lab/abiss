@@ -29,11 +29,13 @@ std::vector<std::pair<T, T> > load_remaps(size_t data_size)
 template<typename T>
 std::unordered_map<T, size_t> load_sizes(size_t data_size)
 {
-    MMArray<std::pair<T, size_t>, 1> count_data("counts.data",std::array<size_t, 1>({data_size}));
-    auto counts = count_data.data();
     std::unordered_map<T, size_t> sizes(data_size);
-    for (size_t i = 0; i != data_size; i++) {
-        sizes[counts[i].first] = counts[i].second;
+    if (data_size > 0) {
+        MMArray<std::pair<T, size_t>, 1> count_data("counts.data",std::array<size_t, 1>({data_size}));
+        auto counts = count_data.data();
+        for (size_t i = 0; i != data_size; i++) {
+            sizes[counts[i].first] = counts[i].second;
+        }
     }
     return sizes;
 }
@@ -42,10 +44,12 @@ template<typename ID, typename F>
 region_graph<ID,F> load_dend(size_t data_size)
 {
     region_graph<ID, F> rg;
-    MMArray<std::tuple<F, ID, ID>, 1> dend_data("dend.data",std::array<size_t, 1>({data_size}));
-    auto dend_tuple = dend_data.data();
-    for (size_t i = 0; i != data_size; i++) {
-        rg.push_back(dend_tuple[i]);
+    if (data_size > 0) {
+        MMArray<std::tuple<F, ID, ID>, 1> dend_data("dend.data",std::array<size_t, 1>({data_size}));
+        auto dend_tuple = dend_data.data();
+        for (size_t i = 0; i != data_size; i++) {
+            rg.push_back(dend_tuple[i]);
+        }
     }
     return rg;
 }
