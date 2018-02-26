@@ -410,7 +410,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     std::cout << "generate new remap in " << elapsed_secs << " seconds" << std::endl;
 
     std::cout << "number of supervoxels:" << remaps.size() << "," << next_id << std::endl;
-    return std::make_tuple(remaps, c, d);
+    return std::make_tuple(std::move(remaps), c, d);
 }
 
 template<typename T>
