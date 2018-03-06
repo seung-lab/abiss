@@ -38,6 +38,66 @@ struct edge_t
     T        w;
 };
 
+typedef struct atomic_edge
+{
+    seg_t u1;
+    seg_t u2;
+    double sum_aff;
+    double area;
+    explicit constexpr atomic_edge(seg_t w1 = 0, seg_t w2 = 0, double s_a = 0.0, double a = 0)
+        : u1(w1)
+        , u2(w2)
+        , sum_aff(s_a)
+        , area(a)
+    {
+    }
+} atomic_edge_t;
+
+struct mean_edge
+{
+    double sum;
+    double num;
+    atomic_edge_t * repr;
+
+    explicit constexpr mean_edge(double s = 0, double n = 1, atomic_edge_t * r = NULL)
+        : sum(s)
+        , num(n)
+        , repr(r)
+    {
+    }
+};
+
+struct mean_edge_plus
+{
+    mean_edge operator()(mean_edge const& a, mean_edge const& b) const
+    {
+        atomic_edge_t * new_repr = NULL;
+        if (a.repr->area > b.repr->area) {
+            new_repr = a.repr;
+        }
+        else {
+            new_repr = b.repr;
+        }
+        return mean_edge(a.sum + b.sum, a.num + b.num, new_repr);
+    }
+};
+
+struct mean_edge_greater
+{
+    bool operator()(mean_edge const& a, mean_edge const& b) const
+    {
+        return a.sum / a.num > b.sum / b.num;
+    }
+};
+
+struct mean_edge_limits
+{
+    static constexpr mean_edge max()
+    {
+        return mean_edge(std::numeric_limits<double>::max(), 1, NULL);
+    }
+};
+
 template <class T>
 using region_graph = std::vector<edge_t<T>>;
 
@@ -322,66 +382,6 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg, std::unordered_set<seg
 
     return;
 }
-
-typedef struct atomic_edge
-{
-    seg_t u1;
-    seg_t u2;
-    double sum_aff;
-    double area;
-    explicit constexpr atomic_edge(seg_t w1 = 0, seg_t w2 = 0, double s_a = 0.0, double a = 0)
-        : u1(w1)
-        , u2(w2)
-        , sum_aff(s_a)
-        , area(a)
-    {
-    }
-} atomic_edge_t;
-
-struct mean_edge
-{
-    double sum;
-    double num;
-    atomic_edge_t * repr;
-
-    explicit constexpr mean_edge(double s = 0, double n = 1, atomic_edge_t * r = NULL)
-        : sum(s)
-        , num(n)
-        , repr(r)
-    {
-    }
-};
-
-struct mean_edge_plus
-{
-    mean_edge operator()(mean_edge const& a, mean_edge const& b) const
-    {
-        atomic_edge_t * new_repr = NULL;
-        if (a.repr->area > b.repr->area) {
-            new_repr = a.repr;
-        }
-        else {
-            new_repr = b.repr;
-        }
-        return mean_edge(a.sum + b.sum, a.num + b.num, new_repr);
-    }
-};
-
-struct mean_edge_greater
-{
-    bool operator()(mean_edge const& a, mean_edge const& b) const
-    {
-        return a.sum / a.num > b.sum / b.num;
-    }
-};
-
-struct mean_edge_limits
-{
-    static constexpr mean_edge max()
-    {
-        return mean_edge(std::numeric_limits<double>::max(), 1, NULL);
-    }
-};
 
 template <class CharT, class Traits>
 ::std::basic_ostream<CharT, Traits>&
