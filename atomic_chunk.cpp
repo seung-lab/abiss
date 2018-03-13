@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
     auto c = write_counts(counts, offset, tag);
     free_container(counts);
     auto d = write_vector(str(boost::format("dend_%1%.data") % tag), rg);
-
+    free_container(rg);
     begin = clock();
     write_volume(str(boost::format("seg_%1%.data") % tag), seg);
     write_chunk_boundaries(seg, aff, flags, tag);
