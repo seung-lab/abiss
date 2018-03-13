@@ -352,6 +352,8 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
 
     auto remap_vector = load_remaps<ID>(remap_size);
 
+    std::unordered_map<ID, ID> reps;
+
     begin = clock();
 
     for (auto & kv : remap_vector) {
@@ -360,14 +362,21 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             current_ac = s - (s % ac_offset);
             if (of_done.is_open()) {
                 of_done.close();
+                reps.clear();
             }
             of_done.open(str(boost::format("done_%1%_%2%.data") % tag % current_ac));
         }
         const auto seg = remaps[kv.second];
         const auto size = sizes[seg];
         if (size & traits::on_border) {
-            of_ongoing.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
-            of_ongoing.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
+            if (reps.count(seg) == 0) {
+                of_ongoing.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
+                of_ongoing.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
+                reps[seg] = s;
+            } else {
+                of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
+                of_done.write(reinterpret_cast<const char *>(&(reps.at(seg))), sizeof(ID));
+            }
         } else {
             of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
             of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
