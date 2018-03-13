@@ -50,7 +50,7 @@ std::unordered_map<T,T> generate_remap(std::string filename, size_t data_size)
             T s1 = remap[i].first;
             T s2 = remap[i].second;
             T p = parent_map[s2];
-            if (normalized_root[p] == 0) {
+            if (normalized_root.count(p) == 0) {
                 normalized_root[p] = s2;
                 count_segs--;
             }
