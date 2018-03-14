@@ -77,9 +77,7 @@ def generate_descedants(f, target=None):
             if target is None or mip_c == target:
                 descedants.append(tag)
 
-            f_c = tag+".json"
-            if path:
-                f_c = path+"/"+f_c
-            descedants += generate_descedants(f_c)
+            f_c = os.path.join(path, tag+".json")
+            descedants += generate_descedants(f_c, target)
         return descedants
 
