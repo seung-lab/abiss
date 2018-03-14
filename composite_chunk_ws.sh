@@ -15,12 +15,10 @@ done
 try python3 $SCRIPT_PATH/merge_chunks_ws.py $1
 #try $BIN_PATH/ws2 param.txt $output >& debug_"${output}".log
 try $BIN_PATH/ws2 param.txt $output
-try $COMPRESS_CMD remap_"${output}".data
 try $COMPRESS_CMD done_"${output}"_*.data
 try $UPLOAD_CMD done_"${output}"_*.data."${COMPRESSED_EXT}" $FILE_PATH/remap/
 try $COMPRESS_CMD ongoing_"${output}".data
 try $UPLOAD_CMD ongoing_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/
-try $UPLOAD_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/remap_"${output}".data."${COMPRESSED_EXT}"
 try $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/dend/"${output}".tar."${COMPRESSED_EXT}"
