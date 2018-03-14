@@ -9,15 +9,15 @@ for fn in $(cat filelist.txt)
 do
     try $DOWNLOAD_CMD $FILE_PATH/dend/$fn.tar."${COMPRESSED_EXT}" .
     try $COMPRESS_CMD -d -c $fn.tar."${COMPRESSED_EXT}"|tar xf -
-    just_in_case $DOWNLOAD_CMD $FILE_PATH/remap/ongoing_"${fn}".data."${COMPRESSED_EXT}" .
-    just_in_case $COMPRESS_CMD -d ongoing_"${fn}".data."${COMPRESSED_EXT}"
+    try $DOWNLOAD_CMD $FILE_PATH/remap/ongoing_"${fn}".data."${COMPRESSED_EXT}" .
+    try $COMPRESS_CMD -d ongoing_"${fn}".data."${COMPRESSED_EXT}"
 done
 try python3 $SCRIPT_PATH/merge_chunks_ws.py $1
 #try $BIN_PATH/ws2 param.txt $output >& debug_"${output}".log
 try $BIN_PATH/ws2 param.txt $output
 try $COMPRESS_CMD remap_"${output}".data
-just_in_case $COMPRESS_CMD done_"${output}"_*.data
-just_in_case $UPLOAD_CMD done_"${output}"_*.data."${COMPRESSED_EXT}" $FILE_PATH/remap/
+try $COMPRESS_CMD done_"${output}"_*.data
+try $UPLOAD_CMD done_"${output}"_*.data."${COMPRESSED_EXT}" $FILE_PATH/remap/
 try $COMPRESS_CMD ongoing_"${output}".data
 try $UPLOAD_CMD ongoing_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/
 try $UPLOAD_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/remap_"${output}".data."${COMPRESSED_EXT}"

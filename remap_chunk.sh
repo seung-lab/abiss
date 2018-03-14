@@ -7,8 +7,8 @@ echo $output
 try python3 $SCRIPT_PATH/generate_filelist.py $1 $2|tee filelist.txt
 for fn in $(cat filelist.txt)
 do
-    just_in_case $DOWNLOAD_CMD $FILE_PATH/remap/"${fn}".data."${COMPRESSED_EXT}" .
-    just_in_case $COMPRESS_CMD -d "${fn}".data."${COMPRESSED_EXT}"
+    try $DOWNLOAD_CMD $FILE_PATH/remap/"${fn}".data."${COMPRESSED_EXT}" .
+    try $COMPRESS_CMD -d "${fn}".data."${COMPRESSED_EXT}"
 done
 try $DOWNLOAD_CMD $FILE_PATH/seg/seg_"${output}".data."${COMPRESSED_EXT}" seg_"${output}".data."${COMPRESSED_EXT}"
 try python3 $SCRIPT_PATH/merge_remaps_ws.py $1 $2
