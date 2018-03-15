@@ -4,7 +4,7 @@ INIT_PATH="$(dirname "$0")"
 
 output=`basename $1 .json`
 echo $output
-try python3 $SCRIPT_PATH/generate_ancestors.py $1 $2|tee filelist.txt
+try python3 $SCRIPT_PATH/generate_branch.py $1 $2|tee filelist.txt
 for fn in $(cat filelist.txt)
 do
     try $DOWNLOAD_CMD $FILE_PATH/meta/meta_"${fn}".data .
