@@ -142,6 +142,7 @@ public:
             delete p.second;
             p.second = NULL;
         }
+        d_pmap.clear();
     }
 
     container & operator[](key k) {
