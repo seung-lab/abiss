@@ -178,12 +178,8 @@ private:
 };
 
 template <typename id>
-int n_intersection(const std::unordered_set<id> & set1, const std::unordered_set<id> & set2)
+int n_intersection_impl(const std::unordered_set<id> & set1, const std::unordered_set<id> & set2)
 {
-    //Assuming set1 has smaller number of element, too lazy to add a helper function
-    if (set1.size() == 0 || set2.size() == 0) {
-        return 0;
-    }
     int count = 0;
     for (const auto & e : set1) {
         if (set2.count(e) > 0) {
@@ -191,6 +187,20 @@ int n_intersection(const std::unordered_set<id> & set1, const std::unordered_set
         }
     }
     return count;
+}
+
+template <typename id>
+int n_intersection(const std::unordered_set<id> & set1, const std::unordered_set<id> & set2)
+{
+    if (set1.size() == 0 || set2.size() == 0) {
+        return 0;
+    }
+    if (set2.size() > set1.size()) {
+        return n_intersection_impl(set1, set2);
+    } else {
+        return n_intersection_impl(set2, set1);
+    }
+
 }
 
 template <class T, class Compare = std::greater<T> >
