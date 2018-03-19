@@ -363,8 +363,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, T co
                     }
                 }
 
-                // std::cout << "Joined " << s0 << " and " << s1 << " to " << s
-                //           << " at " << e->edge.w << "\n";
+                //std::cout << "Joined " << v0 << " and " << v1 << std::endl;
+                           //<< " at " << e->edge.w << "\n";
                 if (v0 != v1) {
                     of_mst.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
                     of_mst.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
@@ -409,14 +409,12 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, T co
                     heap.update(e1.handle);
                     heap.erase(e0.second);
                     {
-                        // std::cout
+                        //std::cout
                         //     << "Removing: " <<
-                        //     sets.find_set(e0.second->edge.v0)
-                        //     << " to " << sets.find_set(e0.second->edge.v1)
-                        //     << " of " << e0.second->edge.w << " ";
-                        e0.second->edge.w = Limits::max();
-                        heap.increase(e0.second->handle);
-                        heap.pop();
+                        //     (*(e0.second)).edge.v0
+                        //     << " to " <<
+                        //     (*(e0.second)).edge.v1
+                        //     << " of " << (*(e0.second)).edge.w << std::endl;
                     }
                 }
                 else
