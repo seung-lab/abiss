@@ -152,6 +152,15 @@ public:
         return *(d_pmap.at(k));
     }
 
+    void remove(const key & k) {
+        if (d_pmap.count(k) == 0) {
+            return;
+        }
+        delete d_pmap.at(k);
+        d_pmap[k] = NULL;
+        d_pmap.erase(k);
+    }
+
     std::unordered_set<key> neighbors(key k) {
         std::unordered_set<key> nbs;
         if (d_pmap.count(k) > 0) {
@@ -187,7 +196,7 @@ int n_intersection(const std::unordered_set<id> & set1, const std::unordered_set
 template <class T, class Compare = std::greater<T> >
 struct agglomeration_data_t
 {
-    incident_matrix<seg_t, std::map<seg_t, heap_handle_type<T, Compare> > > incident;
+    incident_matrix<seg_t, std::unordered_map<seg_t, heap_handle_type<T, Compare> > > incident;
     heap_type<T, Compare> heap;
     std::unordered_set<seg_t> frozen_supervoxels;
 };
@@ -410,8 +419,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, T co
                     incident[e0.first][v1] = e0.second;
                     incident[v1][e0.first] = e0.second;
                 }
-                incident[v0].erase(e0.first);
             }
+            incident.remove(v0);
         }
     }
 
