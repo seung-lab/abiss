@@ -16,7 +16,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <boost/heap/binomial_heap.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
 #include <cstddef>
 #include <cstdlib>
 #include <cstdint>
@@ -116,7 +116,7 @@ struct heapable_edge_compare
 };
 
 template <class T, class C = std::greater<T>>
-using heap_type = boost::heap::binomial_heap<
+using heap_type = boost::heap::fibonacci_heap<
     heapable_edge<T, C>, boost::heap::compare<heapable_edge_compare<T, C>>>;
 
 template <class T, class C = std::greater<T>>
@@ -428,7 +428,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, T co
         heap.pop();
         auto v0 = e.edge.v0;
         auto v1 = e.edge.v1;
-        if (frozen_supervoxels.count(v0) > 0 || frozen_supervoxels.count(v1) > 0) {
+        if (frozen_supervoxels.count(v0) > 0 && frozen_supervoxels.count(v1) > 0) {
             of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
             of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
             residue_size++;
