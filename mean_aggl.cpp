@@ -145,7 +145,7 @@ public:
         d_pmap.clear();
     }
 
-    container & operator[](key k) {
+    container & operator[](const key & k) {
         if (d_pmap.count(k) == 0) {
             d_pmap.emplace(k, new container);
         }
