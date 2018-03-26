@@ -3,6 +3,7 @@
 #include "types.hpp"
 
 #include <cstdio>
+#include <cassert>
 #include <fstream>
 #include <type_traits>
 #include <unordered_map>
@@ -37,9 +38,11 @@ write_to_file( const std::string& fname,
                const T* data, std::size_t n )
 {
     std::ofstream f(fname.c_str(), (std::ios::out | std::ios::binary) );
-    if ( !f ) return false;
+    assert(f);
 
     f.write( reinterpret_cast<const char*>(data), n * sizeof(T));
+    assert(!f.bad());
+    f.close();
     return true;
 }
 
@@ -76,8 +79,12 @@ inline bool write_region_graph( const std::string& fname,
 
     f.write( reinterpret_cast<char*>(data), rg.size() * 3 * sizeof(F));
 
+    assert(!f.bad());
+
     delete [] data;
 
+
+    f.close();
     return true;
 }
 
@@ -121,6 +128,7 @@ size_t write_vector(const std::string & fn, std::vector<T> & v)
     f_param.path = fn;
     f_param.new_file_size = bytes;
     f.open(f_param);
+    assert(f.is_open());
     memcpy(f.data(), v.data(), bytes);
     f.close();
     return v.size();
@@ -147,15 +155,17 @@ size_t write_remap(const std::unordered_map<K, V> & map, const char * tag)
 }
 
 template<typename T, size_t N>
-void write_multi_array(const std::string & fn, boost::multi_array<T,N> slice){
+bool write_multi_array(const std::string & fn, boost::multi_array<T,N> slice){
     bio::mapped_file_params f_param;
     bio::mapped_file_sink f;
     size_t bytes = sizeof(T)*slice.num_elements();
     f_param.path = fn;
     f_param.new_file_size = bytes;
     f.open(f_param);
+    assert(f.is_open());
     memcpy(f.data(), slice.data(), bytes);
     f.close();
+    return true;
 }
 
 template < typename T >
@@ -167,8 +177,7 @@ write_volume( const std::string& fname,
 
     volume<T>& seg = *seg_ptr;
     auto shape = seg.shape();
-    write_multi_array(fname, boost::multi_array<T,3>(seg[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][range(1,shape[2]-1)]], boost::fortran_storage_order()));
-    return true;
+    return write_multi_array(fname, boost::multi_array<T,3>(seg[boost::indices[range(1,shape[0]-1)][range(1,shape[1]-1)][range(1,shape[2]-1)]], boost::fortran_storage_order()));
 }
 
 template<typename ID, typename F>
