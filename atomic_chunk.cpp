@@ -4,6 +4,7 @@
 #include "AffinityExtractor.hpp"
 #include "MeanEdge.hpp"
 #include "ReweightedLocalMeanEdge.hpp"
+#include <cassert>
 #include <cstdint>
 #include <array>
 #include <fstream>
@@ -26,6 +27,7 @@ std::unordered_set<Ts> processMetaData(const AffinityExtractor<Ts, Ta, ConstChun
             //out << x << "\n";
             out.write(reinterpret_cast<const char *>(&x), sizeof(x));
         }
+        assert(!out.bad());
         out.close();
     }
     return incomplete_segments;
@@ -45,6 +47,7 @@ void writeEdge(const SegPair<Ts> & p, const std::unordered_map<SegPair<Ts>, Edge
             out.write(reinterpret_cast<const char *>(&v), sizeof(v));
         }
     }
+    assert(!out.bad());
     out.close();
 }
 
@@ -103,6 +106,8 @@ void processData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinit
         //complete << std::setprecision (17) << p.first << " " << p.second << " " << me[i].first << " " << me[i].second << " ";
         //complete << std::setprecision (17) << p.first << " " << p.second << " " << affinities[i]<< " " << areas[i] << std::endl;
     }
+    assert(!incomplete.bad());
+    assert(!complete.bad());
     incomplete.close();
     complete.close();
 }
@@ -124,12 +129,14 @@ int main(int argc, char * argv[])
     bio::mapped_file_source seg_file;
     size_t seg_bytes = sizeof(seg_t)*dim[0]*dim[1]*dim[2];
     seg_file.open("seg.raw", seg_bytes);
+    assert(seg_file.is_open());
     ConstChunkRef<seg_t, 3> seg_chunk (reinterpret_cast<const seg_t*>(seg_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])], boost::fortran_storage_order());
     std::cout << "mmap seg data" << std::endl;
 
     bio::mapped_file_source aff_file;
     size_t aff_bytes = sizeof(aff_t)*dim[0]*dim[1]*dim[2]*3;
     aff_file.open("aff.raw", aff_bytes);
+    assert(aff_file.is_open());
     ConstChunkRef<aff_t,4> aff_chunk (reinterpret_cast<const aff_t*>(aff_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])][3], boost::fortran_storage_order());
     std::cout << "mmap aff data" << std::endl;
 

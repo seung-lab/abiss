@@ -22,6 +22,7 @@ Edge<Ta> loadEdge(Ts seg1, Ts seg2)
         Coord coord({x,y,z});
         edge[i][coord] = affinity;
     }
+    assert(!in.bad());
     in.close();
     return edge;
 }
@@ -41,6 +42,7 @@ int main(int argc, char * argv[])
         edges[p] = loadEdge<aff_t, seg_t>(seg1, seg2);
         me.push_back(meanAffinity<aff_t, size_t>(edges.at(p)));
     }
+    assert(!edge_list.bad());
     edge_list.close();
 
     std::vector<size_t> areas(complete_segpairs.size(),0);
@@ -68,5 +70,6 @@ int main(int argc, char * argv[])
         ofs.write(reinterpret_cast<const char *>(&(affinities[i])), sizeof(aff_t));
         ofs.write(reinterpret_cast<const char *>(&(areas[i])), sizeof(size_t));
     }
+    assert(!ofs.bad());
     ofs.close();
 }

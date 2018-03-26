@@ -1,6 +1,7 @@
 #include "Types.h"
 #include "MeanEdge.hpp"
 #include "ReweightedLocalMeanEdge.hpp"
+#include <cassert>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -27,11 +28,16 @@ std::unordered_set<Ts> updateBoundarySegments(size_t index, const std::string & 
     while (in.read(reinterpret_cast<char *>(&s), sizeof(s))) {
         incomplete_segments.insert(s);
     }
+
+    assert(!in.bad());
+
     in.close();
     std::ofstream out(str(boost::format("boundary_%1%_%2%.data") % index % tag), std::ios_base::binary);
     for (const auto & v : incomplete_segments) {
         out.write(reinterpret_cast<const char *>(&v), sizeof(v));
     }
+    assert(!out.bad());
+    out.close();
     return incomplete_segments;
 }
 
@@ -51,6 +57,8 @@ RegionGraph<Ts, SimpleEdge<Ta> > loadRegionGraph(const std::string & tag)
         e.affinity +=  aff;
         e.area += area;
     }
+    assert(!in.bad());
+    in.close();
     return rg;
 }
 
@@ -103,6 +111,8 @@ int main(int argc, char * argv[])
             complete.write(reinterpret_cast<const char *>(&(v.area)), sizeof(size_t));
         }
     }
+    assert(!incomplete.bad());
+    assert(!complete.bad());
     incomplete.close();
     complete.close();
 }
