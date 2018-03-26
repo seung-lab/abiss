@@ -432,6 +432,9 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, T co
         }
     }
 
+    assert(!of_mst.bad());
+    assert(!of_remap.bad());
+
     of_mst.close();
 
     of_remap.close();
@@ -459,6 +462,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, T co
         }
     }
 
+    assert(!of_res.bad());
+    assert(!of_frg.bad());
     of_res.close();
     of_frg.close();
 
@@ -471,6 +476,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, T co
     of_meta.write(reinterpret_cast<const char *>(&(rg_size)), sizeof(size_t));
     of_meta.write(reinterpret_cast<const char *>(&(residue_size)), sizeof(size_t));
     of_meta.write(reinterpret_cast<const char *>(&(mst_size)), sizeof(size_t));
+    assert(!of_meta.bad());
     of_meta.close();
 
     return;
