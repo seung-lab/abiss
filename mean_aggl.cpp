@@ -366,9 +366,9 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, T co
                 //std::cout << "Joined " << v0 << " and " << v1 << std::endl;
                            //<< " at " << e->edge.w << "\n";
                 if (v0 != v1) {
+                    of_mst.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
                     of_mst.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
                     of_mst.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
-                    of_mst.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
                     mst_size++;
                     write_edge(of_mst, e.edge.w);
                     if (v0 == s) {
