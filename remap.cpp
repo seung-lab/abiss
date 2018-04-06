@@ -46,7 +46,7 @@ std::unordered_map<T,T> generate_remap(std::string filename, size_t data_size)
         sets.compress_sets(std::begin(nodes), std::end(nodes));
         auto count_segs = sets.count_sets(std::begin(nodes), std::end(nodes));
         std::unordered_map<T, T> normalized_root(count_segs);
-        for (size_t i = 0; i != data_size; i++) {
+        for (size_t i = data_size - 1; i >= 0; i--) {
             T s1 = remap[i].first;
             T s2 = remap[i].second;
             T p = parent_map[s2];
