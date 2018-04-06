@@ -77,7 +77,10 @@ def generate_descedants(f, target=None):
             if target is None or mip_c == target:
                 descedants.append(tag)
 
+        for k in d:
+            tag = chunk_tag(mip_c, d[k])
             f_c = os.path.join(path, tag+".json")
             descedants += generate_descedants(f_c, target)
+
         return descedants
 
