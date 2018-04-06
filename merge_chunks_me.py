@@ -8,6 +8,13 @@ def merge_incomplete_edges(p):
     fn = [prefix+cu.chunk_tag(mip_c, d[k])+".data" for k in d]
     cu.merge_files(prefix+cu.chunk_tag(p["mip_level"],p["indices"])+".tmp", fn)
 
+def merge_incomplete_sizes(p):
+    d = p["children"]
+    mip_c = p["mip_level"]-1
+    prefix = "incomplete_sizes_"
+    fn = [prefix+cu.chunk_tag(mip_c, d[k])+".data" for k in d]
+    cu.merge_files(prefix+cu.chunk_tag(p["mip_level"],p["indices"])+".tmp", fn)
+
 def merge_face(p,idx,subFaces):
     mip_c = p["mip_level"]-1
     prefix = "boundary_"
@@ -19,13 +26,15 @@ def merge_face(p,idx,subFaces):
 
 def merge_faces(p, faceMaps):
     merge_incomplete_edges(p)
+    merge_incomplete_sizes(p)
     print(faceMaps)
     for k in faceMaps:
         merge_face(p,k,faceMaps[k])
 
 def merge_chunks(p):
     #cu.merge_intermediate_outputs(p, "complete_edges")
-    #cu.merge_intermediate_outputs(p, "mst")
+    cu.merge_intermediate_outputs(p, "ongoing_mst")
+    cu.merge_intermediate_outputs(p, "ongoing_sizes")
     cu.merge_intermediate_outputs(p, "residual_rg")
     d = p["children"]
     face_maps = {i : [d[k] for k in cu.generate_subface_keys(i) if k in d] for i in range(6)}
