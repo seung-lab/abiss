@@ -42,10 +42,11 @@ std::unordered_set<Ts> updateBoundarySegments(size_t index, const std::string & 
 }
 
 template<typename Ts, typename Ta>
-RegionGraph<Ts, SimpleEdge<Ta> > loadRegionGraph(const std::string & tag)
+RegionGraph<Ts, SimpleEdge<Ta> > loadRegionGraph(const std::string & fileName)
 {
     RegionGraph<Ts, SimpleEdge<Ta> > rg;
-    std::ifstream in(str(boost::format("incomplete_edges_%1%.tmp") % tag));
+    std::cout << "loading: " << fileName << std::endl;
+    std::ifstream in(fileName);
     Ts s1, s2;
     size_t area;
     Ta aff;
@@ -62,40 +63,35 @@ RegionGraph<Ts, SimpleEdge<Ta> > loadRegionGraph(const std::string & tag)
     return rg;
 }
 
-int main(int argc, char * argv[])
+template <typename Ts>
+std::unordered_map<Ts, size_t> loadSizes(const std::string & fileName)
 {
-    //size_t xdim,ydim,zdim;
-    //int flag;
-    //size_t face_size, counts, dend_size;
-    //std::ifstream param_file(argv[1]);
-    const char * tag = argv[1];
-    //param_file >> xdim >> ydim >> zdim;
-    //std::cout << xdim << " " << ydim << " " << zdim << std::endl;
-    //std::array<bool,6> flags({true,true,true,true,true,true});
-    //for (size_t i = 0; i != 6; i++) {
-    //    param_file >> flag;
-    //    flags[i] = (flag > 0);
-    //    if (flags[i]) {
-    //        std::cout << "real boundary: " << i << std::endl;
-    //    }
-    //}
-
-    //if (face_size == 0) {
-    //    std::cout << "Nothing to merge, exit!" << std::endl;
-    //    return 0;
-    //}
-
-    std::unordered_set<seg_t> incomplete_segments;
-    for (size_t i = 0; i != 6; i++) {
-        incomplete_segments.merge(updateBoundarySegments<seg_t>(i, tag));
+    std::unordered_map<Ts, size_t> sizes;
+    std::cout << "loading: " << fileName << std::endl;
+    std::ifstream in(fileName);
+    Ts s;
+    size_t size;
+    while (in.read(reinterpret_cast<char *>(&s), sizeof(s))) {
+        in.read(reinterpret_cast<char *>(&s), sizeof(s));
+        in.read(reinterpret_cast<char *>(&size), sizeof(size));
+        //if (sizes.count(s) > 0) {
+        //    std::cout << s << " " << size << std::endl;
+        //}
+        sizes[s] += size;
     }
-    auto rg = loadRegionGraph<seg_t, aff_t>(tag);
+    assert(!in.bad());
+    in.close();
+    return sizes;
+}
 
-    std::ofstream incomplete(str(boost::format("incomplete_edges_%1%.data") % tag), std::ios_base::binary);
-    std::ofstream complete("new_edges.data", std::ios_base::binary);
+template <typename Ts, typename Ta>
+void writeRegionGraph(const std::unordered_set<Ts> & incompleteSegments, const RegionGraph<Ts, SimpleEdge<Ta> >  rg, const std::string & incompleteFileName, const std::string & completeFileName)
+{
+    std::ofstream incomplete(incompleteFileName, std::ios_base::binary);
+    std::ofstream complete(completeFileName, std::ios_base::binary);
 
     for (const auto &[k, v] : rg) {
-        if (incomplete_segments.count(k.first) > 0 && incomplete_segments.count(k.second) > 0) {
+        if (incompleteSegments.count(k.first) > 0 && incompleteSegments.count(k.second) > 0) {
             incomplete.write(reinterpret_cast<const char *>(&(k.first)), sizeof(seg_t));
             incomplete.write(reinterpret_cast<const char *>(&(k.second)), sizeof(seg_t));
             incomplete.write(reinterpret_cast<const char *>(&(v.affinity)), sizeof(aff_t));
@@ -115,4 +111,59 @@ int main(int argc, char * argv[])
     assert(!complete.bad());
     incomplete.close();
     complete.close();
+}
+
+template <typename Ts>
+void writeSizes(const std::unordered_set<Ts> & incompleteSegments, const std::unordered_map<Ts, size_t> sizes, const std::string & incompleteFileName, const std::string & completeFileName)
+{
+    std::ofstream incomplete(incompleteFileName, std::ios_base::binary);
+    std::ofstream complete(completeFileName, std::ios_base::binary);
+    for (const auto &[k,v] : sizes) {
+        if (incompleteSegments.count(k) > 0) {
+            incomplete.write(reinterpret_cast<const char *> (&k), sizeof(k));
+            incomplete.write(reinterpret_cast<const char *> (&k), sizeof(k));
+            incomplete.write(reinterpret_cast<const char *> (&v), sizeof(v));
+        } else {
+            complete.write(reinterpret_cast<const char *> (&k), sizeof(k));
+            complete.write(reinterpret_cast<const char *> (&k), sizeof(k));
+            complete.write(reinterpret_cast<const char *> (&v), sizeof(v));
+        }
+    }
+    assert(!incomplete.bad());
+    assert(!complete.bad());
+    incomplete.close();
+    complete.close();
+}
+
+template <typename Ts, typename Ta>
+void updateRegionGraph(const std::unordered_set<Ts> & incompleteSegments, const std::string & inputFileName, const std::string & incompleteFileName, const std::string & completeFileName)
+{
+    writeRegionGraph<Ts, Ta>(incompleteSegments, loadRegionGraph<Ts, Ta>(inputFileName), incompleteFileName, completeFileName);
+}
+
+template <typename Ts>
+void updateSizes(const std::unordered_set<Ts> & incompleteSegments, const std::string & inputFileName, const std::string & incompleteFileName, const std::string & completeFileName)
+{
+    writeSizes<Ts>(incompleteSegments, loadSizes<Ts>(inputFileName), incompleteFileName, completeFileName);
+}
+
+
+int main(int argc, char * argv[])
+{
+    std::string tag(argv[1]);
+
+    std::unordered_set<seg_t> incomplete_segments;
+    for (size_t i = 0; i != 6; i++) {
+        incomplete_segments.merge(updateBoundarySegments<seg_t>(i, tag));
+    }
+    std::cout << incomplete_segments.size() << " incomplete segments" << std::endl;
+    updateRegionGraph<seg_t, aff_t>(incomplete_segments,
+            str(boost::format("incomplete_edges_%1%.tmp") % tag),
+            str(boost::format("incomplete_edges_%1%.data") % tag),
+            "new_edges.data");
+    updateSizes<seg_t>(incomplete_segments,
+            str(boost::format("incomplete_sizes_%1%.tmp") % tag),
+            str(boost::format("incomplete_sizes_%1%.data") % tag),
+            "sizes.data");
+
 }
