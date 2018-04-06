@@ -443,6 +443,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, T co
     std::ofstream of_frg;
     of_frg.open("final_rg.data", std::ofstream::out | std::ofstream::trunc);
 
+    std::unordered_set<seg_t> finished_supervoxels;
+
     while (!heap.empty())
     {
         auto e = heap.top();
@@ -455,6 +457,12 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, T co
             residue_size++;
             write_edge(of_res, e.edge.w);
         } else {
+            if (frozen_supervoxels.count(v0) == 0) {
+                finished_supervoxels.insert(v0);
+            }
+            if (frozen_supervoxels.count(v1) == 0) {
+                finished_supervoxels.insert(v1);
+            }
             of_frg.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
             of_frg.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
             write_edge(of_frg, e.edge.w);
@@ -478,6 +486,22 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, T co
     of_meta.write(reinterpret_cast<const char *>(&(mst_size)), sizeof(size_t));
     assert(!of_meta.bad());
     of_meta.close();
+
+    std::ofstream of_fs;
+    of_fs.open("ongoing_segments.data", std::ofstream::out | std::ofstream::trunc);
+
+    for (const auto & s : frozen_supervoxels) {
+        of_fs.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+    }
+    of_fs.close();
+
+    of_fs.open("done_segments.data", std::ofstream::out | std::ofstream::trunc);
+
+    for (const auto & s : finished_supervoxels) {
+        of_fs.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+    }
+
+    of_fs.close();
 
     return;
 }
