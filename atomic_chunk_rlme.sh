@@ -35,7 +35,7 @@ try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_
 
 
 try find $output -name '*.data' -print > /tmp/test_"${output}".manifest
-try tar -cf - --files-from /tmp/test_"${output}".manifest > incomplete_edges_"${output}".tar."${COMPRESSED_EXT}"
+try tar -cf - --files-from /tmp/test_"${output}".manifest | $COMPRESS_CMD > incomplete_edges_"${output}".tar."${COMPRESSED_EXT}"
 try tar -cvf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD incomplete_edges_"${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/incomplete_edges/incomplete_edges_"${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/region_graph/"${output}".tar."${COMPRESSED_EXT}"
