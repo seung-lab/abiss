@@ -28,13 +28,13 @@ top_mip = param["top_mip_level"]
 mip = param["mip_level"]
 indices = param["indices"]
 
-ancestors = cu.generate_ancestors(sys.argv[1])
+descedants = list(reversed(cu.generate_descedants(sys.argv[1])))
 
-ancestors = list(reversed(ancestors))
+ancestors = list(cu.generate_ancestors(sys.argv[1]))
 
-branches = ancestors+[cu.chunk_tag(mip, indices)]
+branches = descedants+[cu.chunk_tag(mip, indices)]+ancestors
 
-branches += cu.generate_descedants(sys.argv[1])
+print(branches)
 
 bbox = param["bbox"]
 sizes = [bbox[i+3]-bbox[i] for i in range(3)]

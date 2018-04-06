@@ -1,5 +1,4 @@
 import sys
-import struct
 import os
 import chunk_utils as cu
 
@@ -19,7 +18,8 @@ ancestors = cu.generate_ancestors(sys.argv[1])
 
 offset = param["offset"]
 
-ancestors = list(reversed(ancestors))
+ancestors = list(ancestors)
+#print(ancestors)
 
 if param["mip_level"] == 0:
     bbox = param["bbox"]
