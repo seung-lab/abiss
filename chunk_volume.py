@@ -47,6 +47,12 @@ def process_composite_tasks(c, top_mip, f_task, f_deps):
             f_task.write('remap_chunks["{}_{}"]=remap_chunks_op(dag, ["{}"])\n'.format(tag,i,tags_b))
             f_deps.write('generate_chunks["{}_{}"].set_downstream(generate_chunks["{}"])\n'.format(tag,i,tag))
             f_deps.write('generate_chunks["{}"].set_downstream(remap_chunks["{}_{}"])\n'.format(top_tag,tag,i))
+#cutout E
+#data_bbox = [600, 16000, 10, 24000, 29000, 1500]
+#PHASE I ROI
+#data_bbox = [10240, 7680, 0, 65016, 43716, 1003]
+#New pinky40 ROI
+#data_bbox = [10240,4096,0,10240+57344,4096+40960,0+1024]
 
 #data_bbox = [0,16000,0, 24000,30000,1500]
 data_bbox = [0,0,0,2048,2048,256]
