@@ -15,7 +15,10 @@ COMPRESS_CMD="zstd -9 --rm -T8"
 COMPRESSED_EXT="zst"
 THRESHOLD=0.2
 
-#try . /root/google-cloud-sdk/path.bash.inc
+try dos2unix /root/.cloudvolume/secrets/config.sh
+try . /root/.cloudvolume/secrets/config.sh
+try . /root/google-cloud-sdk/path.bash.inc
+
 just_in_case rm -rf meta
 just_in_case rm -rf remap
 just_in_case rm -rf *.data
