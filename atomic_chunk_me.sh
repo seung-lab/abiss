@@ -4,10 +4,12 @@ INIT_PATH="$(dirname "$0")"
 
 output=`basename $1 .json`
 echo $output
-just_in_case rm -rf mst
-just_in_case rm -rf sizes
-try mkdir mst
-try mkdir sizes
+
+for d in $META; do
+    just_in_case rm -rf $d
+    try mkdir $d
+done
+
 try python3 $SCRIPT_PATH/cut_chunk_agg.py $1
 try $BIN_PATH/acme param.txt $output
 try cp edges_"$output".data input_rg.data
@@ -31,9 +33,9 @@ try $COMPRESS_CMD remap_"${output}".data
 try $COMPRESS_CMD edges_"${output}".data
 try $COMPRESS_CMD final_rg_"${output}".data
 
-for d in mst sizes; do
+for d in $META; do
     if [ "$(ls -A $d)"  ]; then
-        try $UPLOAD_CMD -r $d/* $FILE_PATH/$d/
+        try $UPLOAD_CMD -r $d $FILE_PATH/
     fi
 done
 
@@ -46,5 +48,7 @@ try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_
 
 try tar -cvf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch/"${output}".tar."${COMPRESSED_EXT}"
-try rm -rf mst
-try rm -rf sizes
+
+for d in $META; do
+    try rm -rf $d
+done

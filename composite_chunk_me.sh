@@ -4,10 +4,11 @@ INIT_PATH="$(dirname "$0")"
 
 output=`basename $1 .json`
 echo $output
-just_in_case rm -rf mst
-just_in_case rm -rf sizes
-try mkdir mst
-try mkdir sizes
+
+for d in $META; do
+    just_in_case rm -rf $d
+    try mkdir $d
+done
 
 try python3 $SCRIPT_PATH/generate_children.py $1|tee filelist.txt
 for fn in $(cat filelist.txt)
@@ -46,9 +47,9 @@ try $COMPRESS_CMD remap_"${output}".data
 try $COMPRESS_CMD edges_"${output}".data
 try $COMPRESS_CMD final_rg_"${output}".data
 
-for d in mst sizes; do
+for d in $META; do
     if [ "$(ls -A $d)"  ]; then
-        try $UPLOAD_CMD -r $d/* $FILE_PATH/$d/
+        try $UPLOAD_CMD -r $d $FILE_PATH/
     fi
 done
 
@@ -65,5 +66,7 @@ for fn in $(cat filelist.txt)
 do
     try rm -rf $fn
 done
-try rm -rf mst
-try rm -rf sizes
+
+for d in $META; do
+    try rm -rf $d
+done
