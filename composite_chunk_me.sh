@@ -5,7 +5,7 @@ INIT_PATH="$(dirname "$0")"
 output=`basename $1 .json`
 echo $output
 
-for d in $META; do
+for d in ${META[@]}; do
     just_in_case rm -rf $d
     try mkdir $d
 done
@@ -47,7 +47,7 @@ try $COMPRESS_CMD remap_"${output}".data
 try $COMPRESS_CMD edges_"${output}".data
 try $COMPRESS_CMD final_rg_"${output}".data
 
-for d in $META; do
+for d in ${META[@]}; do
     if [ "$(ls -A $d)"  ]; then
         try $UPLOAD_CMD -r $d $FILE_PATH/
     fi
@@ -67,6 +67,6 @@ do
     try rm -rf $fn
 done
 
-for d in $META; do
+for d in ${META[@]}; do
     try rm -rf $d
 done
