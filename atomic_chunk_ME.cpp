@@ -4,6 +4,7 @@
 #include "AffinityExtractorME.hpp"
 #include "BoundaryExtractor.hpp"
 #include "SizeExtractor.hpp"
+#include "BBoxExtractor.hpp"
 #include "MeanEdge.hpp"
 #include "ReweightedLocalMeanEdge.hpp"
 #include <cassert>
@@ -19,8 +20,8 @@ namespace bio = boost::iostreams;
 
 int main(int argc, char * argv[])
 {
-    std::array<int, 3> offset({0,0,0});
-    std::array<int, 3> dim({0,0,0});
+    std::array<int64_t, 3> offset({0,0,0});
+    std::array<int64_t, 3> dim({0,0,0});
 
     //FIXME: check the input is valid
     std::ifstream param_file(argv[1]);
@@ -48,8 +49,9 @@ int main(int argc, char * argv[])
     AffinityExtractorME<seg_t, aff_t, ConstChunkRef<aff_t, 4> > affinity_extractor(aff_chunk);
     BoundaryExtractor<seg_t> boundary_extractor;
     SizeExtractor<seg_t> size_extractor;
+    BBoxExtractor<seg_t, int64_t> bbox_extractor;
 
-    traverseSegments(seg_chunk, true, boundary_extractor, affinity_extractor, size_extractor);
+    traverseSegments(seg_chunk, true, boundary_extractor, affinity_extractor, size_extractor, bbox_extractor);
 
     auto incomplete_segments = boundary_extractor.incompleteSupervoxels();
 
@@ -58,6 +60,8 @@ int main(int argc, char * argv[])
     affinity_extractor.output(incomplete_segments, "edges_"+output_path+".data", "incomplete_edges_"+output_path+".data");
 
     size_extractor.output(incomplete_segments, "sizes.data", "incomplete_sizes_"+output_path+".data");
+
+    bbox_extractor.output(incomplete_segments, "bboxes.data", "incomplete_bboxes_"+output_path+".data");
 
     std::cout << "finished" << std::endl;
     aff_file.close();

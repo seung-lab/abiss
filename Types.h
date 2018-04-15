@@ -15,7 +15,7 @@ using ConstChunkRef = boost::const_multi_array_ref<T, n, const T*>;
 template <class Ts>
 using SegPair = std::pair<Ts, Ts>;
 
-using Coord = std::array<int, 3>;
+using Coord = std::array<int64_t, 3>;
 
 using ContactRegion = std::unordered_set<Coord, boost::hash<Coord> >;
 

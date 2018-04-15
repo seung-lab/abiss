@@ -10,7 +10,8 @@
 const std::unordered_map<std::string, size_t> metaData =
 {
     {"mst", (sizeof(seg_t)+sizeof(seg_t)+sizeof(aff_t)+sizeof(size_t))+(sizeof(seg_t)+sizeof(seg_t)+sizeof(aff_t)+sizeof(size_t))},
-    {"sizes", sizeof(seg_t)+sizeof(size_t)}
+    {"sizes", sizeof(seg_t)+sizeof(size_t)},
+    {"bboxes", sizeof(seg_t)+sizeof(int64_t)*6}
 };
 
 std::unordered_map<seg_t, seg_t> load_remap(const char * filename)

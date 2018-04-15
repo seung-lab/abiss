@@ -4,6 +4,7 @@
 #include "BoundaryExtractor.hpp"
 #include "AffinityExtractorME.hpp"
 #include "SizeExtractor.hpp"
+#include "BBoxExtractor.hpp"
 #include <cassert>
 #include <cstdint>
 #include <fstream>
@@ -27,5 +28,9 @@ int main(int argc, char * argv[])
             str(boost::format("incomplete_sizes_%1%.tmp") % tag),
             str(boost::format("incomplete_sizes_%1%.data") % tag),
             "sizes.data");
+    updateBBoxes<seg_t, int64_t>(incomplete_segments,
+            str(boost::format("incomplete_bboxes_%1%.tmp") % tag),
+            str(boost::format("incomplete_bboxes_%1%.data") % tag),
+            "bboxes.data");
 
 }
