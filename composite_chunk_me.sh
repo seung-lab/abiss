@@ -31,8 +31,9 @@ done
 
 try $BIN_PATH/agg $THRESHOLD input_rg.data frozen.data
 
-cat ongoing_mst.data >> mst.data
-cat ongoing_sizes.data >> sizes.data
+for d in ${META[@]}; do
+    try cat ongoing_"${d}".data >> "${d}".data
+done
 
 try $BIN_PATH/assort $output
 
