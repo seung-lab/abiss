@@ -98,20 +98,23 @@ std::unordered_map<seg_t, std::vector<seg_t> > generate_bags(auto & pmap, auto &
     return bags;
 }
 
-void write_data(auto & data, auto & k, auto & v, auto & out, size_t payloadSize)
+size_t write_data(auto & data, auto & k, auto & v, auto & out, size_t payloadSize)
 {
+    size_t n = 0;
     for (auto & s : v) {
         if (data.count(s) > 0) {
             for (auto & p : data.at(s)) {
                 out.write(reinterpret_cast<const char *>(&k), sizeof(k));
                 out.write(reinterpret_cast<const char *>(p.data()), payloadSize);
+                n+=1;
             }
         }
     }
     assert(!out.bad());
+    return n;
 }
 
-void split_data(const auto & data, const auto & ongoing, const auto & done, size_t payloadSize, const std::string & type, const std::string & tag)
+auto split_data(const auto & data, const auto & ongoing, const auto & done, size_t payloadSize, const std::string & type, const std::string & tag)
 {
     std::ofstream out(str(boost::format("ongoing_%1%_%2%.data")%type%tag), std::ios_base::binary);
     assert(out.is_open());
@@ -123,23 +126,27 @@ void split_data(const auto & data, const auto & ongoing, const auto & done, size
     }
     out.close();
 
+    std::vector<std::pair<seg_t, size_t> > counts;
+
     for (auto & [k, v] : done) {
         if (v.size() == 1 && data.count(v[0]) == 0) {
             continue;
         }
         std::ofstream o(str(boost::format("%1%/%2%.data")%type%k), std::ios_base::binary);
         assert(o.is_open());
-        write_data(data, k , v, o, payloadSize);
+        auto n = write_data(data, k , v, o, payloadSize);
+        counts.emplace_back(k, n);
         o.close();
     }
+    return counts;
 }
 
-void write_info(auto bags, const std::string & filename)
+void write_info(auto counts, const std::string & filename)
 {
     std::ofstream out(filename);
     assert(out.is_open());
-    for (const auto & [k, v] : bags) {
-        out << k << " " << v.size() << std::endl;
+    for (const auto & [k, v] : counts) {
+        out << k << " " << v << std::endl;
     }
     assert(!out.bad());
     out.close();
@@ -154,9 +161,13 @@ int main(int argc, char *argv[])
     std::cout << "map size: " << pmap.size() << std::endl;
     auto ongoing_bags = generate_bags(pmap, ongoing);
     auto done_bags = generate_bags(pmap, done);
-    write_info(done_bags, str(boost::format("info_%1%.txt")%tag));
     for (const auto & [k, v] : metaData) {
         auto data = load_data(str(boost::format("%1%.data")%k), v);
-        split_data(data, ongoing_bags, done_bags, v, k, tag);
+        if (k == "sizes") {
+            auto counts = split_data(data, ongoing_bags, done_bags, v, k, tag);
+            write_info(counts, str(boost::format("info_%1%.txt")%tag));
+        } else {
+            split_data(data, ongoing_bags, done_bags, v, k, tag);
+        }
     }
 }
