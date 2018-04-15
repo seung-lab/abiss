@@ -22,6 +22,8 @@ public:
     {
         std::ofstream complete(completeFileName, std::ios_base::binary);
         std::ofstream incomplete(incompleteFileName, std::ios_base::binary);
+        assert(complete.is_open());
+        assert(incomplete.is_open());
         for (const auto & [k,v] : m_sizes) {
             if (incompleteSegments.count(k) > 0) {
                 write_size(incomplete, k ,v);
