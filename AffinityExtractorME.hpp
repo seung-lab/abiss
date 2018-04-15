@@ -2,6 +2,8 @@
 #define AFFINITY_EXTRACTOR_HPP
 
 #include "Types.h"
+#include <cassert>
+#include <iostream>
 #include <fstream>
 #include <unordered_set>
 #include <unordered_map>

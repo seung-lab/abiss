@@ -2,6 +2,8 @@
 #define BBOX_EXTRACTOR_HPP
 
 #include "Types.h"
+#include <cassert>
+#include <iostream>
 #include <fstream>
 #include <limits>
 #include <unordered_map>
