@@ -48,5 +48,28 @@ private:
     std::array<std::unordered_set<Ts>, 6> m_boundarySupervoxels;
 };
 
+template<typename Ts>
+std::unordered_set<Ts> updateBoundarySegments(size_t index, const std::string & tag)
+{
+    std::unordered_set<Ts> incomplete_segments;
+    Ts s;
+    std::ifstream in(str(boost::format("boundary_%1%_%2%.tmp") % index % tag));
+    std::cout << "update: " << index << std::endl;
+    while (in.read(reinterpret_cast<char *>(&s), sizeof(s))) {
+        incomplete_segments.insert(s);
+    }
+
+    assert(!in.bad());
+
+    in.close();
+    std::ofstream out(str(boost::format("boundary_%1%_%2%.data") % index % tag), std::ios_base::binary);
+    for (const auto & v : incomplete_segments) {
+        out.write(reinterpret_cast<const char *>(&v), sizeof(v));
+    }
+    assert(!out.bad());
+    out.close();
+    return incomplete_segments;
+}
+
 #endif
 
