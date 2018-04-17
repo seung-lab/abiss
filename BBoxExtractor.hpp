@@ -65,7 +65,6 @@ void writeBBox(auto & io, const auto & k, const auto & v) {
     io.write(reinterpret_cast<const char *>(&k), sizeof(k));
     io.write(reinterpret_cast<const char *>(v.minPt.data()), sizeof(v.minPt));
     io.write(reinterpret_cast<const char *>(v.maxPt.data()), sizeof(v.maxPt));
-    std::cout << "size: " << sizeof(v.minPt) << std::endl;
     assert(!io.bad());
 }
 
