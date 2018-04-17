@@ -3,7 +3,7 @@ import numpy
 import os
 
 def load_data(url):
-    return CloudVolume(url, fill_missing=True)
+    return CloudVolume(url, fill_missing=True, parallel=2)
     #return CloudVolumeGSUtil(url, fill_missing=True)
 
 def save_raw_data(fn,data, data_type):
