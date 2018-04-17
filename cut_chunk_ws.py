@@ -23,6 +23,5 @@ end_coord = [bbox[i+3]+1-boundary_flags[i+3] for i in range(3)]
 
 aff_cutout = cut_data(aff, start_coord, end_coord, boundary_flags)
 save_raw_data("aff.raw", aff_cutout, aff.dtype)
-aff.flush_cache()
 
 write_metadata("param.txt", aff_cutout.shape[0:3], boundary_flags, offset)

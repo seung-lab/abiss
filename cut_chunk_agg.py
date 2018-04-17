@@ -28,13 +28,11 @@ end_coord = [bbox[i+3]+1-boundary_flags[i+3] for i in range(3)]
 aff_cutout = cut_data(aff, start_coord, end_coord, boundary_flags)
 save_raw_data("aff.raw", aff_cutout, aff.dtype)
 del aff_cutout
-aff.flush_cache()
 
 seg = load_data(os.environ['WS_PATH'])
 seg_cutout = cut_data(seg, start_coord, end_coord, boundary_flags)
 save_raw_data("seg.raw", seg_cutout, seg.dtype)
 #save_data("aff.h5", aff_cutout)
 #save_data("seg.h5", seg_cutout)
-seg.flush_cache()
 
 write_metadata("param.txt", chunk_origin(bbox), seg_cutout.shape[0:3])
