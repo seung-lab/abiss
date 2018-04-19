@@ -31,7 +31,7 @@ done
 
 try $BIN_PATH/agg $THRESHOLD input_rg.data frozen.data
 
-for d in ${META[@]}; do
+for d in $META; do
     try cat ongoing_"${d}".data >> "${d}".data
 done
 
@@ -48,7 +48,7 @@ try $COMPRESS_CMD remap_"${output}".data
 try $COMPRESS_CMD edges_"${output}".data
 try $COMPRESS_CMD final_rg_"${output}".data
 
-for d in ${META[@]}; do
+for d in $META; do
     if [ "$(ls -A $d)"  ]; then
         try $UPLOAD_CMD -r $d $FILE_PATH/
     fi
@@ -68,6 +68,6 @@ do
     try rm -rf $fn
 done
 
-for d in ${META[@]}; do
+for d in $META; do
     try rm -rf $d
 done

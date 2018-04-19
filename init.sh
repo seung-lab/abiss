@@ -13,7 +13,7 @@ UPLOAD_CMD="gsutil -q -m cp"
 DOWNLOAD_CMD="gsutil -m cp"
 COMPRESS_CMD="zstd -9 --rm -T8"
 COMPRESSED_EXT="zst"
-META=(mst sizes bboxes)
+META=""
 THRESHOLD=0.2
 
 try dos2unix /root/.cloudvolume/secrets/config.sh

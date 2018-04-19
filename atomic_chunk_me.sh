@@ -5,7 +5,7 @@ INIT_PATH="$(dirname "$0")"
 output=`basename $1 .json`
 echo $output
 
-for d in ${META[@]}; do
+for d in $META; do
     echo "create $d"
     just_in_case rm -rf $d
     try mkdir $d
@@ -34,7 +34,7 @@ try $COMPRESS_CMD remap_"${output}".data
 try $COMPRESS_CMD edges_"${output}".data
 try $COMPRESS_CMD final_rg_"${output}".data
 
-for d in ${META[@]}; do
+for d in $META; do
     if [ "$(ls -A $d)"  ]; then
         try $UPLOAD_CMD -r $d $FILE_PATH/
     fi
@@ -50,6 +50,6 @@ try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_
 try tar -cvf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch/"${output}".tar."${COMPRESSED_EXT}"
 
-for d in ${META[@]}; do
+for d in $META; do
     try rm -rf $d
 done
