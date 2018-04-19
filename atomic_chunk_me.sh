@@ -21,7 +21,8 @@ do
 done
 
 try $BIN_PATH/agg $THRESHOLD input_rg.data frozen.data
-try $BIN_PATH/assort $output
+
+try $BIN_PATH/assort $output $META
 
 try mv meta.data meta_"$output".data
 try mv residual_rg.data residual_rg_"$output".data

@@ -5,19 +5,21 @@ INIT_PATH="$(dirname "$0")"
 output=`basename $1 .json`
 echo $output
 
-for d in ${META[@]}; do
+for d in $META; do
     just_in_case rm -rf $d
     try mkdir $d
 done
 
 try python3 $SCRIPT_PATH/generate_children.py $1|tee filelist.txt
+
 for fn in $(cat filelist.txt)
 do
     just_in_case rm -rf $fn
     try $DOWNLOAD_CMD $FILE_PATH/scratch/"${fn}".tar."${COMPRESSED_EXT}" .
     try $COMPRESS_CMD -d -c "${fn}".tar."${COMPRESSED_EXT}"|tar xf -
 done
-try python3 $SCRIPT_PATH/merge_chunks_me.py $1
+
+try python3 $SCRIPT_PATH/merge_chunks_me.py $1 $META
 
 try mv residual_rg.data input_rg.data
 try $BIN_PATH/meme $output
@@ -35,7 +37,7 @@ for d in $META; do
     try cat ongoing_"${d}".data >> "${d}".data
 done
 
-try $BIN_PATH/assort $output
+try $BIN_PATH/assort $output $META
 
 try mv meta.data meta_"$output".data
 try mv mst.data mst_"$output".data
