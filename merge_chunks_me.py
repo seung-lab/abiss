@@ -19,18 +19,22 @@ def merge_face(p,idx,subFaces):
 
 def merge_faces(p, faceMaps):
     merge_incomplete(p, "edges")
-    merge_incomplete(p, "sizes")
-    merge_incomplete(p, "bboxes")
+
+    for meta in sys.argv[2:]:
+        if meta == "mst":
+            print("skip mst")
+            continue
+        merge_incomplete(p, meta)
+
     print(faceMaps)
     for k in faceMaps:
         merge_face(p,k,faceMaps[k])
 
 def merge_chunks(p):
     #cu.merge_intermediate_outputs(p, "complete_edges")
-    cu.merge_intermediate_outputs(p, "ongoing_mst")
-    cu.merge_intermediate_outputs(p, "ongoing_sizes")
-    cu.merge_intermediate_outputs(p, "ongoing_bboxes")
     cu.merge_intermediate_outputs(p, "residual_rg")
+    for meta in sys.argv[2:]:
+        cu.merge_intermediate_outputs(p, "ongoing_{}".format(meta))
     d = p["children"]
     face_maps = {i : [d[k] for k in cu.generate_subface_keys(i) if k in d] for i in range(6)}
     merge_faces(p,face_maps)
