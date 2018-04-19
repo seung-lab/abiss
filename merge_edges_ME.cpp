@@ -24,13 +24,13 @@ int main(int argc, char * argv[])
             str(boost::format("incomplete_edges_%1%.tmp") % tag),
             str(boost::format("incomplete_edges_%1%.data") % tag),
             "new_edges.data");
-    updateSizes<seg_t>(incomplete_segments,
-            str(boost::format("incomplete_sizes_%1%.tmp") % tag),
-            str(boost::format("incomplete_sizes_%1%.data") % tag),
-            "sizes.data");
-    updateBBoxes<seg_t, int64_t>(incomplete_segments,
-            str(boost::format("incomplete_bboxes_%1%.tmp") % tag),
-            str(boost::format("incomplete_bboxes_%1%.data") % tag),
-            "bboxes.data");
+    //updateSizes<seg_t>(incomplete_segments,
+    //        str(boost::format("incomplete_sizes_%1%.tmp") % tag),
+    //        str(boost::format("incomplete_sizes_%1%.data") % tag),
+    //        "sizes.data");
+    //updateBBoxes<seg_t, int64_t>(incomplete_segments,
+    //        str(boost::format("incomplete_bboxes_%1%.tmp") % tag),
+    //        str(boost::format("incomplete_bboxes_%1%.data") % tag),
+    //        "bboxes.data");
 
 }
