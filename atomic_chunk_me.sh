@@ -41,7 +41,10 @@ for d in $META; do
     fi
 done
 
-try $UPLOAD_CMD info_"${output}".txt $FILE_PATH/info/info_"${output}".txt
+if [ ! -z $META ]; then
+    try $UPLOAD_CMD info_"${output}".txt $FILE_PATH/info/info_"${output}".txt
+fi
+
 try $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 try $UPLOAD_CMD mst_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/chunked_mst/mst_"${output}".data."${COMPRESSED_EXT}"
 try $UPLOAD_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/remap_"${output}".data."${COMPRESSED_EXT}"
