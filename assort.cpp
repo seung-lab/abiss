@@ -154,6 +154,10 @@ void write_info(auto counts, const std::string & filename)
 
 int main(int argc, char *argv[])
 {
+    if (argc <= 2) {
+        std::cout << "Nothing to be done" << std::endl;
+        return 0;
+    }
     auto pmap = load_remap("remap.data");
     auto ongoing = load_seg("ongoing_segments.data");
     auto done = load_seg("done_segments.data");
@@ -161,13 +165,20 @@ int main(int argc, char *argv[])
     std::cout << "map size: " << pmap.size() << std::endl;
     auto ongoing_bags = generate_bags(pmap, ongoing);
     auto done_bags = generate_bags(pmap, done);
-    for (const auto & [k, v] : metaData) {
-        auto data = load_data(str(boost::format("%1%.data")%k), v);
-        if (k == "sizes") {
-            auto counts = split_data(data, ongoing_bags, done_bags, v, k, tag);
-            write_info(counts, str(boost::format("info_%1%.txt")%tag));
+    for (int i = 2; i != argc; i++) {
+        auto k = argv[i];
+        std::cout << "processing: " << k << std::endl;
+        if (metaData.count(k) > 0) {
+            auto & v = metaData.at(k);
+            auto data = load_data(str(boost::format("%1%.data")%k), v);
+            if (k == "sizes") {
+                auto counts = split_data(data, ongoing_bags, done_bags, v, k, tag);
+                write_info(counts, str(boost::format("info_%1%.txt")%tag));
+            } else {
+                split_data(data, ongoing_bags, done_bags, v, k, tag);
+            }
         } else {
-            split_data(data, ongoing_bags, done_bags, v, k, tag);
+            std::cout << "Do not understand metadata type: " << k << std::endl;
         }
     }
 }
