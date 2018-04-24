@@ -41,7 +41,7 @@ for d in $META; do
     fi
 done
 
-if [ ! -z $META ]; then
+if [ ! -z "$META" ]; then
     try $UPLOAD_CMD info_"${output}".txt $FILE_PATH/info/info_"${output}".txt
 fi
 
