@@ -10,7 +10,7 @@ boundary_flags = [0,0,0,0,0,0]
 start_coord = bbox[0:3]
 end_coord = bbox[3:6]
 
-seg = load_data(sys.argv[2])
+seg = load_data(sys.argv[2], mip=0)
 seg_cutout = cut_data(seg, start_coord, end_coord, boundary_flags)
 save_raw_data("seg.raw", seg_cutout, seg.dtype)
 

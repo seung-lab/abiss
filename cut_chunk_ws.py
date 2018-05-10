@@ -16,7 +16,7 @@ bbox = param["bbox"]
 boundary_flags = param["boundary_flags"]
 offset = param["offset"]
 
-aff = load_data(os.environ['AFF_PATH'])
+aff = load_data(os.environ['AFF_PATH'],mip=0)
 #aff = numpy.memmap("../aff64.raw", dtype='float64', mode='r', order='F', shape=(2048,2048,256,3))
 start_coord = [bbox[i]-1+boundary_flags[i] for i in range(3)]
 end_coord = [bbox[i+3]+1-boundary_flags[i+3] for i in range(3)]
