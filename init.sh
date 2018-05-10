@@ -14,7 +14,6 @@ DOWNLOAD_CMD="gsutil -m cp"
 COMPRESS_CMD="zstd -9 --rm -T8"
 COMPRESSED_EXT="zst"
 META=""
-THRESHOLD=0.2
 
 try dos2unix /root/.cloudvolume/secrets/config.sh
 try . /root/.cloudvolume/secrets/config.sh
