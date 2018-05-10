@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
     auto ongoing_bags = generate_bags(pmap, ongoing);
     auto done_bags = generate_bags(pmap, done);
     for (int i = 2; i != argc; i++) {
-        auto k = argv[i];
+        auto k = std::string(argv[i]);
         std::cout << "processing: " << k << std::endl;
         if (metaData.count(k) > 0) {
             auto & v = metaData.at(k);
