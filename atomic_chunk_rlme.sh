@@ -15,7 +15,7 @@ do
     cat boundary_"$i"_"$output".data >> frozen.data
 done
 
-try $BIN_PATH/agg $THRESHOLD input_rg.data frozen.data
+try $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data
 try mv meta.data meta_"$output".data
 try mv residual_rg.data residual_rg_"$output".data
 try mv final_rg.data final_rg_"$output".data

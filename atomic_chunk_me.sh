@@ -20,7 +20,7 @@ do
     cat boundary_"$i"_"$output".data >> frozen.data
 done
 
-try $BIN_PATH/agg $THRESHOLD input_rg.data frozen.data
+try $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data
 
 try $BIN_PATH/assort $output $META
 
