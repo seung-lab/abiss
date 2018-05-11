@@ -14,7 +14,7 @@ do
 done
 try python3 $SCRIPT_PATH/merge_chunks_ws.py $1
 #try $BIN_PATH/ws2 param.txt $output >& debug_"${output}".log
-try $BIN_PATH/ws2 param.txt $output
+try $BIN_PATH/ws2 param.txt $WS_HIGH_THRESHOLD $WS_LOW_THRESHOLD $WS_SIZE_THRESHOLD $output
 try $COMPRESS_CMD done_"${output}"_*.data
 try $UPLOAD_CMD done_"${output}"_*.data."${COMPRESSED_EXT}" $FILE_PATH/remap/
 try $COMPRESS_CMD ongoing_"${output}".data

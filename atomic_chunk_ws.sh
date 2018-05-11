@@ -5,7 +5,7 @@ INIT_PATH="$(dirname "$0")"
 output=`basename $1 .json`
 echo $output
 try python3 $SCRIPT_PATH/cut_chunk_ws.py $1
-try $BIN_PATH/ws param.txt aff.raw $output
+try $BIN_PATH/ws param.txt aff.raw $WS_HIGH_THRESHOLD $WS_LOW_THRESHOLD $WS_SIZE_THRESHOLD $output
 try touch remap_"${output}".data
 try touch ongoing_"${output}".data
 try $COMPRESS_CMD seg_"${output}".data
