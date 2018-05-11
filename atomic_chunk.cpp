@@ -33,6 +33,7 @@ int main(int argc, char* argv[])
     std::string ht(argv[3]);
     std::string lt(argv[4]);
     std::string st(argv[5]);
+    std::cout << "thresholds: "<< ht << " " << lt << " " << st << std::endl;
     const char * tag = argv[6];
     auto high_threshold = read_float(ht);
     auto low_threshold = read_float(lt);
