@@ -1,4 +1,3 @@
-#include "defines.h"
 #include "types.hpp"
 #include "utils.hpp"
 #include "agglomeration.hpp"
@@ -56,7 +55,7 @@ region_graph<ID,F> load_dend(size_t data_size)
 
 template<typename ID, typename F>
 std::tuple<std::unordered_map<ID, ID>, size_t, size_t>
-process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, region_graph<ID, F> & rg, const std::string & tag, size_t remap_size, size_t ac_offset)
+process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, region_graph<ID, F> & rg, auto high_threshold, auto low_threshold, auto size_threshold, const std::string & tag, size_t remap_size, size_t ac_offset)
 {
     using traits = watershed_traits<ID>;
     using rank_t = std::unordered_map<ID,std::size_t>;
@@ -75,7 +74,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
 
     for (auto & kv : sizes) {
         sets.make_set(kv.first);
-        descent[kv.first] = HIGH_THRESHOLD;
+        descent[kv.first] = high_threshold;
         segids.push_back(kv.first);
     }
 
@@ -102,19 +101,19 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         if ( fi[idx] && bi[idx] ) {
             bool needs_an_edge = false;
             id_pair<ID> xp = std::minmax(fi[idx], bi[idx]);
-            if ( conn[idx] >= LOW_THRESHOLD ) {
+            if ( conn[idx] >= low_threshold ) {
                 if ( fo[idx] ) {
                     if (fi[idx] != fo[idx]) {
                         std::cout << "something is wrong in fo" << std::endl;
                     }
-                    if ( conn[idx] >= HIGH_THRESHOLD ) {
+                    if ( conn[idx] >= high_threshold ) {
                         if (bi[idx] != bo[idx]) {
                             std::cout << "something is wrong in merge" << std::endl;
                         }
                         same.insert(xp);
                     } else {
                         needs_an_edge = true;
-                        if (descent[fi[idx]] != HIGH_THRESHOLD && descent[fi[idx]] != conn[idx]) {
+                        if (descent[fi[idx]] != high_threshold && descent[fi[idx]] != conn[idx]) {
                             std::cout << "This should not happen in a" << std::endl;
                             std::cout << fi[idx] << " " << bi[idx] << std::endl;
                             std::cout << descent[fi[idx]] << " " << conn[idx] << std::endl;
@@ -125,14 +124,14 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
                     if (bi[idx] != bo[idx]) {
                         std::cout << "something is wrong in bo" << std::endl;
                     }
-                    if ( conn[idx] >= HIGH_THRESHOLD ) {
+                    if ( conn[idx] >= high_threshold ) {
                         if (fi[idx] != fo[idx]) {
                             std::cout << "something is wrong in merge" << std::endl;
                         }
                         same.insert(xp);
                     } else {
                         needs_an_edge = true;
-                        if (descent[bi[idx]] != HIGH_THRESHOLD && descent[bi[idx]] != conn[idx]) {
+                        if (descent[bi[idx]] != high_threshold && descent[bi[idx]] != conn[idx]) {
                             std::cout << "This should not happen in b" << std::endl;
                             std::cout << fi[idx] << " " << bi[idx] << std::endl;
                             std::cout << descent[bi[idx]] << " " << conn[idx] << std::endl;
@@ -140,7 +139,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
                         descent[bi[idx]] = conn[idx];
                     }
                 } else {
-                    if (conn[idx] >= HIGH_THRESHOLD) {
+                    if (conn[idx] >= high_threshold) {
                         std::cout << "something is wrong in edge" << std::endl;
                     }
                     needs_an_edge = true;
@@ -185,7 +184,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             sizes[v1] |= sizes[v2]&traits::on_border;
             sizes[v2]  = 0;
             std::swap( sizes[vr], sizes[v1] );
-            descent[vr] = HIGH_THRESHOLD;
+            descent[vr] = high_threshold;
         }
     }
     end = clock();
@@ -199,7 +198,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         const ID v1 = sets.find_set( std::get<1>(t) );
         const ID v2 = sets.find_set( std::get<2>(t) );
 
-        if (val < LOW_THRESHOLD) {
+        if (val < low_threshold) {
             break;
         }
 
@@ -218,7 +217,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             n_merger += 1;
             if ( descent[vr] != val )
             {
-                descent[vr] = HIGH_THRESHOLD;
+                descent[vr] = high_threshold;
             }
         }
     }
@@ -235,12 +234,12 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         const ID v1 = sets.find_set( std::get<1>(t) );
         const ID v2 = sets.find_set( std::get<2>(t) );
 
-        if (val < LOW_THRESHOLD) {
+        if (val < low_threshold) {
             break;
         }
 
         if ( v1 != v2 && v1 && v2 ) {
-            if (try_merge(sizes, sets, v1, v2, SIZE_THRESHOLD)) {
+            if (try_merge(sizes, sets, v1, v2, size_threshold)) {
                 n_merger += 1;
             }
         }
@@ -260,13 +259,13 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         const ID v = kv.first;
         size_t size = kv.second;
         const ID s = sets.find_set(v);
-        if (sizes[s] >= SIZE_THRESHOLD) {
+        if (sizes[s] >= size_threshold) {
             remaps[v] = s;
         } else {
             remaps[v] = 0;
         }
 
-        if ( (size & (~traits::on_border)) && size >= SIZE_THRESHOLD  ) {
+        if ( (size & (~traits::on_border)) && size >= size_threshold  ) {
             if (s != v) {
                 std::cout << "s("<<s<<") != v("<<v<<")" << std::endl;
             }
@@ -480,7 +479,13 @@ int main(int argc, char* argv[])
     int flag;
     size_t face_size, counts, dend_size, remap_size, ac_offset;
     std::ifstream param_file(argv[1]);
-    const char * tag = argv[2];
+    std::string ht(argv[2]);
+    std::string lt(argv[3]);
+    std::string st(argv[4]);
+    const char * tag = argv[5];
+    auto high_threshold = read_float(ht);
+    auto low_threshold = read_float(lt);
+    auto size_threshold = read_int(st);
     param_file >> xdim >> ydim >> zdim;
     std::cout << xdim << " " << ydim << " " << zdim << std::endl;
     std::array<bool,6> flags({true,true,true,true,true,true});
@@ -515,7 +520,7 @@ int main(int argc, char* argv[])
     size_t c = 0;
     size_t d = 0;
 
-    std::tie(remaps, c, d) = process_chunk_borders<seg_t, aff_t>(face_size, sizes, dend, tag, remap_size, ac_offset);
+    std::tie(remaps, c, d) = process_chunk_borders<seg_t, aff_t>(face_size, sizes, dend, high_threshold, low_threshold, size_threshold, tag, remap_size, ac_offset);
     update_border_supervoxels(remaps, flags, std::array<size_t, 6>({ydim*zdim, xdim*zdim, xdim*ydim, ydim*zdim, xdim*zdim, xdim*ydim}), tag);
     //auto m = write_remap(remaps, tag);
     std::vector<size_t> meta({xdim,ydim,zdim,c,d,0});

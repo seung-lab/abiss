@@ -50,3 +50,13 @@ using region_graph = std::vector<std::tuple<F,ID,ID>>;
 
 template< typename ID, typename F >
 using region_graph_ptr = std::shared_ptr<region_graph<ID,F>>;
+
+auto read_float(std::string & s)
+{
+    return std::stof(s);
+}
+
+auto read_int(std::string & s)
+{
+    return std::stoi(s);
+}

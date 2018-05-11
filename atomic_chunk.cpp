@@ -1,5 +1,4 @@
 //#pragma once
-#include "defines.h"
 #include "agglomeration.hpp"
 #include "region_graph.hpp"
 #include "basic_watershed.hpp"
@@ -17,6 +16,7 @@
 #include <vector>
 #include <algorithm>
 #include <tuple>
+#include <string>
 #include <vector>
 #include <chrono>
 #include <ctime>
@@ -30,7 +30,13 @@ int main(int argc, char* argv[])
     int flag;
     seg_t offset;
     std::ifstream param_file(argv[1]);
-    const char * tag = argv[3];
+    std::string ht(argv[3]);
+    std::string lt(argv[4]);
+    std::string st(argv[5]);
+    const char * tag = argv[6];
+    auto high_threshold = read_float(ht);
+    auto low_threshold = read_float(lt);
+    auto size_threshold = read_int(st);
     param_file >> xdim >> ydim >> zdim;
     std::cout << xdim << " " << ydim << " " << zdim << std::endl;
     std::array<bool,6> flags({true,true,true,true,true,true});
@@ -59,18 +65,18 @@ int main(int argc, char* argv[])
     std::vector<std::size_t> counts;
 
     begin = clock();
-    std::tie(seg , counts) = watershed<seg_t>(aff, LOW_THRESHOLD, HIGH_THRESHOLD, flags);
+    std::tie(seg , counts) = watershed<seg_t>(aff, low_threshold, high_threshold, flags);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "finished watershed in " << elapsed_secs << " seconds" << std::endl;
     begin = clock();
-    auto rg = get_region_graph(aff, seg , counts.size()-1, LOW_THRESHOLD, flags);
+    auto rg = get_region_graph(aff, seg , counts.size()-1, low_threshold, flags);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "finished region graph in " << elapsed_secs << " seconds" << std::endl;
 
     begin = clock();
-    merge_segments(seg, rg, counts, std::make_pair(SIZE_THRESHOLD, LOW_THRESHOLD), SIZE_THRESHOLD, offset);
+    merge_segments(seg, rg, counts, std::make_pair(size_threshold, low_threshold), size_threshold, offset);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
