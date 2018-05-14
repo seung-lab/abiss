@@ -51,9 +51,23 @@ using region_graph = std::vector<std::tuple<F,ID,ID>>;
 template< typename ID, typename F >
 using region_graph_ptr = std::shared_ptr<region_graph<ID,F>>;
 
+template< typename T >
 auto read_float(std::string & s)
 {
+    std::cout << "Not implemented, returns 0" << std::endl;
+    return 0;
+}
+
+template <>
+auto read_float<float>(std::string & s)
+{
     return std::stof(s);
+}
+
+template <>
+auto read_float<double>(std::string & s)
+{
+    return std::stod(s);
 }
 
 auto read_int(std::string & s)

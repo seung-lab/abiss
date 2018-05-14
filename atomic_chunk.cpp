@@ -35,8 +35,8 @@ int main(int argc, char* argv[])
     std::string st(argv[5]);
     std::cout << "thresholds: "<< ht << " " << lt << " " << st << std::endl;
     const char * tag = argv[6];
-    auto high_threshold = read_float(ht);
-    auto low_threshold = read_float(lt);
+    auto high_threshold = read_float<aff_t>(ht);
+    auto low_threshold = read_float<aff_t>(lt);
     auto size_threshold = read_int(st);
     param_file >> xdim >> ydim >> zdim;
     std::cout << xdim << " " << ydim << " " << zdim << std::endl;
