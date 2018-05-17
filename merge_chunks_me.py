@@ -22,7 +22,7 @@ def merge_faces(p, faceMaps):
 
     for meta in sys.argv[2:]:
         if meta == "mst":
-            print("skip mst")
+            print("skip mst, mst is either ongoing or complete, there is no incomplete ones")
             continue
         merge_incomplete(p, meta)
 
