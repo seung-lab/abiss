@@ -22,7 +22,7 @@ done
 try python3 $SCRIPT_PATH/merge_chunks_me.py $1 $META
 
 try mv residual_rg.data input_rg.data
-try $BIN_PATH/meme $output
+try $BIN_PATH/meme $output $META
 try cat new_edges.data >> input_rg.data
 try mv new_edges.data edges_"$output".data
 
