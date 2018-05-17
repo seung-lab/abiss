@@ -20,20 +20,29 @@ int main(int argc, char * argv[])
         incomplete_segments.merge(updateBoundarySegments<seg_t>(i, tag));
     }
     std::cout << incomplete_segments.size() << " incomplete segments" << std::endl;
+
     updateRegionGraph<seg_t, aff_t>(incomplete_segments,
             str(boost::format("incomplete_edges_%1%.tmp") % tag),
             str(boost::format("incomplete_edges_%1%.data") % tag),
             "new_edges.data");
+    for  (int i = 2; i != argc; i++) {
+        auto k = std::string(argv[i]);
+        std::cout << "processing: " << k << std::endl;
 #ifdef EXTRACT_SIZE
-    updateSizes<seg_t>(incomplete_segments,
-            str(boost::format("incomplete_sizes_%1%.tmp") % tag),
-            str(boost::format("incomplete_sizes_%1%.data") % tag),
-            "sizes.data");
+        if (k == "sizes") {
+            updateSizes<seg_t>(incomplete_segments,
+                    str(boost::format("incomplete_sizes_%1%.tmp") % tag),
+                    str(boost::format("incomplete_sizes_%1%.data") % tag),
+                    "sizes.data");
+        }
 #endif
 #ifdef EXTRACT_BBOX
-    updateBBoxes<seg_t, int64_t>(incomplete_segments,
-            str(boost::format("incomplete_bboxes_%1%.tmp") % tag),
-            str(boost::format("incomplete_bboxes_%1%.data") % tag),
-            "bboxes.data");
+        if (k == "bboxes") {
+            updateBBoxes<seg_t, int64_t>(incomplete_segments,
+                    str(boost::format("incomplete_bboxes_%1%.tmp") % tag),
+                    str(boost::format("incomplete_bboxes_%1%.data") % tag),
+                    "bboxes.data");
+        }
 #endif
+    }
 }
