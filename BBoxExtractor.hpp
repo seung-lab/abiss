@@ -79,8 +79,8 @@ std::unordered_map<Ts, BBox<Ti> > loadBBoxes(const std::string & fileName)
     BBox<Ti> bbox;
     while (in.read(reinterpret_cast<char *>(&s), sizeof(s))) {
         in.read(reinterpret_cast<char *>(&s), sizeof(s));
-        in.read(reinterpret_cast<char *>(bbox.minPt.data()), sizeof(bbox.minPt.data()));
-        in.read(reinterpret_cast<char *>(bbox.maxPt.data()), sizeof(bbox.maxPt.data()));
+        in.read(reinterpret_cast<char *>(bbox.minPt.data()), sizeof(bbox.minPt));
+        in.read(reinterpret_cast<char *>(bbox.maxPt.data()), sizeof(bbox.maxPt));
         for (int i = 0; i != 3; i++) {
             bboxes[s].minPt[i] = std::min(bbox.minPt[i], bboxes[s].minPt[i]);
             bboxes[s].maxPt[i] = std::max(bbox.maxPt[i], bboxes[s].maxPt[i]);
