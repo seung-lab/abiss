@@ -7,7 +7,7 @@ def chunk_origin(bbox):
     offset = bbox[0:3]
     for i in range(3):
         if boundary_flags[i] == 1:
-            offset[i] = -1
+            offset[i] -= 1
     return offset
 
 def write_metadata(fn, offset, size):
