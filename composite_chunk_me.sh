@@ -31,7 +31,7 @@ do
     cat boundary_"$i"_"$output".data >> frozen.data
 done
 
-try $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data
+try $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
 
 for d in $META; do
     try cat ongoing_"${d}".data >> "${d}".data
@@ -44,6 +44,8 @@ try mv mst.data mst_"$output".data
 try mv remap.data remap_"$output".data
 try mv residual_rg.data residual_rg_"$output".data
 try mv final_rg.data final_rg_"$output".data
+try mv done_segments.data info_"$output".data
+try mv ongoing_segments.data ongoing_supervoxel_counts_"$output".data
 
 try $COMPRESS_CMD mst_"${output}".data
 try $COMPRESS_CMD remap_"${output}".data
@@ -56,9 +58,7 @@ for d in $META; do
     fi
 done
 
-if [ ! -z "$META" ]; then
-    try $UPLOAD_CMD info_"${output}".txt $FILE_PATH/info/info_"${output}".txt
-fi
+try $UPLOAD_CMD info_"${output}".data $FILE_PATH/info/info_"${output}".data
 
 try $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 try $UPLOAD_CMD mst_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/chunked_mst/mst_"${output}".data."${COMPRESSED_EXT}"
