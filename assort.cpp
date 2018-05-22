@@ -52,8 +52,10 @@ std::vector<seg_t> load_seg(const char * filename)
 {
     std::vector<seg_t> segs;
     seg_t s;
+    size_t count;
     std::ifstream in(filename);
     while (in.read(reinterpret_cast<char *>(&s), sizeof(s))) {
+        in.read(reinterpret_cast<char *>(&count), sizeof(count));
         segs.push_back(s);
     }
     return segs;
@@ -126,8 +128,6 @@ auto split_data(const auto & data, const auto & ongoing, const auto & done, size
     }
     out.close();
 
-    std::vector<std::pair<seg_t, size_t> > counts;
-
     for (auto & [k, v] : done) {
         if (v.size() == 1 && data.count(v[0]) == 0) {
             continue;
@@ -135,21 +135,8 @@ auto split_data(const auto & data, const auto & ongoing, const auto & done, size
         std::ofstream o(str(boost::format("%1%/%2%.data")%type%k), std::ios_base::binary);
         assert(o.is_open());
         auto n = write_data(data, k , v, o, payloadSize);
-        counts.emplace_back(k, n);
         o.close();
     }
-    return counts;
-}
-
-void write_info(auto counts, const std::string & filename)
-{
-    std::ofstream out(filename);
-    assert(out.is_open());
-    for (const auto & [k, v] : counts) {
-        out << k << " " << v << std::endl;
-    }
-    assert(!out.bad());
-    out.close();
 }
 
 int main(int argc, char *argv[])
@@ -171,12 +158,7 @@ int main(int argc, char *argv[])
         if (metaData.count(k) > 0) {
             auto & v = metaData.at(k);
             auto data = load_data(str(boost::format("%1%.data")%k), v);
-            if (k == "sizes") {
-                auto counts = split_data(data, ongoing_bags, done_bags, v, k, tag);
-                write_info(counts, str(boost::format("info_%1%.txt")%tag));
-            } else {
-                split_data(data, ongoing_bags, done_bags, v, k, tag);
-            }
+            split_data(data, ongoing_bags, done_bags, v, k, tag);
         } else {
             std::cout << "Do not understand metadata type: " << k << std::endl;
         }
