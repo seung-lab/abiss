@@ -1,4 +1,6 @@
+from cloudvolume import CloudVolume
 from chunk_iterator import ChunkIterator
+import sys
 import json
 
 def process_atomic_chunks(c, top_mip, idx):
@@ -65,7 +67,21 @@ top_mip = v.top_mip_level()
 
 f_task = open("task.txt", "w")
 f_deps = open("deps.txt", "w")
-print([data_bbox[i+3] - data_bbox[i] for i in range(3)])
+
+if (len(sys.argv) == 2):
+    metadata_seg = CloudVolume.create_new_info(
+            num_channels    = 1,
+            layer_type      = 'segmentation',
+            data_type       = 'uint64',
+            encoding        = 'raw',
+            resolution      = [8, 8, 40], # Pick scaling for your data!
+            voxel_offset    = data_bbox[0:3],
+            chunk_size      = [64,64,8], # This must divide evenly into image length or you won't cover the whole cube
+            volume_size     = [data_bbox[i+3] - data_bbox[i] for i in range(3)]
+            )
+
+    vol_ws = CloudVolume(sys.argv[1], mip=0, info=metadata_seg)
+    vol_ws.commit_info()
 
 index = 0
 for c in v:
