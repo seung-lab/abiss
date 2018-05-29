@@ -22,7 +22,7 @@ def process_composite_chunks(c, top_mip, offset):
         "indices": c.coordinate(),
         "bbox": c.data_bbox(),
         "boundary_flags": c.boundary_flags(),
-        "children": {k: v.coordinate() for k, v in d.iteritems() if v.has_data()},
+        "children": {k: v.coordinate() for k, v in d.items() if v.has_data()},
         "ac_offset" : offset
     }
     fn = str(c.mip_level()) + "_" + "_".join([str(i) for i in c.coordinate()]) + ".json"
