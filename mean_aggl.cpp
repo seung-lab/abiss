@@ -362,69 +362,67 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         if (v0 != v1)
         {
 
-            {
-                auto s = v0;
-                if (incident[v0].size() < incident[v1].size()) {
-                    s = v1;
-                }
-                if (frozen_supervoxels.count(v0) > 0 && frozen_supervoxels.count(v1) > 0) {
+            auto s = v0;
+            if (incident[v0].size() < incident[v1].size()) {
+                s = v1;
+            }
+            if (frozen_supervoxels.count(v0) > 0 && frozen_supervoxels.count(v1) > 0) {
+                of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+                of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+                write_edge(of_res, e.edge.w);
+                residue_size++;
+                continue;
+            }
+
+            if (frozen_supervoxels.count(v0) > 0) {
+                s = v0;
+                if (n_intersection(incident.neighbors(v1), frozen_supervoxels) > 1) {
+                    frozen_supervoxels.insert(v1);
                     of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
                     of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
                     write_edge(of_res, e.edge.w);
                     residue_size++;
                     continue;
                 }
+            }
 
-                if (frozen_supervoxels.count(v0) > 0) {
-                    s = v0;
-                    if (n_intersection(incident.neighbors(v1), frozen_supervoxels) > 1) {
-                        frozen_supervoxels.insert(v1);
-                        of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-                        of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
-                        write_edge(of_res, e.edge.w);
-                        residue_size++;
-                        continue;
-                    }
+            if (frozen_supervoxels.count(v1) > 0) {
+                s = v1;
+                if (n_intersection(incident.neighbors(v0), frozen_supervoxels) > 1) {
+                    frozen_supervoxels.insert(v0);
+                    of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+                    of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+                    write_edge(of_res, e.edge.w);
+                    residue_size++;
+                    continue;
                 }
+            }
 
-                if (frozen_supervoxels.count(v1) > 0) {
-                    s = v1;
-                    if (n_intersection(incident.neighbors(v0), frozen_supervoxels) > 1) {
-                        frozen_supervoxels.insert(v0);
-                        of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-                        of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
-                        write_edge(of_res, e.edge.w);
-                        residue_size++;
-                        continue;
-                    }
-                }
+            //std::cout << "Joined " << v0 << " and " << v1 << std::endl;
+                       //<< " at " << e->edge.w << "\n";
+            auto total = supervoxel_counts.at(v0) + supervoxel_counts.at(v1);
+            supervoxel_counts[v0] = 0;
+            supervoxel_counts[v1] = 0;
+            supervoxel_counts[s] = total;
+            of_mst.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+            of_mst.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+            of_mst.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+            mst_size++;
+            write_edge(of_mst, e.edge.w);
+            if (v0 == s) {
+                of_remap.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+                of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+            } else if (v1 == s) {
+                of_remap.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+                of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+            } else {
+                std::cout << "Something is wrong in the MST" << std::endl;
+                std::cout << "s: " << s << ", v0: " << v0 << ", v1: " << v1 << std::endl;
+            }
 
-                //std::cout << "Joined " << v0 << " and " << v1 << std::endl;
-                           //<< " at " << e->edge.w << "\n";
-                auto total = supervoxel_counts.at(v0) + supervoxel_counts.at(v1);
-                supervoxel_counts[v0] = 0;
-                supervoxel_counts[v1] = 0;
-                supervoxel_counts[s] = total;
-                of_mst.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
-                of_mst.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-                of_mst.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
-                mst_size++;
-                write_edge(of_mst, e.edge.w);
-                if (v0 == s) {
-                    of_remap.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
-                    of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
-                } else if (v1 == s) {
-                    of_remap.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-                    of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
-                } else {
-                    std::cout << "Something is wrong in the MST" << std::endl;
-                    std::cout << "s: " << s << ", v0: " << v0 << ", v1: " << v1 << std::endl;
-                }
-
-                if (s == v0)
-                {
-                    std::swap(v0, v1);
-                }
+            if (s == v0)
+            {
+                std::swap(v0, v1);
             }
 
             // v0 is dissapearing from the graph
