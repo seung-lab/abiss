@@ -396,9 +396,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                     continue;
                 }
             }
-
-            //std::cout << "Joined " << v0 << " and " << v1 << std::endl;
-                       //<< " at " << e->edge.w << "\n";
+            //std::cout << "Join " << v0 << " and " << v1 << std::endl;
             auto total = supervoxel_counts.at(v0) + supervoxel_counts.at(v1);
             supervoxel_counts[v0] = 0;
             supervoxel_counts[v1] = 0;
@@ -472,6 +470,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     of_remap.close();
 
     //std::cout << "Total of " << next << " segments\n";
+    //
+    std::cout << "edges frozen above threshold: " << residue_size << std::endl;
     std::ofstream of_frg;
     of_frg.open("final_rg.data", std::ofstream::out | std::ofstream::trunc);
 
@@ -493,6 +493,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
         }
     }
+
+    std::cout << "edges frozen: " << residue_size << std::endl;
 
     assert(!of_res.bad());
     assert(!of_frg.bad());
