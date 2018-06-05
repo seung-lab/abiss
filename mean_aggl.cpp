@@ -343,6 +343,9 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     std::ofstream of_res;
     of_res.open("residual_rg.data", std::ofstream::out | std::ofstream::trunc);
 
+    std::ofstream of_reject;
+    of_reject.open("rejected_edges.log", std::ofstream::out | std::ofstream::trunc);
+
     std::cout << "looping through the heap" << std::endl;
 
     while (!heap.empty() && comp(heap.top().edge.w, threshold))
@@ -366,7 +369,14 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             if (incident[v0].size() < incident[v1].size()) {
                 s = v1;
             }
-            if (frozen_supervoxels.count(v0) > 0 && frozen_supervoxels.count(v1) > 0) {
+
+            // earase the edge e = {v0,v1}
+            incident[v0].erase(v1);
+            incident[v1].erase(v0);
+
+            if (frozen_supervoxels.count(v0) > 0 || frozen_supervoxels.count(v1) > 0) {
+                frozen_supervoxels.insert(v0);
+                frozen_supervoxels.insert(v1);
                 of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
                 of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
                 write_edge(of_res, e.edge.w);
@@ -374,26 +384,15 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 continue;
             }
 
-            if (frozen_supervoxels.count(v0) > 0) {
-                s = v0;
-                if (n_intersection(incident.neighbors(v1), frozen_supervoxels) > 1) {
-                    frozen_supervoxels.insert(v1);
-                    of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-                    of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
-                    write_edge(of_res, e.edge.w);
-                    residue_size++;
-                    continue;
-                }
-            }
-
-            if (frozen_supervoxels.count(v1) > 0) {
-                s = v1;
-                if (n_intersection(incident.neighbors(v0), frozen_supervoxels) > 1) {
-                    frozen_supervoxels.insert(v0);
-                    of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-                    of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
-                    write_edge(of_res, e.edge.w);
-                    residue_size++;
+            //std::cout << "Test " << v0 << " and " << v1 << std::endl;
+                       //<< " at " << e->edge.w << "\n";
+            if (e.edge.w.sum/e.edge.w.num < 0.5) {
+                auto p = std::minmax(supervoxel_counts.at(v0), supervoxel_counts.at(v1));
+                if (p.first > 1000 and p.second > 10000) {
+                    std::cout << "reject edge between " << v0 << "(" << supervoxel_counts.at(v0) << ")"<< " and " << v1 << "(" << supervoxel_counts.at(v1) << ")"<< std::endl;
+                    of_reject.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+                    of_reject.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+                    write_edge(of_reject, e.edge.w);
                     continue;
                 }
             }
@@ -426,10 +425,6 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             }
 
             // v0 is dissapearing from the graph
-
-            // earase the edge e = {v0,v1}
-            incident[v0].erase(v1);
-            incident[v1].erase(v0);
 
             // loop over other edges e0 = {v0,v}
             for (auto& e0 : incident[v0])
@@ -501,8 +496,10 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
     assert(!of_res.bad());
     assert(!of_frg.bad());
+    assert(!of_reject.bad());
     of_res.close();
     of_frg.close();
+    of_reject.close();
 
     std::ofstream of_meta;
     of_meta.open("meta.data", std::ofstream::out | std::ofstream::trunc);
