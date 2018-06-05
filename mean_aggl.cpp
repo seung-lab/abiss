@@ -401,27 +401,26 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
                 //std::cout << "Joined " << v0 << " and " << v1 << std::endl;
                            //<< " at " << e->edge.w << "\n";
-                if (v0 != v1) {
-                    auto total = supervoxel_counts.at(v0) + supervoxel_counts.at(v1);
-                    supervoxel_counts[v0] = 0;
-                    supervoxel_counts[v1] = 0;
-                    supervoxel_counts[s] = total;
-                    of_mst.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
-                    of_mst.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-                    of_mst.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
-                    mst_size++;
-                    write_edge(of_mst, e.edge.w);
-                    if (v0 == s) {
-                        of_remap.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
-                        of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
-                    } else if (v1 == s) {
-                        of_remap.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-                        of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
-                    } else {
-                        std::cout << "Something is wrong in the MST" << std::endl;
-                        std::cout << "s: " << s << ", v0: " << v0 << ", v1: " << v1 << std::endl;
-                    }
+                auto total = supervoxel_counts.at(v0) + supervoxel_counts.at(v1);
+                supervoxel_counts[v0] = 0;
+                supervoxel_counts[v1] = 0;
+                supervoxel_counts[s] = total;
+                of_mst.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+                of_mst.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+                of_mst.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+                mst_size++;
+                write_edge(of_mst, e.edge.w);
+                if (v0 == s) {
+                    of_remap.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+                    of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+                } else if (v1 == s) {
+                    of_remap.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
+                    of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+                } else {
+                    std::cout << "Something is wrong in the MST" << std::endl;
+                    std::cout << "s: " << s << ", v0: " << v0 << ", v1: " << v1 << std::endl;
                 }
+
                 if (s == v0)
                 {
                     std::swap(v0, v1);
