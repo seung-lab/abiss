@@ -14,4 +14,4 @@ try $DOWNLOAD_CMD $FILE_PATH/seg/seg_"${output}".data."${COMPRESSED_EXT}" seg_"$
 try python3 $SCRIPT_PATH/merge_remaps_ws.py $1
 try $COMPRESS_CMD -d seg_"${output}".data."${COMPRESSED_EXT}"
 try $BIN_PATH/ws3 param.txt seg_"${output}".data
-#try python3 $SCRIPT_PATH/upload_chunk.py $1 $WS_PATH $WS_MIP
+try python3 $SCRIPT_PATH/upload_chunk.py $1 $WS_PATH $WS_MIP
