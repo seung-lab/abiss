@@ -7,10 +7,19 @@ echo $output
 try python3 $SCRIPT_PATH/generate_branch.py $1|tee filelist.txt
 for fn in $(cat filelist.txt)
 do
-    try $DOWNLOAD_CMD $FILE_PATH/meta/meta_"${fn}".data .
-    try $DOWNLOAD_CMD $FILE_PATH/remap/remap_"${fn}".data."${COMPRESSED_EXT}" .
-    try $COMPRESS_CMD -d remap_"${fn}".data."${COMPRESSED_EXT}"
+    try $DOWNLOAD_CMD $FILE_PATH/meta/meta_"${fn}".data . &
+    try $DOWNLOAD_CMD $FILE_PATH/remap/remap_"${fn}".data."${COMPRESSED_EXT}" . &
 done
+
+wait
+
+for fn in $(cat filelist.txt)
+do
+    try $COMPRESS_CMD -d remap_"${fn}".data."${COMPRESSED_EXT}" &
+done
+
+wait
+
 try python3 $SCRIPT_PATH/cut_chunk_remap.py $1 $WS_PATH
 try python3 $SCRIPT_PATH/merge_remaps.py $1
 try mv seg.raw seg_"${output}".data
