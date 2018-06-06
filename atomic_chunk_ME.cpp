@@ -43,7 +43,7 @@ int main(int argc, char * argv[])
     size_t aff_bytes = sizeof(aff_t)*dim[0]*dim[1]*dim[2]*3;
     aff_file.open("aff.raw", aff_bytes);
     assert(aff_file.is_open());
-    ConstChunkRef<aff_t,4> aff_chunk (reinterpret_cast<const aff_t*>(aff_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])][3], boost::fortran_storage_order());
+    ConstChunkRef<aff_t, 4> aff_chunk (reinterpret_cast<const aff_t*>(aff_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])][3], boost::fortran_storage_order());
     std::cout << "mmap aff data" << std::endl;
 
     AffinityExtractorME<seg_t, aff_t, ConstChunkRef<aff_t, 4> > affinity_extractor(aff_chunk);
