@@ -8,6 +8,7 @@ echo $output
 for d in $META; do
     just_in_case rm -rf $d
     try mkdir $d
+    try touch $d/.nonempty.txt
 done
 
 try python3 $SCRIPT_PATH/generate_children.py $1|tee filelist.txt
