@@ -16,17 +16,9 @@ try python3 $SCRIPT_PATH/generate_children.py $1|tee filelist.txt
 for fn in $(cat filelist.txt)
 do
     just_in_case rm -rf $fn
-    try $DOWNLOAD_CMD $FILE_PATH/scratch/"${fn}".tar."${COMPRESSED_EXT}" . &
 done
 
-wait
-
-for fn in $(cat filelist.txt)
-do
-    try $COMPRESS_CMD -d -c "${fn}".tar."${COMPRESSED_EXT}"|tar xf - &
-done
-
-wait
+try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/scratch/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
 
 try python3 $SCRIPT_PATH/merge_chunks_me.py $1 $META
 
@@ -62,13 +54,9 @@ try $COMPRESS_CMD remap_"${output}".data
 try $COMPRESS_CMD edges_"${output}".data
 try $COMPRESS_CMD final_rg_"${output}".data
 
-for d in $META; do
-    if [ "$(ls -A $d)"  ]; then
-        try $UPLOAD_CMD -r $d $FILE_PATH/ &
-    fi
-done
-
-wait
+if [ -n "$META" ]; then
+    try $PARALLEL_CMD $UPLOAD_CMD -r {} $FILE_PATH/ ::: $META
+fi
 
 try $UPLOAD_CMD info_"${output}".data $FILE_PATH/info/info_"${output}".data
 try $UPLOAD_CMD rejected_edges_"${output}".log $FILE_PATH/info/rejected_edges_"${output}".log

@@ -12,6 +12,7 @@ BIN_PATH="/root/agg/build"
 UPLOAD_CMD="gsutil -q -m cp"
 DOWNLOAD_CMD="gsutil -m cp"
 COMPRESS_CMD="zstd -9 --rm -T8"
+PARALLEL_CMD="parallel --verbose --halt 2"
 COMPRESSED_EXT="zst"
 META=""
 

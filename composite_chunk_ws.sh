@@ -5,13 +5,10 @@ INIT_PATH="$(dirname "$0")"
 output=`basename $1 .json`
 echo $output
 try python3 $SCRIPT_PATH/generate_children.py $1|tee filelist.txt
-for fn in $(cat filelist.txt)
-do
-    try $DOWNLOAD_CMD $FILE_PATH/dend/$fn.tar."${COMPRESSED_EXT}" .
-    try $COMPRESS_CMD -d -c $fn.tar."${COMPRESSED_EXT}"|tar xf -
-    try $DOWNLOAD_CMD $FILE_PATH/remap/ongoing_"${fn}".data."${COMPRESSED_EXT}" .
-    try $COMPRESS_CMD -d ongoing_"${fn}".data."${COMPRESSED_EXT}"
-done
+
+try cat filelist.txt|$PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/dend/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
+try cat filelist.txt|$PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/remap/ongoing_{}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o ongoing_{}.data"
+
 try python3 $SCRIPT_PATH/merge_chunks_ws.py $1
 #try $BIN_PATH/ws2 param.txt $output >& debug_"${output}".log
 try $BIN_PATH/ws2 param.txt $WS_HIGH_THRESHOLD $WS_LOW_THRESHOLD $WS_SIZE_THRESHOLD $output
