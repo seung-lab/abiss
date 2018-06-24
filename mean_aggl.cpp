@@ -224,7 +224,7 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     std::ifstream ns_file(ns_filename);
     if (!ns_file.is_open()) {
         std::cout << "Cannot open the supervoxel count file" << std::endl;
-        return agg_data;
+        std::abort();
     }
 
     seg_t seg;
@@ -233,10 +233,12 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
         ns_file.read(reinterpret_cast<char *>(&count), sizeof(count));
         if (count == 0) {
             std::cout << "SHOULD NOT HAPPEN, 0 supervoxel for : " << seg << std::endl;
+            std::abort();
         }
         if (supervoxel_counts.count(seg) > 0) {
             if (supervoxel_counts.at(seg) != 1 || count != 1) {
                 std::cout << "multiple entries for " << seg << " " << supervoxel_counts.at(seg) << ", " << count << std::endl;
+                std::abort();
             }
             supervoxel_counts[seg] += (count - 1);
         } else {
@@ -247,7 +249,7 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     std::ifstream rg_file(rg_filename);
     if (!rg_file.is_open()) {
         std::cout << "Cannot open the region graph file" << std::endl;
-        return agg_data;
+        std::abort();
     }
 
     seg_t v0, v1;
@@ -293,7 +295,7 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     std::ifstream fs_file(fs_filename);
     if (!fs_file.is_open()) {
         std::cout << "Cannot open the frozen supervoxel file" << std::endl;
-        return agg_data;
+        std::abort();
     }
 
     std::cout << "reading frozen sv" << std::endl;
@@ -415,6 +417,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             } else {
                 std::cout << "Something is wrong in the MST" << std::endl;
                 std::cout << "s: " << s << ", v0: " << v0 << ", v1: " << v1 << std::endl;
+                std::abort();
             }
 
             if (s == v0)
@@ -522,6 +525,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         of_fs.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
         if (supervoxel_counts.at(s) == 0) {
             std::cout << "SHOULD NOT HAPPEN, frozen supervoxel agglomerated: " << s << std::endl;
+            std::abort();
         }
         of_fs.write(reinterpret_cast<const char *>(&(supervoxel_counts.at(s))), sizeof(size_t));
     }
