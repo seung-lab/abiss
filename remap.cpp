@@ -12,54 +12,20 @@
 template<typename T>
 std::unordered_map<T,T> generate_remap(std::string filename, size_t data_size)
 {
-    using rank_t = std::unordered_map<T,std::size_t>;
-    using parent_t = std::unordered_map<T,T>;;
-    rank_t rank_map(data_size);
-    parent_t parent_map(data_size);
+    std::unordered_map<T,T> parent_map(data_size);
 
     if (data_size > 0) {
-        boost::associative_property_map<rank_t> rank_pmap(rank_map);
-        boost::associative_property_map<parent_t> parent_pmap(parent_map);
-
-        boost::disjoint_sets<boost::associative_property_map<rank_t>, boost::associative_property_map<parent_t> > sets(rank_pmap, parent_pmap);
         MMArray<std::pair<T, T>, 1> remap_data(filename, std::array<size_t, 1>({data_size}));
         auto remap = remap_data.data();
-        std::unordered_set<T> nodes(data_size);
-        for (size_t i = 0; i != data_size; i++) {
-            if ((i+1) % 100000000 == 0) {
-                std::cout << i << " remaps processed" << std::endl;
+        for (size_t i = data_size; i != 0; i--) {
+            //std::cout << "i:" << i << std::endl;
+            T s1 = remap[i-1].first;
+            T s2 = remap[i-1].second;
+            if (parent_map.count(s2) == 0) {
+                parent_map[s1] = s2;
+            } else {
+                parent_map[s1] = parent_map[s2];
             }
-            T s1 = remap[i].first;
-            T s2 = remap[i].second;
-            if (nodes.count(s1) == 0) {
-                nodes.insert(s1);
-                sets.make_set(s1);
-
-            }
-            if (nodes.count(s2) == 0) {
-                nodes.insert(s2);
-                sets.make_set(s2);
-
-            }
-            sets.link(s1, s2);
-        }
-        sets.compress_sets(std::begin(nodes), std::end(nodes));
-        auto count_segs = sets.count_sets(std::begin(nodes), std::end(nodes));
-        std::unordered_map<T, T> normalized_root(count_segs);
-        for (size_t i = data_size - 1; i >= 0; i--) {
-            T s1 = remap[i].first;
-            T s2 = remap[i].second;
-            T p = parent_map[s2];
-            if (normalized_root.count(p) == 0) {
-                normalized_root[p] = s2;
-                count_segs--;
-            }
-            if (count_segs == 0) {
-                break;
-            }
-        }
-        for (auto & k : nodes) {
-            parent_map[k] = normalized_root[parent_map[k]];
         }
     }
     return parent_map;
