@@ -9,6 +9,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 #include <ctime>
+#include <cstdlib>
 #include <boost/format.hpp>
 
 template<typename T>
@@ -348,6 +349,10 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     std::ofstream of_done;
     std::ofstream of_ongoing;
     of_ongoing.open(str(boost::format("ongoing_%1%.data") % tag));
+    if (!of_ongoing.is_open()) {
+        std::cerr << "Failed to open ongoing remap file for " << tag << std::endl;
+        std::abort();
+    }
 
     auto remap_vector = load_remaps<ID>(remap_size);
 
@@ -358,12 +363,20 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     for (auto & kv : remap_vector) {
         auto & s = kv.first;
         if (current_ac != (s - (s % ac_offset))) {
-            current_ac = s - (s % ac_offset);
             if (of_done.is_open()) {
                 of_done.close();
+                if (of_done.is_open()) {
+                    std::cerr << "Failed to close done remap file for " << tag << " " << current_ac << std::endl;
+                    std::abort();
+                }
                 reps.clear();
             }
-            of_done.open(str(boost::format("done_%1%_%2%.data") % tag % current_ac));
+            current_ac = s - (s % ac_offset);
+            of_done.open(str(boost::format("remap/done_%1%_%2%.data") % tag % current_ac));
+            if (!of_done.is_open()) {
+                std::cerr << "Failed to open done remap file for " << tag << " " << current_ac << std::endl;
+                std::abort();
+            }
         }
         const auto seg = remaps[kv.second];
         const auto size = sizes[seg];
@@ -380,6 +393,14 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
             of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
         }
+        if (of_done.bad()) {
+            std::cerr << "Error occurred when writing done remap file for " << tag << " " << current_ac << std::endl;
+            std::abort();
+        }
+        if (of_ongoing.bad()) {
+            std::cerr << "Error occurred when writing ongoing remap file for " << tag << " " << current_ac << std::endl;
+            std::abort();
+        }
     }
 
     free_container(remap_vector);
@@ -393,11 +414,19 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     begin = clock();
     for (auto & s : segids) {
         if (current_ac != (s - (s % ac_offset))) {
-            current_ac = s - (s % ac_offset);
             if (of_done.is_open()) {
                 of_done.close();
+                if (of_done.is_open()) {
+                    std::cerr << "Failed to close done remap file for " << tag << " " << current_ac << std::endl;
+                    std::abort();
+                }
             }
-            of_done.open(str(boost::format("done_%1%_%2%.data") % tag % current_ac), std::ios_base::app);
+            current_ac = s - (s % ac_offset);
+            of_done.open(str(boost::format("remap/done_%1%_%2%.data") % tag % current_ac), std::ios_base::app);
+            if (!of_done.is_open()) {
+                std::cerr << "Failed to open done remap file for " << tag << " " << current_ac << std::endl;
+                std::abort();
+            }
         }
         const auto seg = remaps[s];
         const auto size = sizes[seg];
@@ -407,6 +436,14 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         } else {
             of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
             of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
+        }
+        if (of_done.bad()) {
+            std::cerr << "Error occurred when writing done remap file for " << tag << " " << current_ac << std::endl;
+            std::abort();
+        }
+        if (of_ongoing.bad()) {
+            std::cerr << "Error occurred when writing ongoing remap file for " << tag << " " << current_ac << std::endl;
+            std::abort();
         }
     }
 
