@@ -114,7 +114,7 @@ def touch_done_files(f, tag):
     path = os.path.dirname(f)
     for c in d:
         cp = cu.read_inputs(os.path.join(path,c+".json"))
-        fn_done = "done_{}_{}.data".format(tag, cp["offset"])
+        fn_done = "remap/done_{}_{}.data".format(tag, cp["offset"])
         open(fn_done,'a').close()
 
 param = cu.read_inputs(sys.argv[1])
