@@ -105,43 +105,50 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             if ( conn[idx] >= low_threshold ) {
                 if ( fo[idx] ) {
                     if (fi[idx] != fo[idx]) {
-                        std::cout << "something is wrong in fo" << std::endl;
+                        std::cerr << "something is wrong in fo" << std::endl;
+                        std::abort();
                     }
                     if ( conn[idx] >= high_threshold ) {
                         if (bi[idx] != bo[idx]) {
-                            std::cout << "something is wrong in merge" << std::endl;
+                            std::cerr << "something is wrong in merge" << std::endl;
+                            std::abort();
                         }
                         same.insert(xp);
                     } else {
                         needs_an_edge = true;
                         if (descent[fi[idx]] != high_threshold && descent[fi[idx]] != conn[idx]) {
-                            std::cout << "This should not happen in a" << std::endl;
-                            std::cout << fi[idx] << " " << bi[idx] << std::endl;
-                            std::cout << descent[fi[idx]] << " " << conn[idx] << std::endl;
+                            std::cerr << "This should not happen in a" << std::endl;
+                            std::cerr << fi[idx] << " " << bi[idx] << std::endl;
+                            std::cerr << descent[fi[idx]] << " " << conn[idx] << std::endl;
+                            std::abort();
                         }
                         descent[fi[idx]] = conn[idx];
                     }
                 } else if ( bo[idx] ) {
                     if (bi[idx] != bo[idx]) {
-                        std::cout << "something is wrong in bo" << std::endl;
+                        std::cerr << "something is wrong in bo" << std::endl;
+                        std::abort();
                     }
                     if ( conn[idx] >= high_threshold ) {
                         if (fi[idx] != fo[idx]) {
-                            std::cout << "something is wrong in merge" << std::endl;
+                            std::cerr << "something is wrong in merge" << std::endl;
+                            std::abort();
                         }
                         same.insert(xp);
                     } else {
                         needs_an_edge = true;
                         if (descent[bi[idx]] != high_threshold && descent[bi[idx]] != conn[idx]) {
-                            std::cout << "This should not happen in b" << std::endl;
-                            std::cout << fi[idx] << " " << bi[idx] << std::endl;
-                            std::cout << descent[bi[idx]] << " " << conn[idx] << std::endl;
+                            std::cerr << "This should not happen in b" << std::endl;
+                            std::cerr << fi[idx] << " " << bi[idx] << std::endl;
+                            std::cerr << descent[bi[idx]] << " " << conn[idx] << std::endl;
+                            std::abort();
                         }
                         descent[bi[idx]] = conn[idx];
                     }
                 } else {
                     if (conn[idx] >= high_threshold) {
-                        std::cout << "something is wrong in edge" << std::endl;
+                        std::cerr << "something is wrong in edge" << std::endl;
+                        std::abort();
                     }
                     needs_an_edge = true;
                 }
