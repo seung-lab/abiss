@@ -36,7 +36,10 @@ def process_composite_tasks(c, top_mip, f_task, f_deps):
     tag = str(c.mip_level()) + "_" + "_".join([str(i) for i in c.coordinate()])
     d = c.children()
     bundle_size = 8;
-    f_task.write('generate_chunks["{}"]=composite_chunks_op(dag, ["{}"])\n'.format(tag,tag))
+    if c.mip_level() > 5:
+        f_task.write('generate_chunks["{}"]=composite_chunks_long_op(dag, ["{}"])\n'.format(tag,tag))
+    else:
+        f_task.write('generate_chunks["{}"]=composite_chunks_op(dag, ["{}"])\n'.format(tag,tag))
     if c.mip_level() > 1:
         for k in d:
             tag_c = str(c.mip_level()-1) + "_" + "_".join([str(i) for i in k.coordinate()])
