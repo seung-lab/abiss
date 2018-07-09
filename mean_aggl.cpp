@@ -40,13 +40,13 @@ size_t filesize(std::string filename)
 }
 
 template <class T>
-struct edge_t
+struct __attribute__((packed)) edge_t
 {
     seg_t v0, v1;
     T        w;
 };
 
-typedef struct atomic_edge
+typedef struct __attribute__((packed)) atomic_edge
 {
     seg_t u1;
     seg_t u2;
@@ -61,7 +61,7 @@ typedef struct atomic_edge
     }
 } atomic_edge_t;
 
-struct mean_edge
+struct __attribute__((packed)) mean_edge
 {
     double sum;
     double num;
