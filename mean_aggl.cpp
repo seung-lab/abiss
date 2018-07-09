@@ -27,9 +27,17 @@
 #include <map>
 #include <vector>
 #include <unordered_set>
+#include <sys/stat.h>
 
 using seg_t = uint64_t;
 using aff_t = float;
+
+size_t filesize(std::string filename)
+{
+    struct stat stat_buf;
+    int rc = stat(filename.c_str(), &stat_buf);
+    return rc == 0 ? stat_buf.st_size : 0;
+}
 
 template <class T>
 struct edge_t
