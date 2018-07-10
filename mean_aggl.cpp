@@ -130,8 +130,10 @@ using heap_handle_type = typename heap_type<T, C>::handle_type;
 template <class T, class C>
 struct heapable_edge
 {
-    edge_t<T> edge;
+    edge_t<T> & edge;
     heap_handle_type<T, C> handle;
+    explicit constexpr heapable_edge(edge_t<T> & e)
+        : edge(e) {};
 };
 
 template <typename key, typename container>
@@ -215,6 +217,7 @@ struct agglomeration_data_t
     heap_type<T, Compare> heap;
     std::unordered_set<seg_t> frozen_supervoxels;
     std::unordered_map<seg_t, size_t> supervoxel_counts;
+    std::vector<edge_t<T> > rg_vector;
 };
 
 template <class T, class Compare = std::greater<T> >
@@ -225,6 +228,7 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     auto & heap = agg_data.heap;
     auto & frozen_supervoxels = agg_data.frozen_supervoxels;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
+    auto & rg_vector = agg_data.rg_vector;
 
     std::ifstream ns_file(ns_filename);
     if (!ns_file.is_open()) {
@@ -251,46 +255,47 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
         }
     }
 
-    std::ifstream rg_file(rg_filename);
-    if (!rg_file.is_open()) {
-        std::cout << "Cannot open the region graph file" << std::endl;
+    std::cout << "filesize:" << filesize(rg_filename)/sizeof(edge_t<T>) << std::endl;
+    size_t rg_size = filesize(rg_filename);
+    if (rg_size % sizeof(edge_t<T>) != 0) {
+        std::cerr << "Region graph file incomplete!" << std::endl;
+        std::abort();
+    }
+    size_t rg_entries = rg_size / sizeof(edge_t<T>);
+    //size_t rg_entries = 100000000;
+
+
+    FILE* f = std::fopen(rg_filename, "rbXS");
+    if ( !f ) {
+        std::cerr << "Cannot open the region graph file" << std::endl;
         std::abort();
     }
 
-    seg_t v0, v1;
-    aff_t aff;
-    size_t area;
+    rg_vector.resize(rg_entries);
+    std::size_t nread = std::fread(rg_vector.data(), sizeof(edge_t<T>), rg_entries, f);
+    if (nread != rg_entries) {
+        std::cerr << "Reading: " << nread << " entries, but expecting: " << rg_entries << std::endl;
+        std::abort();
+    }
+    std::fclose(f);
 
-    std::cout << "reading rg" << std::endl;
+    std::cout << "reading rg:" << sizeof(edge_t<T>) << " " << sizeof(heapable_edge<T, Compare>)<< std::endl;
     size_t i = 0;
-    while (rg_file.read(reinterpret_cast<char *>(&v0), sizeof(v0)))
+    edge_t<T> e;
+    for (auto & e : rg_vector)
     {
-        rg_file.read(reinterpret_cast<char *>(&v1), sizeof(v1));
-        rg_file.read(reinterpret_cast<char *>(&(aff)), sizeof(aff));
-        rg_file.read(reinterpret_cast<char *>(&(area)), sizeof(area));
-        heapable_edge<T, Compare> he;
-        auto & e = he.edge;
-        e.v0 = v0;
-        e.v1 = v1;
-        e.w.sum = aff;
-        e.w.num = area;
-        if (supervoxel_counts.count(v0) == 0) {
-            supervoxel_counts[v0] = 1;
-        }
-        if (supervoxel_counts.count(v1) == 0) {
-            supervoxel_counts[v1] = 1;
-        }
-        rg_file.read(reinterpret_cast<char *>(&v0), sizeof(v0));
-        rg_file.read(reinterpret_cast<char *>(&v1), sizeof(v1));
-        rg_file.read(reinterpret_cast<char *>(&(aff)), sizeof(aff));
-        rg_file.read(reinterpret_cast<char *>(&(area)), sizeof(area));
-        atomic_edge_t ae(v0,v1,aff,area);
-        e.w.repr = ae;
-        //std::cout << e.v0 <<" " << e.v1 <<" " << e.w.sum <<" " << e.w.num<<" "  << v0 <<" "  << v1 <<" "  << aff<<" "  << area << std::endl;
+        heapable_edge<T, Compare> he(e);
+        //he.edge = e;
         auto handle = heap.push(he);
         (*handle).handle = handle;
         incident[e.v0][e.v1] = handle;
         incident[e.v1][e.v0] = handle;
+        if (supervoxel_counts.count(e.v0) == 0) {
+            supervoxel_counts[e.v0] = 1;
+        }
+        if (supervoxel_counts.count(e.v1) == 0) {
+            supervoxel_counts[e.v1] = 1;
+        }
         i++;
         if (i % 10000000 == 0) {
             std::cout << "reading " << i << "th edge" << std::endl;
@@ -312,7 +317,6 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
         }
     }
 
-    rg_file.close();
     fs_file.close();
     ns_file.close();
 
