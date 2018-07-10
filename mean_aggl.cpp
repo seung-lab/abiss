@@ -65,9 +65,9 @@ struct __attribute__((packed)) mean_edge
 {
     aff_t sum;
     size_t num;
-    atomic_edge_t * repr;
+    atomic_edge_t repr;
 
-    explicit constexpr mean_edge(aff_t s = 0, size_t n = 1, atomic_edge_t * r = NULL )
+    explicit constexpr mean_edge(aff_t s = 0, size_t n = 1, atomic_edge_t r = atomic_edge_t() )
         : sum(s)
         , num(n)
         , repr(r)
@@ -79,11 +79,8 @@ struct mean_edge_plus
 {
     mean_edge operator()(mean_edge const& a, mean_edge const& b) const
     {
-        atomic_edge_t * new_repr = NULL;
-        if (a.repr->area > b.repr->area) {
-            new_repr = a.repr;
-        }
-        else {
+        atomic_edge_t new_repr = a.repr;
+        if (a.repr.area < b.repr.area) {
             new_repr = b.repr;
         }
         return mean_edge(a.sum + b.sum, a.num + b.num, new_repr);
@@ -102,7 +99,7 @@ struct mean_edge_limits
 {
     static constexpr mean_edge max()
     {
-        return mean_edge(std::numeric_limits<double>::max(), 1, NULL);
+        return mean_edge(std::numeric_limits<double>::max());
     }
 };
 
@@ -287,7 +284,7 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
         rg_file.read(reinterpret_cast<char *>(&v1), sizeof(v1));
         rg_file.read(reinterpret_cast<char *>(&(aff)), sizeof(aff));
         rg_file.read(reinterpret_cast<char *>(&(area)), sizeof(area));
-        atomic_edge_t * ae = new atomic_edge_t(v0,v1,aff,area);
+        atomic_edge_t ae(v0,v1,aff,area);
         e.w.repr = ae;
         //std::cout << e.v0 <<" " << e.v1 <<" " << e.w.sum <<" " << e.w.num<<" "  << v0 <<" "  << v1 <<" "  << aff<<" "  << area << std::endl;
         auto handle = heap.push(he);
@@ -560,7 +557,7 @@ template <class CharT, class Traits>
 ::std::basic_ostream<CharT, Traits>&
 operator<<(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
 {
-    os << v.sum << " " << v.num << " " << v.repr->u1 << " " <<  v.repr->u2 << " " << v.repr->sum_aff << " " << v.repr->area;
+    os << v.sum << " " << v.num << " " << v.repr.u1 << " " <<  v.repr.u2 << " " << v.repr.sum_aff << " " << v.repr.area;
     return os;
 }
 
@@ -568,14 +565,14 @@ template <class CharT, class Traits>
 void write_edge(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
 {
     aff_t aff = v.sum;
-    aff_t aff_rw = v.repr->sum_aff;
+    aff_t aff_rw = v.repr.sum_aff;
     size_t num = v.num;
-    size_t area = v.repr->area;
+    size_t area = v.repr.area;
 
     os.write(reinterpret_cast<const char *>(&(aff)), sizeof(aff_t));
     os.write(reinterpret_cast<const char *>(&(num)), sizeof(size_t));
-    os.write(reinterpret_cast<const char *>(&(v.repr->u1)), sizeof(seg_t));
-    os.write(reinterpret_cast<const char *>(&(v.repr->u2)), sizeof(seg_t));
+    os.write(reinterpret_cast<const char *>(&(v.repr.u1)), sizeof(seg_t));
+    os.write(reinterpret_cast<const char *>(&(v.repr.u2)), sizeof(seg_t));
     os.write(reinterpret_cast<const char *>(&(aff_rw)), sizeof(aff_t));
     os.write(reinterpret_cast<const char *>(&(area)), sizeof(size_t));
 }
