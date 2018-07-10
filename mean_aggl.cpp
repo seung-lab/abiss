@@ -279,6 +279,8 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     }
     std::fclose(f);
 
+    std::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return a.v0 < b.v0 && a.v1 < b.v1;  });
+
     std::cout << "reading rg:" << sizeof(edge_t<T>) << " " << sizeof(heapable_edge<T, Compare>)<< std::endl;
     size_t i = 0;
     edge_t<T> e;
