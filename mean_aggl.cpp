@@ -50,9 +50,9 @@ typedef struct __attribute__((packed)) atomic_edge
 {
     seg_t u1;
     seg_t u2;
-    double sum_aff;
-    double area;
-    explicit constexpr atomic_edge(seg_t w1 = 0, seg_t w2 = 0, double s_a = 0.0, double a = 0)
+    aff_t sum_aff;
+    size_t area;
+    explicit constexpr atomic_edge(seg_t w1 = 0, seg_t w2 = 0, aff_t s_a = 0.0, size_t a = 0)
         : u1(w1)
         , u2(w2)
         , sum_aff(s_a)
@@ -63,11 +63,11 @@ typedef struct __attribute__((packed)) atomic_edge
 
 struct __attribute__((packed)) mean_edge
 {
-    double sum;
-    double num;
+    aff_t sum;
+    size_t num;
     atomic_edge_t * repr;
 
-    explicit constexpr mean_edge(double s = 0, double n = 1, atomic_edge_t * r = NULL)
+    explicit constexpr mean_edge(aff_t s = 0, size_t n = 1, atomic_edge_t * r = NULL )
         : sum(s)
         , num(n)
         , repr(r)
