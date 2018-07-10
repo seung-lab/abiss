@@ -99,7 +99,7 @@ struct mean_edge_limits
 {
     static constexpr mean_edge max()
     {
-        return mean_edge(std::numeric_limits<double>::max());
+        return mean_edge(std::numeric_limits<aff_t>::max());
     }
 };
 
@@ -579,7 +579,7 @@ void write_edge(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
 
 int main(int argc, char *argv[])
 {
-    double th = atof(argv[1]);
+    aff_t th = atof(argv[1]);
 
     std::cout << "agglomerate" << std::endl;
     agglomerate<mean_edge, mean_edge_greater, mean_edge_plus,
