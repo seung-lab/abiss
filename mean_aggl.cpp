@@ -39,6 +39,49 @@ size_t filesize(std::string filename)
     return rc == 0 ? stat_buf.st_size : 0;
 }
 
+void print_neighbors(auto neighbors)
+{
+    for (auto & e : neighbors) {
+        std::cout << e.first << " ";
+    }
+    std::cout << std::endl;
+}
+
+auto search_neighbors(const auto & neighbors, const auto & value)
+{
+    return std::lower_bound(std::begin(neighbors), std::end(neighbors), value, [](auto & a, auto & b) { return a.first < b; });
+}
+
+bool erase_neighbors(auto & neighbors, auto target)
+{
+    auto it = search_neighbors(neighbors, target);
+    if (it != std::end(neighbors)) {
+        if ((*it).first == target) {
+            neighbors.erase(it);
+            return true;
+        } else {
+            std::cerr << "VALUE " << target << " NOT FOUND" << std::endl;
+            return false;
+        }
+    }
+    std::cerr << "VALUE " << target << " NOT FOUND" << std::endl;
+    return false;
+}
+
+void insert_neighbor(auto & neighbors, auto target, auto new_value)
+{
+    auto it = search_neighbors(neighbors, target);
+    if (it != std::end(neighbors)) {
+        if ((*it).first == target) {
+            std::cerr << "Should not happen: " << target << " is already a neighbors" << std::endl;
+            it = neighbors.erase(it);
+        }
+        neighbors.insert(it, std::pair(target, new_value));
+    } else {
+        neighbors.push_back(std::pair(target, new_value));
+    }
+}
+
 template <class T>
 struct __attribute__((packed)) edge_t
 {
