@@ -256,7 +256,7 @@ int n_intersection(const std::unordered_set<id> & set1, const std::unordered_set
 template <class T, class Compare = std::greater<T> >
 struct agglomeration_data_t
 {
-    incident_matrix<seg_t, std::unordered_map<seg_t, heap_handle_type<T, Compare> > > incident;
+    std::unordered_map<seg_t, std::vector<std::pair<seg_t, heap_handle_type<T, Compare> > > > incident;
     heap_type<T, Compare> heap;
     std::unordered_set<seg_t> frozen_supervoxels;
     std::unordered_map<seg_t, size_t> supervoxel_counts;
@@ -338,12 +338,12 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     edge_t<T> e;
     for (auto & e : rg_vector)
     {
-        heapable_edge<T, Compare> he(e);
-        //he.edge = e;
-        auto handle = heap.push(he);
+        auto handle = heap.push(heapable_edge<T, Compare>(e));
         (*handle).handle = handle;
-        incident[e.v0][e.v1] = handle;
-        incident[e.v1][e.v0] = handle;
+        auto v0 = e.v0;
+        auto v1 = e.v1;
+        incident[e.v0].push_back(std::pair(v1, handle));
+        incident[e.v1].push_back(std::pair(v0, handle));
         if (supervoxel_counts.count(e.v0) == 0) {
             supervoxel_counts[e.v0] = 1;
         }
@@ -435,9 +435,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 s = v1;
             }
 
-            // earase the edge e = {v0,v1}
-            incident[v0].erase(v1);
-            incident[v1].erase(v0);
+            erase_neighbors(incident[v0], v1);
+            erase_neighbors(incident[v1], v0);
 
             if (frozen_supervoxels.count(v0) > 0 || frozen_supervoxels.count(v1) > 0) {
                 frozen_supervoxels.insert(v0);
@@ -496,11 +495,14 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 if (e0.first == v0)
                     std::cout << "loop in the incident matrix: " << e0.first << std::endl;
 
-                incident[e0.first].erase(v0);
-                if (incident[v1].count(e0.first)) // {v0,v} and {v1,v} exist, we
+                erase_neighbors(incident[e0.first], v0);
+
+                auto it = search_neighbors(incident[v1], e0.first);
+                if (it != std::cend(incident[v1]) && (*it).first == e0.first)
+                                                  // {v0,v} and {v1,v} exist, we
                                                   // need to merge them
                 {
-                    auto& e1   = (*(incident[v1][e0.first])); // edge {v1,v}
+                    auto& e1   = *((*it).second); // edge {v1,v}
                     e1.edge.w = plus(e1.edge.w, (*(e0.second)).edge.w);
                     heap.update(e1.handle);
                     heap.erase(e0.second);
@@ -520,11 +522,11 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                         e.edge.v0 = v1;
                     if (e.edge.v1 == v0)
                         e.edge.v1 = v1;
-                    incident[e0.first][v1] = e0.second;
-                    incident[v1][e0.first] = e0.second;
+                    insert_neighbor(incident[e0.first], v1, e0.second);
+                    insert_neighbor(incident[v1], e0.first, e0.second);
                 }
             }
-            incident.remove(v0);
+            incident.erase(v0);
         }
     }
 
