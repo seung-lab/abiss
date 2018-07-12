@@ -256,22 +256,25 @@ int n_intersection(const std::unordered_set<id> & set1, const std::unordered_set
 template <class T, class Compare = std::greater<T> >
 struct agglomeration_data_t
 {
-    std::unordered_map<seg_t, std::vector<std::pair<seg_t, heap_handle_type<T, Compare> > > > incident;
+    std::vector<std::vector<std::pair<seg_t, heap_handle_type<T, Compare> > > > incident;
     heap_type<T, Compare> heap;
     std::unordered_set<seg_t> frozen_supervoxels;
     std::unordered_map<seg_t, size_t> supervoxel_counts;
     std::vector<edge_t<T> > rg_vector;
+    std::vector<seg_t> seg_indices;
 };
 
 template <class T, class Compare = std::greater<T> >
 inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename)
 {
     agglomeration_data_t<T, Compare> agg_data;
+    using neighbor_vector = std::vector<std::pair<seg_t, heap_handle_type<T, Compare> > >;
     auto & incident = agg_data.incident;
     auto & heap = agg_data.heap;
     auto & frozen_supervoxels = agg_data.frozen_supervoxels;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & rg_vector = agg_data.rg_vector;
+    auto & seg_indices = agg_data.seg_indices;
 
     std::ifstream ns_file(ns_filename);
     if (!ns_file.is_open()) {
@@ -322,33 +325,60 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     }
     std::fclose(f);
 
+    std::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return a.v0 < b.v0;  });
+    {
+    std::unordered_map<seg_t, size_t> reverse_lookup;
+    auto v0_cache = seg_t(0);
+    auto local_v0_cache = seg_t(0);
     for (auto & e : rg_vector) {
         auto v0 = e.v0;
         auto v1 = e.v1;
-        if (v0 > v1) {
-            e.v0 = v1;
-            e.v1 = v0;
+        if (v0_cache != v0) {
+            v0_cache = v0;
+            if (reverse_lookup.count(v0) == 0){
+                reverse_lookup[v0] = incident.size();
+                incident.push_back(neighbor_vector());
+                seg_indices.push_back(v0);
+            }
+            local_v0_cache = v0 = reverse_lookup.at(v0);
+            assert(incident.size() == seg_indices.size());
+        } else {
+            v0 = local_v0_cache;
         }
+        if (reverse_lookup.count(v1) == 0) {
+            reverse_lookup[v1] = incident.size();
+            seg_indices.push_back(v1);
+            v1 = incident.size();
+            incident.push_back(neighbor_vector());
+            assert(incident.size() == seg_indices.size());
+        } else {
+            v1 = reverse_lookup.at(v1);
+        }
+        if (v0 < v1) {
+            std::swap(v0, v1);
+        }
+        e.v0 = v0;
+        e.v1 = v1;
+    }
     }
 
     std::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
 
     std::cout << "reading rg:" << sizeof(edge_t<T>) << " " << sizeof(heapable_edge<T, Compare>)<< std::endl;
     size_t i = 0;
-    edge_t<T> e;
     for (auto & e : rg_vector)
     {
-        auto handle = heap.push(heapable_edge<T, Compare>(e));
-        (*handle).handle = handle;
         auto v0 = e.v0;
         auto v1 = e.v1;
-        incident[e.v0].push_back(std::pair(v1, handle));
-        incident[e.v1].push_back(std::pair(v0, handle));
-        if (supervoxel_counts.count(e.v0) == 0) {
-            supervoxel_counts[e.v0] = 1;
+        auto handle = heap.push(heapable_edge<T, Compare>(e));
+        (*handle).handle = handle;
+        incident[v0].push_back(std::pair(v1, handle));
+        incident[v1].push_back(std::pair(v0, handle));
+        if (supervoxel_counts.count(seg_indices[v0]) == 0) {
+            supervoxel_counts[seg_indices[v0]] = 1;
         }
-        if (supervoxel_counts.count(e.v1) == 0) {
-            supervoxel_counts[e.v1] = 1;
+        if (supervoxel_counts.count(seg_indices[v1]) == 0) {
+            supervoxel_counts[seg_indices[v1]] = 1;
         }
         i++;
         if (i % 10000000 == 0) {
@@ -395,6 +425,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     auto & heap = agg_data.heap;
     auto & frozen_supervoxels = agg_data.frozen_supervoxels;
     auto & supervoxel_counts =  agg_data.supervoxel_counts;
+    auto & seg_indices = agg_data.seg_indices;
 
     size_t rg_size = heap.size();
 
@@ -438,11 +469,11 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             erase_neighbors(incident[v0], v1);
             erase_neighbors(incident[v1], v0);
 
-            if (frozen_supervoxels.count(v0) > 0 || frozen_supervoxels.count(v1) > 0) {
-                frozen_supervoxels.insert(v0);
-                frozen_supervoxels.insert(v1);
-                of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-                of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+            if (frozen_supervoxels.count(seg_indices[v0]) > 0 || frozen_supervoxels.count(seg_indices[v1]) > 0) {
+                frozen_supervoxels.insert(seg_indices[v0]);
+                frozen_supervoxels.insert(seg_indices[v1]);
+                of_res.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
+                of_res.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
                 write_edge(of_res, e.edge.w);
                 residue_size++;
                 continue;
@@ -451,31 +482,31 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             //std::cout << "Test " << v0 << " and " << v1 << std::endl;
                        //<< " at " << e->edge.w << "\n";
             if (e.edge.w.sum/e.edge.w.num < 0.5) {
-                auto p = std::minmax(supervoxel_counts.at(v0), supervoxel_counts.at(v1));
+                auto p = std::minmax(supervoxel_counts.at(seg_indices[v0]), supervoxel_counts.at(seg_indices[v1]));
                 if (p.first > 1000 and p.second > 10000) {
-                    std::cout << "reject edge between " << v0 << "(" << supervoxel_counts.at(v0) << ")"<< " and " << v1 << "(" << supervoxel_counts.at(v1) << ")"<< std::endl;
-                    of_reject.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-                    of_reject.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+                    std::cout << "reject edge between " << seg_indices[v0] << "(" << supervoxel_counts.at(seg_indices[v0]) << ")"<< " and " << seg_indices[v1] << "(" << supervoxel_counts.at(seg_indices[v1]) << ")"<< std::endl;
+                    of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
+                    of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
                     write_edge(of_reject, e.edge.w);
                     continue;
                 }
             }
             //std::cout << "Join " << v0 << " and " << v1 << std::endl;
-            auto total = supervoxel_counts.at(v0) + supervoxel_counts.at(v1);
-            supervoxel_counts[v0] = 0;
-            supervoxel_counts[v1] = 0;
-            supervoxel_counts[s] = total;
-            of_mst.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
-            of_mst.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-            of_mst.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+            auto total = supervoxel_counts.at(seg_indices[v0]) + supervoxel_counts.at(seg_indices[v1]);
+            supervoxel_counts[seg_indices[v0]] = 0;
+            supervoxel_counts[seg_indices[v1]] = 0;
+            supervoxel_counts[seg_indices[s]] = total;
+            of_mst.write(reinterpret_cast<const char *>(&(seg_indices[s])), sizeof(seg_t));
+            of_mst.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
+            of_mst.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
             mst_size++;
             write_edge(of_mst, e.edge.w);
             if (v0 == s) {
-                of_remap.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
-                of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+                of_remap.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
+                of_remap.write(reinterpret_cast<const char *>(&(seg_indices[s])), sizeof(seg_t));
             } else if (v1 == s) {
-                of_remap.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-                of_remap.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+                of_remap.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
+                of_remap.write(reinterpret_cast<const char *>(&(seg_indices[s])), sizeof(seg_t));
             } else {
                 std::cout << "Something is wrong in the MST" << std::endl;
                 std::cout << "s: " << s << ", v0: " << v0 << ", v1: " << v1 << std::endl;
@@ -526,7 +557,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                     insert_neighbor(incident[v1], e0.first, e0.second);
                 }
             }
-            incident.erase(v0);
+            incident[v0].clear();
         }
     }
 
@@ -549,14 +580,14 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         heap.pop();
         auto v0 = e.edge.v0;
         auto v1 = e.edge.v1;
-        if (frozen_supervoxels.count(v0) > 0 && frozen_supervoxels.count(v1) > 0) {
-            of_res.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-            of_res.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+        if (frozen_supervoxels.count(seg_indices[v0]) > 0 && frozen_supervoxels.count(seg_indices[v1]) > 0) {
+            of_res.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
+            of_res.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
             residue_size++;
             write_edge(of_res, e.edge.w);
         } else {
-            of_frg.write(reinterpret_cast<const char *>(&(v0)), sizeof(seg_t));
-            of_frg.write(reinterpret_cast<const char *>(&(v1)), sizeof(seg_t));
+            of_frg.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
+            of_frg.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
             write_edge(of_frg, e.edge.w);
 
         }
