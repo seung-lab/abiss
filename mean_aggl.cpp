@@ -39,24 +39,24 @@ size_t filesize(std::string filename)
     return rc == 0 ? stat_buf.st_size : 0;
 }
 
-void print_neighbors(auto neighbors)
+void print_neighbors(auto neighbors, const auto source)
 {
     for (auto & e : neighbors) {
-        std::cout << e.first << " ";
+        std::cout << e.segid(source) << " ";
     }
     std::cout << std::endl;
 }
 
-auto search_neighbors(const auto & neighbors, const auto & value)
+auto search_neighbors(const auto & neighbors, const auto source, const auto target)
 {
-    return std::lower_bound(std::begin(neighbors), std::end(neighbors), value, [](auto & a, auto & b) { return a.first < b; });
+    return std::lower_bound(std::begin(neighbors), std::end(neighbors), target, [source](auto & a, auto & b) { return a.segid(source) < b; });
 }
 
-bool erase_neighbors(auto & neighbors, auto target)
+bool erase_neighbors(auto & neighbors, const auto source, auto target)
 {
-    auto it = search_neighbors(neighbors, target);
+    auto it = search_neighbors(neighbors, source, target);
     if (it != std::end(neighbors)) {
-        if ((*it).first == target) {
+        if ((*it).segid(source) == target) {
             neighbors.erase(it);
             return true;
         } else {
@@ -68,17 +68,17 @@ bool erase_neighbors(auto & neighbors, auto target)
     return false;
 }
 
-void insert_neighbor(auto & neighbors, auto target, auto new_value)
+void insert_neighbor(auto & neighbors, const auto source, auto target, auto new_value)
 {
-    auto it = search_neighbors(neighbors, target);
+    auto it = search_neighbors(neighbors, source, target);
     if (it != std::end(neighbors)) {
-        if ((*it).first == target) {
+        if ((*it).segid(source) == target) {
             std::cerr << "Should not happen: " << target << " is already a neighbors" << std::endl;
             it = neighbors.erase(it);
         }
-        neighbors.insert(it, std::pair(target, new_value));
+        neighbors.insert(it, new_value);
     } else {
-        neighbors.push_back(std::pair(target, new_value));
+        neighbors.push_back(new_value);
     }
 }
 
@@ -179,10 +179,22 @@ struct heapable_edge
         : edge(e) {};
 };
 
+template <class T, class C>
+struct handle_wrapper
+{
+    heap_handle_type<T, C> handle;
+
+    explicit constexpr handle_wrapper(heap_handle_type<T, C> & h)
+        : handle(h) {};
+    seg_t segid(const seg_t exclude) const {
+        return exclude == (*handle).edge.v0 ? (*handle).edge.v1 : (*handle).edge.v0;
+    }
+};
+
 template <class T, class Compare = std::greater<T> >
 struct agglomeration_data_t
 {
-    std::vector<std::vector<std::pair<seg_t, heap_handle_type<T, Compare> > > > incident;
+    std::vector<std::vector<handle_wrapper<T, Compare> > > incident;
     heap_type<T, Compare> heap;
     std::unordered_set<seg_t> frozen_supervoxels;
     std::vector<size_t> supervoxel_counts;
@@ -194,7 +206,7 @@ template <class T, class Compare = std::greater<T> >
 inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename)
 {
     agglomeration_data_t<T, Compare> agg_data;
-    using neighbor_vector = std::vector<std::pair<seg_t, heap_handle_type<T, Compare> > >;
+    using neighbor_vector = std::vector<handle_wrapper<T, Compare> >;
     auto & incident = agg_data.incident;
     auto & heap = agg_data.heap;
     auto & frozen_supervoxels = agg_data.frozen_supervoxels;
@@ -306,8 +318,8 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
         auto v1 = e.v1;
         auto handle = heap.push(heapable_edge<T, Compare>(e));
         (*handle).handle = handle;
-        incident[v0].push_back(std::pair(v1, handle));
-        incident[v1].push_back(std::pair(v0, handle));
+        incident[v0].push_back(handle_wrapper<T, Compare>(handle));
+        incident[v1].push_back(handle_wrapper<T, Compare>(handle));
         if (supervoxel_counts[v0] == 0) {
             supervoxel_counts[v0] = 1;
         }
@@ -403,8 +415,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 s = v1;
             }
 
-            erase_neighbors(incident[v0], v1);
-            erase_neighbors(incident[v1], v0);
+            erase_neighbors(incident[v0], v0, v1);
+            erase_neighbors(incident[v1], v1, v0);
 
             if (frozen_supervoxels.count(v0) > 0 || frozen_supervoxels.count(v1) > 0) {
                 frozen_supervoxels.insert(v0);
@@ -460,20 +472,21 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             // loop over other edges e0 = {v0,v}
             for (auto& e0 : incident[v0])
             {
-                if (e0.first == v0)
-                    std::cout << "loop in the incident matrix: " << e0.first << std::endl;
+                auto v = e0.segid(v0);
+                if (v == v0)
+                    std::cout << "loop in the incident matrix: " << v << std::endl;
 
-                erase_neighbors(incident[e0.first], v0);
+                erase_neighbors(incident[v], v, v0);
 
-                auto it = search_neighbors(incident[v1], e0.first);
-                if (it != std::cend(incident[v1]) && (*it).first == e0.first)
+                auto it = search_neighbors(incident[v1], v1, v);
+                if (it != std::cend(incident[v1]) && (*it).segid(v1) == v)
                                                   // {v0,v} and {v1,v} exist, we
                                                   // need to merge them
                 {
-                    auto& e1   = *((*it).second); // edge {v1,v}
-                    e1.edge.w = plus(e1.edge.w, (*(e0.second)).edge.w);
+                    auto& e1   = *((*it).handle); // edge {v1,v}
+                    e1.edge.w = plus(e1.edge.w, (*(e0.handle)).edge.w);
                     heap.update(e1.handle);
-                    heap.erase(e0.second);
+                    heap.erase(e0.handle);
                     {
                         //std::cout
                         //     << "Removing: " <<
@@ -485,13 +498,13 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 }
                 else
                 {
-                    auto & e = (*(e0.second));
+                    auto & e = (*(e0.handle));
                     if (e.edge.v0 == v0)
                         e.edge.v0 = v1;
                     if (e.edge.v1 == v0)
                         e.edge.v1 = v1;
-                    insert_neighbor(incident[e0.first], v1, e0.second);
-                    insert_neighbor(incident[v1], e0.first, e0.second);
+                    insert_neighbor(incident[v], v, v1, e0);
+                    insert_neighbor(incident[v1], v1, v, e0);
                 }
             }
             incident[v0].clear();
