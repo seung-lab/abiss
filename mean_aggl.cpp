@@ -185,7 +185,7 @@ struct agglomeration_data_t
     std::vector<std::vector<std::pair<seg_t, heap_handle_type<T, Compare> > > > incident;
     heap_type<T, Compare> heap;
     std::unordered_set<seg_t> frozen_supervoxels;
-    std::unordered_map<seg_t, size_t> supervoxel_counts;
+    std::vector<size_t> supervoxel_counts;
     std::vector<edge_t<T> > rg_vector;
     std::vector<seg_t> seg_indices;
 };
@@ -202,40 +202,14 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     auto & rg_vector = agg_data.rg_vector;
     auto & seg_indices = agg_data.seg_indices;
 
-    std::ifstream ns_file(ns_filename);
-    if (!ns_file.is_open()) {
-        std::cout << "Cannot open the supervoxel count file" << std::endl;
-        std::abort();
-    }
-
-    seg_t seg;
-    size_t count;
-    while (ns_file.read(reinterpret_cast<char *>(&seg), sizeof(seg))) {
-        ns_file.read(reinterpret_cast<char *>(&count), sizeof(count));
-        if (count == 0) {
-            std::cout << "SHOULD NOT HAPPEN, 0 supervoxel for : " << seg << std::endl;
-            std::abort();
-        }
-        if (supervoxel_counts.count(seg) > 0) {
-            if (supervoxel_counts.at(seg) != 1 || count != 1) {
-                std::cout << "multiple entries for " << seg << " " << supervoxel_counts.at(seg) << ", " << count << std::endl;
-                std::abort();
-            }
-            supervoxel_counts[seg] += (count - 1);
-        } else {
-            supervoxel_counts[seg] = count;
-        }
-    }
-
     std::cout << "filesize:" << filesize(rg_filename)/sizeof(edge_t<T>) << std::endl;
     size_t rg_size = filesize(rg_filename);
     if (rg_size % sizeof(edge_t<T>) != 0) {
         std::cerr << "Region graph file incomplete!" << std::endl;
         std::abort();
     }
-    size_t rg_entries = rg_size / sizeof(edge_t<T>);
-    //size_t rg_entries = 100000000;
 
+    size_t rg_entries = rg_size / sizeof(edge_t<T>);
 
     FILE* f = std::fopen(rg_filename, "rbXS");
     if ( !f ) {
@@ -252,7 +226,7 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     std::fclose(f);
 
     std::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return a.v0 < b.v0;  });
-    {
+
     std::unordered_map<seg_t, size_t> reverse_lookup;
     auto v0_cache = seg_t(0);
     auto local_v0_cache = seg_t(0);
@@ -265,6 +239,7 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
                 reverse_lookup[v0] = incident.size();
                 incident.push_back(neighbor_vector());
                 seg_indices.push_back(v0);
+                supervoxel_counts.push_back(0);
             }
             local_v0_cache = v0 = reverse_lookup.at(v0);
             assert(incident.size() == seg_indices.size());
@@ -276,6 +251,7 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
             seg_indices.push_back(v1);
             v1 = incident.size();
             incident.push_back(neighbor_vector());
+            supervoxel_counts.push_back(0);
             assert(incident.size() == seg_indices.size());
         } else {
             v1 = reverse_lookup.at(v1);
@@ -286,9 +262,41 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
         e.v0 = v0;
         e.v1 = v1;
     }
-    }
 
     std::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
+
+    std::ifstream ns_file(ns_filename);
+    if (!ns_file.is_open()) {
+        std::cout << "Cannot open the supervoxel count file" << std::endl;
+        std::abort();
+    }
+
+    seg_t seg;
+    size_t count;
+    while (ns_file.read(reinterpret_cast<char *>(&seg), sizeof(seg))) {
+        ns_file.read(reinterpret_cast<char *>(&count), sizeof(count));
+        if (count == 0) {
+            std::cout << "SHOULD NOT HAPPEN, 0 supervoxel for : " << seg << std::endl;
+            std::abort();
+        }
+        if (reverse_lookup.count(seg) > 0) {
+            auto id = reverse_lookup.at(seg);
+            if (supervoxel_counts[id] == 0) {
+                supervoxel_counts[id] = count;
+            } else {
+                if (supervoxel_counts[id] != 1 || count != 1) {
+                    std::cout << "multiple entries for " << seg << " " << supervoxel_counts[id] << ", " << count << std::endl;
+                    std::abort();
+                }
+                supervoxel_counts[id] += (count - 1);
+            }
+        } else {
+            std::cout << "seg not in rg: " << seg << std::endl;
+            reverse_lookup[seg] = supervoxel_counts.size();
+            supervoxel_counts.push_back(count);
+            seg_indices.push_back(seg);
+        }
+    }
 
     std::cout << "reading rg:" << sizeof(edge_t<T>) << " " << sizeof(heapable_edge<T, Compare>)<< std::endl;
     size_t i = 0;
@@ -300,11 +308,11 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
         (*handle).handle = handle;
         incident[v0].push_back(std::pair(v1, handle));
         incident[v1].push_back(std::pair(v0, handle));
-        if (supervoxel_counts.count(seg_indices[v0]) == 0) {
-            supervoxel_counts[seg_indices[v0]] = 1;
+        if (supervoxel_counts[v0] == 0) {
+            supervoxel_counts[v0] = 1;
         }
-        if (supervoxel_counts.count(seg_indices[v1]) == 0) {
-            supervoxel_counts[seg_indices[v1]] = 1;
+        if (supervoxel_counts[v1] == 0) {
+            supervoxel_counts[v1] = 1;
         }
         i++;
         if (i % 10000000 == 0) {
@@ -321,10 +329,13 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     std::cout << "reading frozen sv" << std::endl;
     seg_t sv;
     while (fs_file.read(reinterpret_cast<char *>(&sv), sizeof(sv))) {
-        frozen_supervoxels.insert(sv);
-        if (supervoxel_counts.count(sv) == 0) {
-            supervoxel_counts[sv] = 1;
+        if (reverse_lookup.count(sv) == 0) {
+            std::cout << "frozen seg not in rg: " << seg << std::endl;
+            reverse_lookup[sv] = supervoxel_counts.size();
+            supervoxel_counts.push_back(1);
+            seg_indices.push_back(sv);
         }
+        frozen_supervoxels.insert(reverse_lookup.at(sv));
     }
 
     fs_file.close();
@@ -395,9 +406,9 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             erase_neighbors(incident[v0], v1);
             erase_neighbors(incident[v1], v0);
 
-            if (frozen_supervoxels.count(seg_indices[v0]) > 0 || frozen_supervoxels.count(seg_indices[v1]) > 0) {
-                frozen_supervoxels.insert(seg_indices[v0]);
-                frozen_supervoxels.insert(seg_indices[v1]);
+            if (frozen_supervoxels.count(v0) > 0 || frozen_supervoxels.count(v1) > 0) {
+                frozen_supervoxels.insert(v0);
+                frozen_supervoxels.insert(v1);
                 of_res.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
                 of_res.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
                 write_edge(of_res, e.edge.w);
@@ -408,9 +419,9 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             //std::cout << "Test " << v0 << " and " << v1 << std::endl;
                        //<< " at " << e->edge.w << "\n";
             if (e.edge.w.sum/e.edge.w.num < 0.5) {
-                auto p = std::minmax(supervoxel_counts.at(seg_indices[v0]), supervoxel_counts.at(seg_indices[v1]));
+                auto p = std::minmax(supervoxel_counts[v0], supervoxel_counts[v1]);
                 if (p.first > 1000 and p.second > 10000) {
-                    std::cout << "reject edge between " << seg_indices[v0] << "(" << supervoxel_counts.at(seg_indices[v0]) << ")"<< " and " << seg_indices[v1] << "(" << supervoxel_counts.at(seg_indices[v1]) << ")"<< std::endl;
+                    std::cout << "reject edge between " << seg_indices[v0] << "(" << supervoxel_counts[v0] << ")"<< " and " << seg_indices[v1] << "(" << supervoxel_counts[v1] << ")"<< std::endl;
                     of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
                     of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
                     write_edge(of_reject, e.edge.w);
@@ -418,10 +429,10 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 }
             }
             //std::cout << "Join " << v0 << " and " << v1 << std::endl;
-            auto total = supervoxel_counts.at(seg_indices[v0]) + supervoxel_counts.at(seg_indices[v1]);
-            supervoxel_counts[seg_indices[v0]] = 0;
-            supervoxel_counts[seg_indices[v1]] = 0;
-            supervoxel_counts[seg_indices[s]] = total;
+            auto total = supervoxel_counts[v0] + supervoxel_counts[v1];
+            supervoxel_counts[v0] = 0;
+            supervoxel_counts[v1] = 0;
+            supervoxel_counts[s] = total;
             of_mst.write(reinterpret_cast<const char *>(&(seg_indices[s])), sizeof(seg_t));
             of_mst.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
             of_mst.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
@@ -506,7 +517,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         heap.pop();
         auto v0 = e.edge.v0;
         auto v1 = e.edge.v1;
-        if (frozen_supervoxels.count(seg_indices[v0]) > 0 && frozen_supervoxels.count(seg_indices[v1]) > 0) {
+        if (frozen_supervoxels.count(v0) > 0 && frozen_supervoxels.count(v1) > 0) {
             of_res.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
             of_res.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
             residue_size++;
@@ -544,7 +555,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     of_fs.open("ongoing_segments.data", std::ofstream::out | std::ofstream::trunc);
 
     for (const auto & s : frozen_supervoxels) {
-        of_fs.write(reinterpret_cast<const char *>(&(s)), sizeof(seg_t));
+        of_fs.write(reinterpret_cast<const char *>(&(seg_indices[s])), sizeof(seg_t));
         if (supervoxel_counts.at(s) == 0) {
             std::cout << "SHOULD NOT HAPPEN, frozen supervoxel agglomerated: " << s << std::endl;
             std::abort();
@@ -555,13 +566,13 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
     of_fs.open("done_segments.data", std::ofstream::out | std::ofstream::trunc);
 
-    for (const auto & [k, v] : supervoxel_counts) {
-        if (v == 0) {
+    for (size_t i = 0; i < supervoxel_counts.size(); i++) {
+        if (supervoxel_counts[i] == 0) {
             continue;
         }
-        if (frozen_supervoxels.count(k) == 0) {
-            of_fs.write(reinterpret_cast<const char *>(&(k)), sizeof(seg_t));
-            of_fs.write(reinterpret_cast<const char *>(&(v)), sizeof(size_t));
+        if (frozen_supervoxels.count(i) == 0) {
+            of_fs.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
+            of_fs.write(reinterpret_cast<const char *>(&(supervoxel_counts[i])), sizeof(size_t));
         }
     }
 
