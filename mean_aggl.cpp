@@ -655,17 +655,7 @@ operator<<(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
 template <class CharT, class Traits>
 void write_edge(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
 {
-    aff_t aff = v.sum;
-    aff_t aff_rw = v.repr.sum_aff;
-    size_t num = v.num;
-    size_t area = v.repr.area;
-
-    os.write(reinterpret_cast<const char *>(&(aff)), sizeof(aff_t));
-    os.write(reinterpret_cast<const char *>(&(num)), sizeof(size_t));
-    os.write(reinterpret_cast<const char *>(&(v.repr.u1)), sizeof(seg_t));
-    os.write(reinterpret_cast<const char *>(&(v.repr.u2)), sizeof(seg_t));
-    os.write(reinterpret_cast<const char *>(&(aff_rw)), sizeof(aff_t));
-    os.write(reinterpret_cast<const char *>(&(area)), sizeof(size_t));
+    os.write(reinterpret_cast<const char *>(&v), sizeof(v));
 }
 
 int main(int argc, char *argv[])
