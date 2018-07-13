@@ -176,9 +176,9 @@ template <class T, class C = std::greater<T>>
 using heap_handle_type = typename heap_type<T, C>::handle_type;
 
 template <class T, class C>
-struct heapable_edge
+struct __attribute__((packed)) heapable_edge
 {
-    edge_t<T> & edge;
+    edge_t<T> edge;
     explicit constexpr heapable_edge(edge_t<T> & e)
         : edge(e) {};
 };
@@ -201,20 +201,20 @@ struct agglomeration_data_t
     std::vector<std::vector<handle_wrapper<T, Compare> > > incident;
     heap_type<T, Compare> heap;
     std::vector<size_t> supervoxel_counts;
-    std::vector<edge_t<T> > rg_vector;
     std::vector<seg_t> seg_indices;
 };
 
 template <class T, class Compare = std::greater<T> >
-inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename)
+inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename)
 {
     agglomeration_data_t<T, Compare> agg_data;
     using neighbor_vector = std::vector<handle_wrapper<T, Compare> >;
-    auto & incident = agg_data.incident;
-    auto & heap = agg_data.heap;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
-    auto & rg_vector = agg_data.rg_vector;
     auto & seg_indices = agg_data.seg_indices;
+
+    std::vector<edge_t<T> > rg_vector;
+
+    std::unordered_map<seg_t, size_t> reverse_lookup;
 
     std::cout << "filesize:" << filesize(rg_filename)/sizeof(edge_t<T>) << std::endl;
     size_t rg_size = filesize(rg_filename);
@@ -241,7 +241,6 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
 
     std::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return a.v0 < b.v0;  });
 
-    std::unordered_map<seg_t, size_t> reverse_lookup;
     auto v0_cache = seg_t(0);
     auto local_v0_cache = seg_t(0);
     for (auto & e : rg_vector) {
@@ -250,23 +249,21 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
         if (v0_cache != v0) {
             v0_cache = v0;
             if (reverse_lookup.count(v0) == 0){
-                reverse_lookup[v0] = incident.size();
-                incident.push_back(neighbor_vector());
+                reverse_lookup[v0] = seg_indices.size();
                 seg_indices.push_back(v0);
                 supervoxel_counts.push_back(0);
             }
             local_v0_cache = v0 = reverse_lookup.at(v0);
-            assert(incident.size() == seg_indices.size());
+            assert(supervoxel_counts.size() == seg_indices.size());
         } else {
             v0 = local_v0_cache;
         }
         if (reverse_lookup.count(v1) == 0) {
-            reverse_lookup[v1] = incident.size();
+            reverse_lookup[v1] = seg_indices.size();
             seg_indices.push_back(v1);
-            v1 = incident.size();
-            incident.push_back(neighbor_vector());
+            v1 = supervoxel_counts.size();
             supervoxel_counts.push_back(0);
-            assert(incident.size() == seg_indices.size());
+            assert(supervoxel_counts.size() == seg_indices.size());
         } else {
             v1 = reverse_lookup.at(v1);
         }
@@ -278,6 +275,13 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     }
 
     std::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
+
+    std::ofstream fout(rg_filename, (std::ios::out | std::ios::binary) );
+    assert(fout);
+
+    fout.write( reinterpret_cast<const char*>(rg_vector.data()), rg_entries * sizeof(edge_t<T>));
+    assert(!fout.bad());
+    fout.close();
 
     std::ifstream ns_file(ns_filename);
     if (!ns_file.is_open()) {
@@ -310,28 +314,6 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
             seg_indices.push_back(seg);
         }
     }
-
-    std::cout << "reading rg:" << sizeof(edge_t<T>) << " " << sizeof(heapable_edge<T, Compare>)<< std::endl;
-    size_t i = 0;
-    for (auto & e : rg_vector)
-    {
-        auto v0 = e.v0;
-        auto v1 = e.v1;
-        auto handle = heap.push(heapable_edge<T, Compare>(e));
-        incident[v0].push_back(handle_wrapper<T, Compare>(handle));
-        incident[v1].push_back(handle_wrapper<T, Compare>(handle));
-        if (supervoxel_counts[v0] == 0) {
-            supervoxel_counts[v0] = 1;
-        }
-        if (supervoxel_counts[v1] == 0) {
-            supervoxel_counts[v1] = 1;
-        }
-        i++;
-        if (i % 10000000 == 0) {
-            std::cout << "reading " << i << "th edge" << std::endl;
-        }
-    }
-
     std::ifstream fs_file(fs_filename);
     if (!fs_file.is_open()) {
         std::cout << "Cannot open the frozen supervoxel file" << std::endl;
@@ -352,7 +334,45 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
 
     fs_file.close();
     ns_file.close();
+    return agg_data;
+}
 
+template <class T, class Compare = std::greater<T> >
+inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename)
+{
+    auto agg_data = preprocess_inputs<T, Compare>(rg_filename, fs_filename, ns_filename);
+    using neighbor_vector = std::vector<handle_wrapper<T, Compare> >;
+    auto & incident = agg_data.incident;
+    auto & heap = agg_data.heap;
+    auto & supervoxel_counts = agg_data.supervoxel_counts;
+    auto & seg_indices = agg_data.seg_indices;
+
+    std::cout << "reading rg:" << sizeof(edge_t<T>) << " " << sizeof(heapable_edge<T, Compare>)<< std::endl;
+    std::ifstream rg_file(rg_filename);
+    if (!rg_file.is_open()) {
+        std::cout << "Cannot open the region graph file" << std::endl;
+        std::abort();
+    }
+
+    size_t i = 0;
+    edge_t<T> e;
+    incident.resize(seg_indices.size());
+    while (rg_file.read(reinterpret_cast<char *>(&e), sizeof(edge_t<T>)))
+    {
+        auto handle = heap.emplace(e);
+        incident[e.v0].push_back(handle_wrapper<T, Compare>(handle));
+        incident[e.v1].push_back(handle_wrapper<T, Compare>(handle));
+        if (supervoxel_counts[e.v0] == 0) {
+            supervoxel_counts[e.v0] = 1;
+        }
+        if (supervoxel_counts[e.v1] == 0) {
+            supervoxel_counts[e.v1] = 1;
+        }
+        i++;
+        if (i % 10000000 == 0) {
+            std::cout << "reading " << i << "th edge" << std::endl;
+        }
+    }
     return agg_data;
 }
 
