@@ -471,7 +471,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             // v0 is dissapearing from the graph
 
             // loop over other edges e0 = {v0,v}
-            for (auto& e0 : incident[v0])
+            for (auto e0 : incident[v0])
             {
                 auto v = e0.segid(v0);
                 if (v == v0)
