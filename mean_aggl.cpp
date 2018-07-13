@@ -489,10 +489,10 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                     {
                         //std::cout
                         //     << "Removing: " <<
-                        //     (*(e0.second)).edge.v0
+                        //     (*(e0.handle)).edge.v0
                         //     << " to " <<
-                        //     (*(e0.second)).edge.v1
-                        //     << " of " << (*(e0.second)).edge.w << std::endl;
+                        //     (*(e0.handle)).edge.v1
+                        //     << " of " << (*(e0.handle)).edge.w << std::endl;
                     }
                 }
                 else
