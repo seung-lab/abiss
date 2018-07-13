@@ -179,7 +179,6 @@ template <class T, class C>
 struct heapable_edge
 {
     edge_t<T> & edge;
-    heap_handle_type<T, C> handle;
     explicit constexpr heapable_edge(edge_t<T> & e)
         : edge(e) {};
 };
@@ -319,7 +318,6 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
         auto v0 = e.v0;
         auto v1 = e.v1;
         auto handle = heap.push(heapable_edge<T, Compare>(e));
-        (*handle).handle = handle;
         incident[v0].push_back(handle_wrapper<T, Compare>(handle));
         incident[v1].push_back(handle_wrapper<T, Compare>(handle));
         if (supervoxel_counts[v0] == 0) {
@@ -486,7 +484,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 {
                     auto& e1   = *((*it).handle); // edge {v1,v}
                     e1.edge.w = plus(e1.edge.w, (*(e0.handle)).edge.w);
-                    heap.update(e1.handle);
+                    heap.update((*it).handle);
                     heap.erase(e0.handle);
                     {
                         //std::cout
