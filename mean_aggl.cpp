@@ -396,10 +396,14 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     {
         num_of_edges += 1;
         auto e = heap.top();
-        heap.pop();
-
         auto v0 = e.edge.v0;
         auto v1 = e.edge.v1;
+        //std::cout << "process edges related to: " << v0 << " and " << v1 << std::endl;
+        //print_neighbors(incident[1262222], 1262222);
+        erase_neighbors(incident[v0], v0, v1);
+        erase_neighbors(incident[v1], v1, v0);
+        heap.pop();
+
         if (e.edge.w.sum/e.edge.w.num < print_th) {
             std::cout << "Processing threshold: " << print_th << std::endl;
             std::cout << "Numer of edges: " << num_of_edges << "(" << rg_size << ")"<< std::endl;
@@ -414,8 +418,6 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 s = v1;
             }
 
-            erase_neighbors(incident[v0], v0, v1);
-            erase_neighbors(incident[v1], v1, v0);
 
             if ((supervoxel_counts[v0] & frozen) != 0 || (supervoxel_counts[v1] & frozen) != 0) {
                 supervoxel_counts[v0] |= frozen;
