@@ -42,6 +42,7 @@ size_t filesize(std::string filename)
 
 void print_neighbors(auto neighbors, const auto source)
 {
+    std::cout << "neighbors of " << source << ":";
     for (auto & e : neighbors) {
         std::cout << e.segid(source) << " ";
     }
@@ -61,11 +62,13 @@ bool erase_neighbors(auto & neighbors, const auto source, auto target)
             neighbors.erase(it);
             return true;
         } else {
-            std::cerr << "VALUE " << target << " NOT FOUND" << std::endl;
+            std::cerr << "edge "<< source << " to " << target << " NOT FOUND" << std::endl;
+            print_neighbors(neighbors, source);
             return false;
         }
     }
-    std::cerr << "VALUE " << target << " NOT FOUND" << std::endl;
+    std::cerr << "edge " << source << " to " << target << " NOT FOUND" << std::endl;
+    print_neighbors(neighbors, source);
     return false;
 }
 
@@ -74,7 +77,8 @@ void insert_neighbor(auto & neighbors, const auto source, auto target, auto new_
     auto it = search_neighbors(neighbors, source, target);
     if (it != std::end(neighbors)) {
         if ((*it).segid(source) == target) {
-            std::cerr << "Should not happen: " << target << " is already a neighbors" << std::endl;
+            std::cerr << "Should not happen, edge: " << source << " to " << target << " is already a neighbors" << std::endl;
+            //print_neighbors(neighbors, source);
             it = neighbors.erase(it);
         }
         neighbors.insert(it, new_value);
