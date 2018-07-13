@@ -160,8 +160,8 @@ struct heapable_edge;
 template <class T, class C = std::greater<T>>
 struct heapable_edge_compare
 {
-    bool operator()(heapable_edge<T, C> const a,
-                    heapable_edge<T, C> const b) const
+    bool operator()(heapable_edge<T, C> const & a,
+                    heapable_edge<T, C> const & b) const
     {
         C c;
         return c(b.edge.w, a.edge.w);
