@@ -545,10 +545,9 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     std::ofstream of_frg;
     of_frg.open("final_rg.data", std::ofstream::out | std::ofstream::trunc);
 
-    while (!heap.empty())
+    for (auto it = heap.begin(); it != heap.end(); ++it)
     {
-        auto e = heap.top();
-        heap.pop();
+        auto e = *(heap_type<T, Compare>::s_handle_from_iterator(it));
         auto v0 = e.edge.v0;
         auto v1 = e.edge.v1;
         if ((supervoxel_counts[v0] & frozen) != 0 && (supervoxel_counts[v1] & frozen) != 0) {
