@@ -251,7 +251,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
             if (reverse_lookup.count(v0) == 0){
                 reverse_lookup[v0] = seg_indices.size();
                 seg_indices.push_back(v0);
-                supervoxel_counts.push_back(0);
+                supervoxel_counts.push_back(1);
             }
             local_v0_cache = v0 = reverse_lookup.at(v0);
             assert(supervoxel_counts.size() == seg_indices.size());
@@ -262,7 +262,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
             reverse_lookup[v1] = seg_indices.size();
             seg_indices.push_back(v1);
             v1 = supervoxel_counts.size();
-            supervoxel_counts.push_back(0);
+            supervoxel_counts.push_back(1);
             assert(supervoxel_counts.size() == seg_indices.size());
         } else {
             v1 = reverse_lookup.at(v1);
