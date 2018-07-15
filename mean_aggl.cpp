@@ -324,7 +324,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     seg_t sv;
     while (fs_file.read(reinterpret_cast<char *>(&sv), sizeof(sv))) {
         if (reverse_lookup.count(sv) == 0) {
-            std::cout << "frozen seg not in rg: " << seg << std::endl;
+            std::cout << "frozen seg not in rg: " << sv << std::endl;
             reverse_lookup[sv] = supervoxel_counts.size();
             supervoxel_counts.push_back(1);
             seg_indices.push_back(sv);
