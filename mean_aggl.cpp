@@ -40,6 +40,10 @@ size_t filesize(std::string filename)
     return rc == 0 ? stat_buf.st_size : 0;
 }
 
+bool is_frozen(size_t size) {
+    return size & frozen;
+}
+
 void print_neighbors(auto neighbors, const auto source)
 {
     std::cout << "neighbors of " << source << ":";
@@ -52,6 +56,17 @@ void print_neighbors(auto neighbors, const auto source)
 auto search_neighbors(const auto & neighbors, const auto source, const auto target)
 {
     return std::lower_bound(std::begin(neighbors), std::end(neighbors), target, [source](auto & a, auto & b) { return a.segid(source) < b; });
+}
+
+bool frozen_neighbors(const auto & neighbors, const auto & supervoxel_counts, const auto source)
+{
+    for (auto & n : neighbors) {
+        auto sid = n.segid(source);
+        if (is_frozen(supervoxel_counts[sid])) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool erase_neighbors(auto & neighbors, const auto source, auto target)
@@ -434,12 +449,15 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         {
 
             auto s = v0;
+
             if (incident[v0].size() < incident[v1].size()) {
                 s = v1;
             }
 
 
-            if ((supervoxel_counts[v0] & frozen) != 0 || (supervoxel_counts[v1] & frozen) != 0) {
+            if ((is_frozen(supervoxel_counts[v0]) && is_frozen(supervoxel_counts[v1]))
+                || (is_frozen(supervoxel_counts[v0]) && (frozen_neighbors(incident[v1], supervoxel_counts, v1) || (e.edge.w.sum/e.edge.w.num < 0.5 && supervoxel_counts[v1] > 1000)))
+                || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (e.edge.w.sum/e.edge.w.num < 0.5 && supervoxel_counts[v0] > 1000)))) {
                 supervoxel_counts[v0] |= frozen;
                 supervoxel_counts[v1] |= frozen;
                 of_res.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
@@ -448,6 +466,13 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 residue_size++;
                 continue;
             }
+
+            if (is_frozen(supervoxel_counts[v0])) {
+                s = v0;
+            } else if (is_frozen(supervoxel_counts[v1])) {
+                s = v1;
+            }
+
 
             //std::cout << "Test " << v0 << " and " << v1 << std::endl;
                        //<< " at " << e->edge.w << "\n";
@@ -550,7 +575,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         auto e = *(heap_type<T, Compare>::s_handle_from_iterator(it));
         auto v0 = e.edge.v0;
         auto v1 = e.edge.v1;
-        if ((supervoxel_counts[v0] & frozen) != 0 && (supervoxel_counts[v1] & frozen) != 0) {
+        if (is_frozen(supervoxel_counts[v0]) && is_frozen(supervoxel_counts[v1])) {
             of_res.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
             of_res.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
             residue_size++;
@@ -589,20 +614,20 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     of_fs_done.open("done_segments.data", std::ofstream::out | std::ofstream::trunc);
 
     for (size_t i = 0; i < supervoxel_counts.size(); i++) {
-        if ((supervoxel_counts[i] & (~frozen)) == 0) {
+        if (!(supervoxel_counts[i] & (~frozen))) {
             if (supervoxel_counts[i] != 0) {
                 std::cout << "SHOULD NOT HAPPEN, frozen supervoxel agglomerated: " << seg_indices[i] << std::endl;
                 std::abort();
             }
             continue;
         }
-        if ((supervoxel_counts[i] & frozen) == 0) {
-            of_fs_done.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
-            of_fs_done.write(reinterpret_cast<const char *>(&(supervoxel_counts[i])), sizeof(size_t));
-        } else {
+        if (is_frozen(supervoxel_counts[i])) {
             auto size = supervoxel_counts[i] & (~frozen);
             of_fs_ongoing.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
             of_fs_ongoing.write(reinterpret_cast<const char *>(&(size)), sizeof(size_t));
+        } else {
+            of_fs_done.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
+            of_fs_done.write(reinterpret_cast<const char *>(&(supervoxel_counts[i])), sizeof(size_t));
         }
     }
 
