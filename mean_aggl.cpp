@@ -319,7 +319,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
             } else {
                 if (supervoxel_counts[id] != 1 && count != 1) {
                     std::cout << "multiple entries for " << seg << " " << supervoxel_counts[id] << ", " << count << std::endl;
-                    std::abort();
+                //    std::abort();
                 }
                 supervoxel_counts[id] += (count - 1);
             }
