@@ -519,8 +519,10 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             for (auto e0 : incident[v0])
             {
                 auto v = e0.segid(v0);
-                if (v == v0)
-                    std::cout << "loop in the incident matrix: " << v << std::endl;
+                if (v == v0) {
+                    std::cerr << "loop in the incident matrix: " << v << std::endl;
+                    std::abort();
+                }
 
                 erase_neighbors(incident[v], v, v0);
 
