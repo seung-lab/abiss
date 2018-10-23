@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <tuple>
+#include <iostream>
 
 template < typename T > struct watershed_traits;
 
