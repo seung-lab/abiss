@@ -78,6 +78,10 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         sets.make_set(kv.first);
         descent[kv.first] = high_threshold;
         segids.push_back(kv.first);
+        if (kv.first == 0 || kv.second == 0) {
+            std::cerr << "Impossible segid: " << kv.first << " or size: " << kv.second << std::endl;
+            std::abort();
+        }
     }
 
     std::stable_sort(std::begin(segids), std::end(segids));
@@ -435,6 +439,10 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
                 std::cerr << "Failed to open done remap file for " << tag << " " << current_ac << std::endl;
                 std::abort();
             }
+        }
+        if (s == 0) {
+            std::cerr << "svid = 0, should not happen" << std::endl;
+            std::abort();
         }
         const auto seg = remaps[s];
         const auto size = sizes[seg];
