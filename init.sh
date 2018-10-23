@@ -10,6 +10,7 @@ just_in_case() { "$@" || true; }
 SCRIPT_PATH="/root/agg/scripts"
 BIN_PATH="/root/agg/build"
 UPLOAD_CMD="gsutil -q -m cp"
+UPLOAD_ST_CMD="gsutil -q cp"
 DOWNLOAD_CMD="gsutil -m cp"
 COMPRESS_CMD="zstd -9 --rm -T0"
 PARALLEL_CMD="parallel --verbose --halt 2"
