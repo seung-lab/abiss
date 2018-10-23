@@ -71,7 +71,8 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     std::unordered_map<ID, F> descent(sizes.size());
 
     sets.make_set(0);
-    std::vector<ID> segids(sizes.size());
+    std::vector<ID> segids;
+    segids.reserve(sizes.size());
 
     for (auto & kv : sizes) {
         sets.make_set(kv.first);
