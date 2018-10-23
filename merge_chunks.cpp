@@ -11,6 +11,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <boost/format.hpp>
+#include <parallel/algorithm>
 
 template<typename T>
 std::vector<std::pair<T, T> > load_remaps(size_t data_size)
@@ -21,7 +22,7 @@ std::vector<std::pair<T, T> > load_remaps(size_t data_size)
         auto data = remap_data.data();
         std::copy(std::begin(data), std::end(data), std::back_inserter(remap_vector));
 
-        std::stable_sort(std::begin(remap_vector), std::end(remap_vector), [](auto & a, auto & b) { return std::get<0>(a) < std::get<0>(b); });
+        __gnu_parallel::stable_sort(std::begin(remap_vector), std::end(remap_vector), [](auto & a, auto & b) { return std::get<0>(a) < std::get<0>(b); });
     }
     return remap_vector;
 }
@@ -84,7 +85,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         }
     }
 
-    std::stable_sort(std::begin(segids), std::end(segids));
+    __gnu_parallel::stable_sort(std::begin(segids), std::end(segids));
 
     std::unordered_set<id_pair<ID>, boost::hash<id_pair<ID> > > same;
     std::unordered_map<id_pair<ID>, F, boost::hash<id_pair<ID> > > edges;
@@ -182,7 +183,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     std::cout << "populate region graph in " << elapsed_secs << " seconds" << std::endl;
 
     begin = clock();
-    std::stable_sort(std::begin(rg), std::end(rg), [](auto & a, auto & b) { return std::get<0>(a) > std::get<0>(b); });
+    __gnu_parallel::stable_sort(std::begin(rg), std::end(rg), [](auto & a, auto & b) { return std::get<0>(a) > std::get<0>(b); });
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "sort region graph in " << elapsed_secs << " seconds" << std::endl;
