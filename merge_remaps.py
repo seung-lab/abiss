@@ -45,3 +45,5 @@ with open("param.txt","w") as f:
     f.write(" ".join([str(i) for i in sizes]))
     f.write("\n")
     f.write(str(actual_size))
+    f.write("\n")
+    f.write("0")

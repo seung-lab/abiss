@@ -30,5 +30,7 @@ if param["mip_level"] == 0:
         f.write(" ".join([str(i) for i in sizes]))
         f.write("\n")
         f.write(str(actual_size))
+        f.write("\n")
+        f.write("1")
 else:
     print("only atomic chunks need remapping")
