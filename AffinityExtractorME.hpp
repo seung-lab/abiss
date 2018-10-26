@@ -27,7 +27,7 @@ public:
         m_edges[p].second += 1;
     }
 
-    void output(const std::unordered_set<Ts> & incompleteSegments, const std::string & completeFileName, const std::string & incompleteFileName)
+    void output(const std::unordered_set<Ts> & incompleteSegments, const std::unordered_map<Ts, Ts> & chunkMap, const std::string & completeFileName, const std::string & incompleteFileName)
     {
         std::vector<SegPair<Ts> > incomplete_segpairs;
         std::vector<SegPair<Ts> > complete_segpairs;
@@ -37,15 +37,33 @@ public:
 
         std::vector<std::pair<Ta, Ts> > me_complete;
         std::vector<std::pair<Ta, Ts> > me_incomplete;
-
+        std::unordered_map<SegPair<Ts>, std::pair<Ta, size_t>, boost::hash<SegPair<Ts> > > real_edges;
         for (const auto & kv : m_edges) {
-            const auto k = kv.first;
+            auto k = kv.first;
+            auto v = kv.second;
+            if (chunkMap.count(k.first) > 0) {
+                k.first = chunkMap.at(k.first);
+            }
+
+            if (chunkMap.count(k.second) > 0) {
+                k.second = chunkMap.at(k.second);
+            }
+            if (k.first == k.second) {
+                continue;
+            }
+            auto p = std::minmax(k.first, k.second);
+            real_edges[p].first += v.first;
+            real_edges[p].second += v.second;
+        }
+
+        for (const auto & [k,v] : real_edges) {
+
             if (incompleteSegments.count(k.first) > 0 && incompleteSegments.count(k.second) > 0) {
                 incomplete_segpairs.push_back(k);
-                me_incomplete.push_back(kv.second);
+                me_incomplete.push_back(v);
             } else {
                 complete_segpairs.push_back(k);
-                me_complete.push_back(kv.second);
+                me_complete.push_back(v);
             }
         }
 

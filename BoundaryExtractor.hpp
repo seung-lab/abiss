@@ -23,22 +23,20 @@ public:
 
     void collectContactingSurface(int nv, Coord & c, Ts segid1, Ts segid2) {}
 
-    std::unordered_set<Ts> boundarySupervoxels(int face) const {return m_boundarySupervoxels[face];}
-
-    std::unordered_set<Ts> incompleteSupervoxels()
+    std::unordered_set<Ts> incompleteSupervoxels(const std::unordered_map<Ts, Ts> & map)
     {
         std::unordered_set<Ts> is;
         for (int i = 0; i != 6; i++) {
-            is.merge(boundarySupervoxels(i));
+            is.merge(boundarySupervoxels(i, map));
         }
         return is;
     }
 
-    void output(const std::string & fnProto)
+    void output(const std::string & fnProto, const std::unordered_map<Ts, Ts> & map)
     {
         for (int i= 0; i != 6; i++) {
             std::ofstream out(str(boost::format(fnProto) % i), std::ios_base::binary);
-            for (auto x : boundarySupervoxels(i)) {
+            for (auto x : boundarySupervoxels(i, map)) {
                 out.write(reinterpret_cast<const char *>(&x), sizeof(x));
             }
             assert(!out.bad());
@@ -46,6 +44,19 @@ public:
         }
     }
 private:
+    std::unordered_set<Ts> boundarySupervoxels(int face, const std::unordered_map<Ts, Ts> & map) const
+    {
+        std::unordered_set<Ts> res;
+        for (auto & s: m_boundarySupervoxels[face]) {
+            if (map.count(s) > 0) {
+                res.insert(map.at(s));
+            } else {
+                res.insert(s);
+            }
+        }
+        return res;
+    }
+
     std::array<std::unordered_set<Ts>, 6> m_boundarySupervoxels;
 };
 

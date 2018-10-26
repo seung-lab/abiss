@@ -13,10 +13,30 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <unordered_map>
 #include <boost/format.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 
 namespace bio = boost::iostreams;
+
+template<typename T>
+std::unordered_map<T,T> loadChunkMap(const char * filename)
+{
+    std::unordered_map<T, T> map;
+    std::ifstream cm_file(filename);
+    if (!cm_file.is_open()) {
+        std::cout << "Cannot open the supervoxel count file" << std::endl;
+        std::abort();
+    }
+
+    T k,v;
+    while (cm_file.read(reinterpret_cast<char *>(&k), sizeof(k))) {
+           cm_file.read(reinterpret_cast<char *>(&v), sizeof(v));
+           map[k] = v;
+    }
+    std::cout << "load " << map.size() << " chunk map entries" << std::endl;
+    return map;
+}
 
 int main(int argc, char * argv[])
 {
@@ -46,6 +66,8 @@ int main(int argc, char * argv[])
     ConstChunkRef<aff_t, 4> aff_chunk (reinterpret_cast<const aff_t*>(aff_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])][3], boost::fortran_storage_order());
     std::cout << "mmap aff data" << std::endl;
 
+    auto map = loadChunkMap<seg_t>("chunkmap.data");
+
     AffinityExtractorME<seg_t, aff_t, ConstChunkRef<aff_t, 4> > affinity_extractor(aff_chunk);
     BoundaryExtractor<seg_t> boundary_extractor;
 
@@ -66,11 +88,11 @@ int main(int argc, char * argv[])
 #endif
                      );
 
-    auto incomplete_segments = boundary_extractor.incompleteSupervoxels();
+    auto incomplete_segments = boundary_extractor.incompleteSupervoxels(map);
 
-    boundary_extractor.output("boundary_%1%_"+output_path+".data");
+    boundary_extractor.output("boundary_%1%_"+output_path+".data", map);
 
-    affinity_extractor.output(incomplete_segments, "edges_"+output_path+".data", "incomplete_edges_"+output_path+".data");
+    affinity_extractor.output(incomplete_segments, map, "edges_"+output_path+".data", "incomplete_edges_"+output_path+".data");
 
 #ifdef EXTRACT_SIZE
     size_extractor.output(incomplete_segments, "sizes.data", "incomplete_sizes_"+output_path+".data");
