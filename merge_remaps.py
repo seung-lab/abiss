@@ -14,11 +14,18 @@ def read_meta(branches):
     return remaps
 
 def merge_remaps(branches_tags, expected):
-    fnList = ["remap_"+t+".data" for t in branches_tags]
+    fnList = []
+    for t in branches_tags:
+        if t.startswith("0_"):
+            fnList.append("chunkmap_"+t+".data")
+
+    for t in branches_tags:
+        fnList.append("remap_"+t+".data")
+
     cu.merge_files("remap.data", fnList)
     filesize = os.path.getsize("remap.data")
     if filesize != expected*16:
-        print("Something is wrong in remap, got {0} while expecting {1}".format(filesize, expected))
+        print("Something is wrong in remap, got {0} while expecting {1}".format(filesize//16, expected))
 
     return filesize
 

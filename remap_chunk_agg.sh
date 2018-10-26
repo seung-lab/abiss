@@ -6,6 +6,8 @@ output=`basename $1 .json`
 echo $output
 try python3 $SCRIPT_PATH/generate_branch.py $1|tee filelist.txt
 
+try $DOWNLOAD_CMD $FILE_PATH/remap/chunkmap_${output}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o chunkmap_${output}.data
+
 try cat filelist.txt | $PARALLEL_CMD $DOWNLOAD_CMD $FILE_PATH/meta/meta_{}.data .
 try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/remap/remap_{}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o remap_{}.data"
 
