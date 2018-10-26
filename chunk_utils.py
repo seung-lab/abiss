@@ -62,6 +62,24 @@ def generate_ancestors(f, target=None):
 
     return ancestor
 
+def generate_siblings(f):
+    param = read_inputs(f)
+    indices = param["indices"]
+    mip = param["mip_level"]
+    boundary_flags = param["boundary_flags"]
+
+    siblings = [indices]
+    for i, f in enumerate(boundary_flags[3:]):
+        if f == 0:
+            extra=[]
+            for s in siblings:
+                c = s[:]
+                c[i] += 1
+                extra.append(c)
+            siblings+=extra
+
+    return [chunk_tag(mip, s) for s in siblings]
+
 def generate_descedants(f, target=None):
     path = os.path.dirname(f)
     p = read_inputs(f)
