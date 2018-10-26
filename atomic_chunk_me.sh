@@ -11,6 +11,11 @@ for d in $META; do
     try mkdir $d
 done
 
+try python3 $SCRIPT_PATH/generate_siblings.py $1|tee filelist.txt
+try cat filelist.txt|$PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/remap/chunkmap_{}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o chunkmap_{}.data"
+
+try python3 $SCRIPT_PATH/merge_chunkmap.py $1
+
 try python3 $SCRIPT_PATH/cut_chunk_agg.py $1
 try $BIN_PATH/acme param.txt $output
 try cp edges_"$output".data input_rg.data
