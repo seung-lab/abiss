@@ -33,6 +33,7 @@ def merge_faces(p, faceMaps):
 def merge_chunks(p):
     #cu.merge_intermediate_outputs(p, "complete_edges")
     cu.merge_intermediate_outputs(p, "residual_rg")
+    cu.merge_intermediate_outputs(p, "ongoing")
     cu.merge_intermediate_outputs(p, "ongoing_supervoxel_counts")
     for meta in sys.argv[2:]:
         cu.merge_intermediate_outputs(p, "ongoing_{}".format(meta))
