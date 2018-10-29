@@ -1,5 +1,5 @@
 import sys
-from chunk_utils import read_inputs
+import chunk_utils as cu
 from cut_chunk_common import load_data, cut_data, save_raw_data
 import numpy
 from scipy import ndimage
@@ -36,7 +36,7 @@ def adjust_affinitymap(data, params, threshold):
     return data
 
 
-param = read_inputs(sys.argv[1])
+param = cu.read_inputs(sys.argv[1])
 bbox = param["bbox"]
 boundary_flags = param["boundary_flags"]
 offset = param["offset"]
@@ -59,6 +59,10 @@ aff_cutout = cut_data(data, start_coord, end_coord, boundary_flags)
 save_raw_data("aff.raw", aff_cutout, aff.dtype)
 
 write_metadata("param.txt", aff_cutout.shape[0:3], boundary_flags, offset)
+
+fn = "remap/done_{}_{}.data".format(cu.chunk_tag(param['mip_level'],param['indices']), offset)
+f = open(fn,"w")
+f.close()
 #upload data
 #vol = CloudVolume(os.environ['ERODED_AFF_PATH'], mip=0, cdn_cache=False)
 #vol[bbox[0]:bbox[3], bbox[1]:bbox[4], bbox[2]:bbox[5], :] = aff_cutout[1:-1, 1:-1, 1:-1, :]
