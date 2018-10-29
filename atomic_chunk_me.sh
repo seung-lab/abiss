@@ -22,7 +22,7 @@ try cp edges_"$output".data input_rg.data
 
 for i in {0..5}
 do
-    cat boundary_"$i"_"$output".data >> frozen.data
+    try cat boundary_"$i"_"$output".data >> frozen.data
 done
 
 try touch ns.data
