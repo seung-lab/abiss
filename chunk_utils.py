@@ -53,7 +53,7 @@ def generate_ancestors(f, target=None):
     top_mip = p["top_mip_level"]
     mip = p["mip_level"]
     indices = p["indices"]
-    ancestor = []
+    ancestor = [chunk_tag(mip, indices)]
     while mip < top_mip:
         mip += 1
         indices = parent(indices)
