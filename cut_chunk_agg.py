@@ -10,11 +10,13 @@ def chunk_origin(bbox):
             offset[i] -= 1
     return offset
 
-def write_metadata(fn, offset, size):
+def write_metadata(fn, offset, size, ac_offset):
     with open(fn, "w") as f:
         f.write(" ".join([str(x) for x in offset]))
         f.write("\n")
         f.write(" ".join([str(x) for x in size]))
+        f.write("\n")
+        f.write(str(ac_offset))
 
 param = read_inputs(sys.argv[1])
 bbox = param["bbox"]
@@ -36,6 +38,6 @@ save_raw_data("seg.raw", seg_cutout, seg.dtype)
 #save_data("aff.h5", aff_cutout)
 #save_data("seg.h5", seg_cutout)
 
-write_metadata("param.txt", chunk_origin(bbox), seg_cutout.shape[0:3])
+write_metadata("param.txt", chunk_origin(bbox), seg_cutout.shape[0:3], ac_offset)
 with open("chunk_offset.txt", "w") as f:
     f.write(str(ac_offset))
