@@ -23,11 +23,13 @@ int main(int argc, char * argv[])
 {
     std::array<int64_t, 3> offset({0,0,0});
     std::array<int64_t, 3> dim({0,0,0});
+    size_t ac_offset;
 
     //FIXME: check the input is valid
     std::ifstream param_file(argv[1]);
     param_file >> offset[0] >> offset[1] >> offset[2];
     param_file >> dim[0] >> dim[1] >> dim[2];
+    param_file >> ac_offset;
     std::cout << offset[0] << " " << offset[1] << " " << offset[2] << std::endl;
     std::cout << dim[0] << " " << dim[1] << " " << dim[2] << std::endl;
     std::string output_path(argv[2]);
@@ -74,6 +76,7 @@ int main(int argc, char * argv[])
     boundary_extractor.output("boundary_%1%_"+output_path+".data", map);
 
     affinity_extractor.output(incomplete_segments, map, "edges_"+output_path+".data", "incomplete_edges_"+output_path+".data");
+    affinity_extractor.outputChunkedGraph(map, output_path, ac_offset);
 
 #ifdef EXTRACT_SIZE
     size_extractor.output(incomplete_segments, "sizes.data", "incomplete_sizes_"+output_path+".data");

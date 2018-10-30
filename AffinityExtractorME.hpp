@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <algorithm>
+#include <boost/format.hpp>
 
 template<typename Ts, typename Ta, typename Chunk>
 class AffinityExtractorME
@@ -33,6 +34,121 @@ public:
         out.write(reinterpret_cast<const char *>(&(v.first)), sizeof(Ta));
         out.write(reinterpret_cast<const char *>(&(v.second)), sizeof(size_t));
     }
+
+    void outputChunkedGraph(const std::unordered_map<Ts, Ts> & chunkMap, const std::string & tag, size_t ac_offset)
+    {
+        std::ofstream ofInChunk;
+        std::ofstream ofBetweenChunks;
+        std::ofstream ofFake;
+        size_t current_ac1 = std::numeric_limits<std::size_t>::max();
+        size_t current_ac2 = std::numeric_limits<std::size_t>::max();
+        std::vector<std::pair<SegPair<Ts>, std::pair<Ta, size_t> > > sorted_edges(std::begin(m_edges), std::end(m_edges));
+        std::sort(std::begin(sorted_edges), std::end(sorted_edges), [](auto & a, auto & b) { return (a.first.first < b.first.first) || (a.first.first == b.first.first && a.first.second < b.first.second);});
+        for (const auto & [k,v] : sorted_edges) {
+            auto s1 = k.first;
+            auto s2 = k.second;
+            if (current_ac1 != (s1 - (s1 % ac_offset))) {
+                if (ofInChunk.is_open()) {
+                    ofInChunk.close();
+                    if (ofInChunk.is_open()) {
+                        std::abort();
+                    }
+                }
+                if (ofBetweenChunks.is_open()) {
+                    ofBetweenChunks.close();
+                    if (ofBetweenChunks.is_open()) {
+                        std::abort();
+                    }
+                }
+                if (ofFake.is_open()) {
+                    ofFake.close();
+                    if (ofFake.is_open()) {
+                        std::abort();
+                    }
+                }
+                current_ac1 = s1 - (s1 % ac_offset);
+                current_ac2 = s2 - (s2 % ac_offset);
+                ofInChunk.open(str(boost::format("chunked_rg/in_chunk_%1%_%2%.data") % tag % current_ac1));
+                if (!ofInChunk.is_open()) {
+                    std::abort();
+                }
+                if (current_ac1 != current_ac2) {
+                    ofBetweenChunks.open(str(boost::format("chunked_rg/between_chunk_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
+                    if (!ofBetweenChunks.is_open()) {
+                        std::abort();
+                    }
+                    ofFake.open(str(boost::format("chunked_rg/fake_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
+                    if (!ofFake.is_open()) {
+                        std::abort();
+                    }
+                }
+            } else if (current_ac2 != (s2 - (s2 % ac_offset))) {
+                if (current_ac1 != current_ac2) {
+                    if (ofBetweenChunks.is_open()) {
+                        ofBetweenChunks.close();
+                        if (ofBetweenChunks.is_open()) {
+                            std::abort();
+                        }
+                    }
+                    if (ofFake.is_open()) {
+                        ofFake.close();
+                        if (ofFake.is_open()) {
+                            std::abort();
+                        }
+                    }
+                }
+                current_ac2 = s2 - (s2 % ac_offset);
+                if (current_ac1 != current_ac2) {
+                    ofBetweenChunks.open(str(boost::format("chunked_rg/between_chunk_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
+                    if (!ofBetweenChunks.is_open()) {
+                        std::abort();
+                    }
+                    ofFake.open(str(boost::format("chunked_rg/fake_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
+                    if (!ofFake.is_open()) {
+                        std::abort();
+                    }
+                }
+            }
+
+            if (chunkMap.count(s1) > 0) {
+                s1 = chunkMap.at(k.first);
+            }
+
+            if (chunkMap.count(s2) > 0) {
+                s2 = chunkMap.at(k.second);
+            }
+
+            if (s1 == s2) {
+                writeEdge(ofFake, k, v);
+            } else if (current_ac1 == current_ac2) {
+                writeEdge(ofInChunk, k, v);
+            } else {
+                writeEdge(ofBetweenChunks, k, v);
+            }
+            assert(!ofFake.bad());
+            assert(!ofBetweenChunks.bad());
+            assert(!ofInChunk.bad());
+        }
+        if (ofInChunk.is_open()) {
+            ofInChunk.close();
+            if (ofInChunk.is_open()) {
+                std::abort();
+            }
+        }
+        if (ofBetweenChunks.is_open()) {
+            ofBetweenChunks.close();
+            if (ofBetweenChunks.is_open()) {
+                std::abort();
+            }
+        }
+        if (ofFake.is_open()) {
+            ofFake.close();
+            if (ofFake.is_open()) {
+                std::abort();
+            }
+        }
+    }
+
 
     void output(const std::unordered_set<Ts> & incompleteSegments, const std::unordered_map<Ts, Ts> & chunkMap, const std::string & completeFileName, const std::string & incompleteFileName)
     {
