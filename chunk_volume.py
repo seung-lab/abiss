@@ -2,15 +2,48 @@ from cloudvolume import CloudVolume
 from chunk_iterator import ChunkIterator
 import sys
 import json
+import numpy as np
 
-def process_atomic_chunks(c, top_mip, idx):
+def get_chunk_offset(layer=None, x=None, y=None, z=None):
+        """ (1) Extract Chunk ID from Node ID
+            (2) Build Chunk ID from Layer, X, Y and Z components
+        :param layer: int
+        :param x: int
+        :param y: int
+        :param z: int
+        :return: np.uint64
+        """
+
+        bits_per_dim = 8
+        n_bits_for_layer_id = 8
+
+        if not(x < 2 ** bits_per_dim and
+               y < 2 ** bits_per_dim and
+               z < 2 ** bits_per_dim):
+            raise Exception("Chunk coordinate is out of range for"
+                            "this graph on layer %d with %d bits/dim."
+                            "[%d, %d, %d]; max = %d."
+                            % (layer, bits_per_dim, x, y, z,
+                               2 ** bits_per_dim))
+
+        layer_offset = 64 - n_bits_for_layer_id
+        x_offset = layer_offset - bits_per_dim
+        y_offset = x_offset - bits_per_dim
+        z_offset = y_offset - bits_per_dim
+        return np.uint64(layer << layer_offset | x << x_offset |
+                         y << y_offset | z << z_offset)
+
+def process_atomic_chunks(c, top_mip, ac_offset):
+    x,y,z = c.coordinate()
+    offset = get_chunk_offset(1, x, y, z)
     output = {
         "top_mip_level" : top_mip,
         "mip_level": c.mip_level(),
         "indices": c.coordinate(),
         "bbox": c.data_bbox(),
         "boundary_flags": c.boundary_flags(),
-        "offset" : idx
+        "offset" : int(offset),
+        "ac_offset" : ac_offset
     }
     fn = str(c.mip_level()) + "_" + "_".join([str(i) for i in c.coordinate()]) + ".json"
     with open(fn, 'w') as fp:
@@ -107,8 +140,10 @@ data_bbox = [35680//2+256, 30046//2+256, 1+20, 122630//2-256, 82140//2-256, 2177
 #data_bbox = [90822//2, 63850//2, 1200,90822//2+1024, 63850//2+1024, 1200+128]
 
 chunk_size = [512,512,128]
-v = ChunkIterator(data_bbox,chunk_size)
-offset = chunk_size[0]*chunk_size[1]*chunk_size[2]
+
+v = ChunkIterator(data_bbox, chunk_size)
+#offset = chunk_size[0]*chunk_size[1]*chunk_size[2]
+offset = 1<<32
 
 top_mip = v.top_mip_level()
 
@@ -130,12 +165,10 @@ if (len(sys.argv) == 2):
     vol_ws = CloudVolume(sys.argv[1], mip=0, info=metadata_seg)
     vol_ws.commit_info()
 
-index = 0
 for c in v:
     if c.mip_level() == 0:
-        process_atomic_chunks(c, top_mip, index)
+        process_atomic_chunks(c, top_mip, offset)
         #process_atomic_tasks(c, top_mip, f_task, f_deps)
-        index+=offset
     else:
         process_composite_chunks(c, top_mip, offset)
         process_composite_tasks(c, top_mip, f_task, f_deps)
