@@ -3,6 +3,29 @@
 
 #include "Types.h"
 #include <queue>
+#include <unordered_map>
+#include <fstream>
+#include <iostream>
+
+template<typename T>
+std::unordered_map<T,T> loadChunkMap(const char * filename)
+{
+    std::unordered_map<T, T> map;
+    std::ifstream cm_file(filename);
+    if (!cm_file.is_open()) {
+        std::cout << "Cannot open the supervoxel count file" << std::endl;
+        std::abort();
+    }
+
+    T k,v;
+    while (cm_file.read(reinterpret_cast<char *>(&k), sizeof(k))) {
+           cm_file.read(reinterpret_cast<char *>(&v), sizeof(v));
+           map[k] = v;
+    }
+    std::cout << "load " << map.size() << " chunk map entries" << std::endl;
+    return map;
+}
+
 
 std::vector<ContactRegion> connectComponent(const ContactRegion & cr)
 {
