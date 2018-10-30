@@ -27,6 +27,13 @@ public:
         m_edges[p].second += 1;
     }
 
+    void writeEdge(std::ofstream & out, const std::pair<Ts, Ts> & k, const std::pair<Ta, size_t> & v) {
+        out.write(reinterpret_cast<const char *>(&(k.first)), sizeof(Ts));
+        out.write(reinterpret_cast<const char *>(&(k.second)), sizeof(Ts));
+        out.write(reinterpret_cast<const char *>(&(v.first)), sizeof(Ta));
+        out.write(reinterpret_cast<const char *>(&(v.second)), sizeof(size_t));
+    }
+
     void output(const std::unordered_set<Ts> & incompleteSegments, const std::unordered_map<Ts, Ts> & chunkMap, const std::string & completeFileName, const std::string & incompleteFileName)
     {
         std::vector<SegPair<Ts> > incomplete_segpairs;
@@ -69,21 +76,12 @@ public:
 
         for (size_t i = 0; i != complete_segpairs.size(); i++) {
             const auto & p = complete_segpairs[i];
-            complete.write(reinterpret_cast<const char *>(&(p.first)), sizeof(Ts));
-            complete.write(reinterpret_cast<const char *>(&(p.second)), sizeof(Ts));
-            complete.write(reinterpret_cast<const char *>(&(me_complete[i].first)), sizeof(Ta));
-            complete.write(reinterpret_cast<const char *>(&(me_complete[i].second)), sizeof(size_t));
-            complete.write(reinterpret_cast<const char *>(&(p.first)), sizeof(Ts));
-            complete.write(reinterpret_cast<const char *>(&(p.second)), sizeof(Ts));
-            complete.write(reinterpret_cast<const char *>(&(me_complete[i].first)), sizeof(Ta));
-            complete.write(reinterpret_cast<const char *>(&(me_complete[i].second)), sizeof(size_t));
+            writeEdge(complete, p, me_complete[i]);
+            writeEdge(complete, p, me_complete[i]);
         }
         for (size_t i = 0; i != incomplete_segpairs.size(); i++) {
             const auto & p = incomplete_segpairs[i];
-            incomplete.write(reinterpret_cast<const char *>(&(p.first)), sizeof(Ts));
-            incomplete.write(reinterpret_cast<const char *>(&(p.second)), sizeof(Ts));
-            incomplete.write(reinterpret_cast<const char *>(&(me_incomplete[i].first)), sizeof(Ta));
-            incomplete.write(reinterpret_cast<const char *>(&(me_incomplete[i].second)), sizeof(size_t));
+            writeEdge(incomplete, p, me_incomplete[i]);
         }
         assert(!incomplete.bad());
         assert(!complete.bad());
