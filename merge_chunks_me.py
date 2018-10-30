@@ -42,9 +42,12 @@ def merge_chunks(p):
     merge_faces(p,face_maps)
 
 param = cu.read_inputs(sys.argv[1])
+ac_offset = param["ac_offset"]
 
 if param["mip_level"] == 0:
     print("atomic chunk, nothing to merge")
 else:
     print("mip level:", param["mip_level"])
     merge_chunks(param)
+    with open("chunk_offset.txt", "w") as f:
+        f.write(str(ac_offset))

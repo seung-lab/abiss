@@ -18,6 +18,7 @@ def write_metadata(fn, offset, size):
 
 param = read_inputs(sys.argv[1])
 bbox = param["bbox"]
+ac_offset = param["ac_offset"]
 boundary_flags = param["boundary_flags"]
 
 aff = load_data(os.environ['AFF_PATH'],mip=int(os.environ['AFF_MIP']))
@@ -36,3 +37,5 @@ save_raw_data("seg.raw", seg_cutout, seg.dtype)
 #save_data("seg.h5", seg_cutout)
 
 write_metadata("param.txt", chunk_origin(bbox), seg_cutout.shape[0:3])
+with open("chunk_offset.txt", "w") as f:
+    f.write(str(ac_offset))

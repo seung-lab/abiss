@@ -32,7 +32,7 @@ try touch ns.data
 try $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data ns.data
 
 try cat remap.data >> localmap.data
-try $BIN_PATH/split_remap $output
+try $BIN_PATH/split_remap chunk_offset.txt $output
 try $BIN_PATH/assort $output $META
 
 try mv meta.data meta_"$output".data

@@ -42,7 +42,7 @@ for d in $META; do
     try cat ongoing_"${d}".data >> "${d}".data
 done
 
-try $BIN_PATH/split_remap $output
+try $BIN_PATH/split_remap chunk_offset.txt $output
 try $BIN_PATH/assort $output $META
 
 try mv meta.data meta_"$output".data
