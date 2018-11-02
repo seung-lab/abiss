@@ -1,9 +1,7 @@
 #!/bin/bash
 INIT_PATH="$(dirname "$0")"
-. ${INIT_PATH}/init.sh
+. ${INIT_PATH}/init.sh $1
 
-output=`basename $1 .json`
-echo $output
 try python3 $SCRIPT_PATH/generate_filelist.py $1|tee filelist.txt
 try cat filelist.txt|$PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/remap/{}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o {}.data"
 try python3 $SCRIPT_PATH/cut_chunk_remap.py $1 $WS_PATH

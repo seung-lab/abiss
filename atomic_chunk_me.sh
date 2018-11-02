@@ -1,9 +1,6 @@
 #!/bin/bash
 INIT_PATH="$(dirname "$0")"
-. ${INIT_PATH}/init.sh
-
-output=`basename $1 .json`
-echo $output
+. ${INIT_PATH}/init.sh $1
 
 try mkdir remap
 try mkdir chunked_rg

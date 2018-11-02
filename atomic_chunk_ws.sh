@@ -1,9 +1,7 @@
 #!/bin/bash
 INIT_PATH="$(dirname "$0")"
-. ${INIT_PATH}/init.sh
+. ${INIT_PATH}/init.sh $1
 
-output=`basename $1 .json`
-echo $output
 try mkdir remap
 try python3 $SCRIPT_PATH/cut_chunk_ws.py $1
 try $BIN_PATH/ws param.txt aff.raw $WS_HIGH_THRESHOLD $WS_LOW_THRESHOLD $WS_SIZE_THRESHOLD $output

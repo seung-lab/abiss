@@ -29,3 +29,10 @@ just_in_case rm -rf *.zst
 just_in_case rm -rf *.raw
 just_in_case rm -rf *.tmp
 just_in_case rm -rf param.txt
+
+output=`basename $1 .json`
+echo $output
+
+if [ ! -f $1 ]; then
+    try python3 $SCRIPT_PATH/chunk_volume.py
+fi
