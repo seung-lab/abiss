@@ -39,7 +39,7 @@ public:
 
     void generateChunkMap() {
         for (auto &[k, v]: m_globalMap) {
-            if (m_globalMap.count(v) == 0) {
+            if (v != 0 && m_globalMap.count(v) == 0) {
                 if (m_chunkMap.count(v) == 0) {
                     m_chunkMap[v] = k;
                 }
