@@ -2,6 +2,7 @@
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
 
+just_in_case rm -rf remap
 try mkdir remap
 for d in $META; do
     just_in_case rm -rf $d

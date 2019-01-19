@@ -2,6 +2,8 @@
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
 
+just_in_case rm -rf remap
+just_in_case rm -rf chunked_rg
 try mkdir remap
 try mkdir chunked_rg
 for d in $META; do
