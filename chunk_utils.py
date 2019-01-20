@@ -2,6 +2,36 @@ import json
 import os
 import shutil
 
+def get_chunk_offset(layer=None, x=None, y=None, z=None):
+        """ (1) Extract Chunk ID from Node ID
+            (2) Build Chunk ID from Layer, X, Y and Z components
+        :param layer: int
+        :param x: int
+        :param y: int
+        :param z: int
+        :return: np.uint64
+        """
+
+        bits_per_dim = 8
+        n_bits_for_layer_id = 8
+
+        if not(x < 2 ** bits_per_dim and
+               y < 2 ** bits_per_dim and
+               z < 2 ** bits_per_dim):
+            raise Exception("Chunk coordinate is out of range for"
+                            "this graph on layer %d with %d bits/dim."
+                            "[%d, %d, %d]; max = %d."
+                            % (layer, bits_per_dim, x, y, z,
+                               2 ** bits_per_dim))
+
+        layer_offset = 64 - n_bits_for_layer_id
+        x_offset = layer_offset - bits_per_dim
+        y_offset = x_offset - bits_per_dim
+        z_offset = y_offset - bits_per_dim
+        return (layer << layer_offset | x << x_offset |
+                         y << y_offset | z << z_offset)
+
+
 def read_inputs(fn):
     with open(fn) as f:
         return json.load(f)
