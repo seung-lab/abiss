@@ -1,6 +1,6 @@
 import sys
 import chunk_utils as cu
-from cut_chunk_common import load_data, cut_data, save_raw_data
+from cut_chunk_common import load_data, cut_data, save_raw_data, warp_z
 import numpy
 from scipy import ndimage
 import os
@@ -38,23 +38,28 @@ def adjust_affinitymap(data, params, threshold):
 
 param = cu.read_inputs(sys.argv[1])
 bbox = param["bbox"]
+aff_bbox = bbox[:]
+aff_bbox[2] = warp_z(bbox[2])
+aff_bbox[5] = aff_bbox[2] + (bbox[5] - bbox[2])
+print(bbox)
+print(aff_bbox)
 boundary_flags = param["boundary_flags"]
 offset = param["offset"]
 
 aff = load_data(os.environ['AFF_PATH'],mip=int(os.environ['AFF_MIP']))
-#start_coord = [bbox[i]-1+boundary_flags[i] for i in range(3)]
-#end_coord = [bbox[i+3]+1-boundary_flags[i+3] for i in range(3)]
-#aff_cutout = cut_data(aff, start_coord, end_coord, boundary_flags)
-erode_params = [[20,0.995],[20,0.995],[2,0.99]]
-start_coord = [bbox[i]-(1-boundary_flags[i])*(1+erode_params[i][0]) for i in range(3)]
-end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*(1+erode_params[i][0]) for i in range(3)]
-bb = tuple(slice(start_coord[i], end_coord[i]) for i in range(3))
-data = adjust_affinitymap(aff[bb+(slice(0,3),)], erode_params, 0.8)
-#data = aff[bb+(slice(0,3),)]
-shape = data.shape
-start_coord = [(1-boundary_flags[i])*erode_params[i][0] for i in range(3)]
-end_coord = [shape[i]-(1-boundary_flags[i+3])*erode_params[i][0] for i in range(3)]
-aff_cutout = cut_data(data, start_coord, end_coord, boundary_flags)
+start_coord = [aff_bbox[i]-1+boundary_flags[i] for i in range(3)]
+end_coord = [aff_bbox[i+3]+1-boundary_flags[i+3] for i in range(3)]
+aff_cutout = cut_data(aff, start_coord, end_coord, boundary_flags)
+#erode_params = [[20,0.995],[20,0.995],[2,0.99]]
+#start_coord = [bbox[i]-(1-boundary_flags[i])*(1+erode_params[i][0]) for i in range(3)]
+#end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*(1+erode_params[i][0]) for i in range(3)]
+#bb = tuple(slice(start_coord[i], end_coord[i]) for i in range(3))
+#data = adjust_affinitymap(aff[bb+(slice(0,3),)], erode_params, 0.8)
+##data = aff[bb+(slice(0,3),)]
+#shape = data.shape
+#start_coord = [(1-boundary_flags[i])*erode_params[i][0] for i in range(3)]
+#end_coord = [shape[i]-(1-boundary_flags[i+3])*erode_params[i][0] for i in range(3)]
+#aff_cutout = cut_data(data, start_coord, end_coord, boundary_flags)
 
 save_raw_data("aff.raw", aff_cutout, aff.dtype)
 

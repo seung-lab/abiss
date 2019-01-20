@@ -1,6 +1,16 @@
 from cloudvolume import CloudVolume
 import numpy
 
+def warp_z(z):
+    return z
+    #z_min = 256
+    #z_range = 256
+    #z_dist = z - z_min
+    #if z_dist > z_range:
+    #    z_dist = z_dist % z_range
+
+    #return z_min+z_dist
+
 def load_data(url, mip=0):
     print("cloud volume url: ", url)
     print("mip level: ", mip)
