@@ -98,17 +98,29 @@ def generate_siblings(f):
     mip = param["mip_level"]
     boundary_flags = param["boundary_flags"]
 
-    siblings = [indices]
+    volume = [[0,0,0]]
+    faces = []
+    edges = []
+    vertices = []
     for i, f in enumerate(boundary_flags[3:]):
         if f == 0:
-            extra=[]
-            for s in siblings:
-                c = s[:]
+            new_faces = [volume[0][:]]
+            new_faces[0][i] += 1
+            new_edges = []
+            for a in faces:
+                c = a[:]
                 c[i] += 1
-                extra.append(c)
-            siblings+=extra
+                new_edges.append(c)
+            new_vertices = []
+            for b in edges:
+                c = b[:]
+                c[i] += 1
+                new_vertices.append(c)
+            faces+=new_faces
+            edges+=new_edges
+            vertices+=new_vertices
 
-    return [chunk_tag(mip, s) for s in siblings]
+    return mip, indices, volume, faces, edges, vertices
 
 def generate_descedants(f, target=None):
     path = os.path.dirname(f)
