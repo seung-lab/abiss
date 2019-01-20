@@ -8,7 +8,7 @@ try python3 $SCRIPT_PATH/cut_chunk_remap.py $1 $WS_PATH
 try python3 $SCRIPT_PATH/merge_remaps_ws.py $1 0
 try mv seg.raw seg_"${output}".data
 try $BIN_PATH/ws3 param.txt seg_"${output}".data
-try python3 $SCRIPT_PATH/ssim.py $1
+#try python3 $SCRIPT_PATH/ssim.py $1
 try python3 $SCRIPT_PATH/upload_chunk.py $1 $SEG_PATH $SEG_MIP
 
 try touch $1.txt
