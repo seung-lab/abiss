@@ -4,10 +4,11 @@ INIT_PATH="$(dirname "$0")"
 
 just_in_case rm -rf remap
 try mkdir remap
+try touch remap/.nonempty_$1.txt
 for d in $META; do
     just_in_case rm -rf $d
     try mkdir $d
-    try touch $d/.nonempty.txt
+    try touch $d/.nonempty_$1.txt
 done
 
 try python3 $SCRIPT_PATH/generate_children.py $1|tee filelist.txt
