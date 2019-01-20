@@ -1,10 +1,9 @@
 #!/bin/bash
-set -euo pipefail
-
 yell() { echo "$0: $*" >&2;   }
 die() { yell "$*"; exit 111;   }
 bail() { yell "$*"; exit 0;  }
 try() { "$@" || die "cannot $*";   }
+try_to_skip() { "$@" && bail "skip $*";  }
 just_in_case() { "$@" || true; }
 
 SCRIPT_PATH="/root/agg/scripts"
@@ -16,6 +15,13 @@ COMPRESS_CMD="zstd -9 --rm -T0"
 PARALLEL_CMD="parallel --verbose --halt 2"
 COMPRESSED_EXT="zst"
 META=""
+
+
+try source $SCRIPT_PATH/config.sh
+
+try_to_skip $DOWNLOAD_CMD $FILE_PATH/done/$1.txt .
+
+set -euo pipefail
 
 try dos2unix /root/.cloudvolume/secrets/config.sh
 try . /root/.cloudvolume/secrets/config.sh

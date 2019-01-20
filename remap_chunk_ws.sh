@@ -13,3 +13,6 @@ try python3 $SCRIPT_PATH/upload_chunk.py $1 $WS_PATH $WS_MIP
 try mv chunkmap.data chunkmap_"${output}".data
 try $COMPRESS_CMD chunkmap_"${output}".data
 try $UPLOAD_ST_CMD chunkmap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/chunkmap_"${output}".data."${COMPRESSED_EXT}"
+
+try touch $1.txt
+try $UPLOAD_CMD $1.txt $FILE_PATH/done/$1.txt

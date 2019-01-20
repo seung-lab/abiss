@@ -21,4 +21,7 @@ try $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/dend/"${output}".tar."${COMPRESSED_EXT}"
 
+try touch $1.txt
+try $UPLOAD_CMD $1.txt $FILE_PATH/done/$1.txt
+
 try rm -rf remap
