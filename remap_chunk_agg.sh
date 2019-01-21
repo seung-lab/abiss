@@ -1,6 +1,8 @@
 #!/bin/bash
+set -euo pipefail
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
+output=`basename $1 .json`
 
 try python3 $SCRIPT_PATH/generate_filelist.py $1|tee filelist.txt
 try cat filelist.txt|$PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/remap/{}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o {}.data"

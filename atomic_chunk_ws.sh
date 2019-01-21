@@ -1,6 +1,8 @@
 #!/bin/bash
+set -euo pipefail
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
+output=`basename $1 .json`
 
 try mkdir remap
 try python3 $SCRIPT_PATH/cut_chunk_ws.py $1

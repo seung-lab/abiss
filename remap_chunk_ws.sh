@@ -1,6 +1,8 @@
 #!/bin/bash
+set -euo pipefail
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
+output=`basename $1 .json`
 
 try touch chunkmap.data
 try python3 $SCRIPT_PATH/generate_filelist.py $1|tee filelist.txt

@@ -19,26 +19,7 @@ META=""
 
 try source $SCRIPT_PATH/config.sh
 
-try_to_skip $DOWNLOAD_CMD $FILE_PATH/done/$1.txt .
-
-set -euo pipefail
-
 try dos2unix /root/.cloudvolume/secrets/config.sh
 try . /root/.cloudvolume/secrets/config.sh
 try . /root/google-cloud-sdk/path.bash.inc
 
-just_in_case rm -rf meta
-just_in_case rm -rf remap
-just_in_case rm -rf *.data
-just_in_case rm -rf *.tar
-just_in_case rm -rf *.zst
-just_in_case rm -rf *.raw
-just_in_case rm -rf *.tmp
-just_in_case rm -rf param.txt
-
-output=`basename $1 .json`
-echo $output
-
-if [ ! -f $1 ]; then
-    try python3 $SCRIPT_PATH/chunk_volume.py
-fi

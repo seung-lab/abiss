@@ -1,6 +1,8 @@
 #!/bin/bash
+set -euo pipefail
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
+output=`basename $1 .json`
 
 just_in_case rm -rf remap
 just_in_case rm -rf chunked_rg

@@ -1,6 +1,8 @@
 #!/bin/bash
+set -euo pipefail
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
+output=`basename $1 .json`
 
 just_in_case rm -rf remap
 try mkdir remap
