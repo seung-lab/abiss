@@ -14,7 +14,7 @@ try $BIN_PATH/ws3 param.txt seg_"${output}".data
 try python3 $SCRIPT_PATH/upload_chunk.py $1 $WS_PATH $WS_MIP
 try mv chunkmap.data chunkmap_"${output}".data
 try $COMPRESS_CMD chunkmap_"${output}".data
-try $UPLOAD_ST_CMD chunkmap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/chunkmap_"${output}".data."${COMPRESSED_EXT}"
+try $UPLOAD_ST_CMD chunkmap_"${output}".data."${COMPRESSED_EXT}" $CHUNKMAP_PATH/chunkmap_"${output}".data."${COMPRESSED_EXT}"
 
 try touch "${output}".txt
 try $UPLOAD_CMD "${output}".txt $FILE_PATH/done/"${output}".txt
