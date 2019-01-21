@@ -4,11 +4,11 @@ INIT_PATH="$(dirname "$0")"
 
 just_in_case rm -rf remap
 try mkdir remap
-try touch remap/.nonempty_$1.txt
+try touch remap/.nonempty_"$output".txt
 for d in $META; do
     just_in_case rm -rf $d
     try mkdir $d
-    try touch $d/.nonempty_$1.txt
+    try touch $d/.nonempty_"$output".txt
 done
 
 try python3 $SCRIPT_PATH/generate_children.py $1|tee filelist.txt
@@ -75,8 +75,9 @@ try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch/"${output}".tar."${COMPRESSED_EXT}"
 
-try touch $1.txt
-try $UPLOAD_CMD $1.txt $FILE_PATH/done/$1.txt
+try touch "${output}".txt
+try $UPLOAD_CMD "${output}".txt $FILE_PATH/done/"${output}".txt
+
 
 for fn in $(cat filelist.txt)
 do

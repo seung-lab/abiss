@@ -18,6 +18,6 @@ try $UPLOAD_ST_CMD ongoing_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap
 try $UPLOAD_ST_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 try tar -cvf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_ST_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/dend/"${output}".tar."${COMPRESSED_EXT}"
-try touch $1.txt
-try $UPLOAD_CMD $1.txt $FILE_PATH/done/$1.txt
+try touch "${output}".txt
+try $UPLOAD_CMD "${output}".txt $FILE_PATH/done/"${output}".txt
 try rm -rf remap

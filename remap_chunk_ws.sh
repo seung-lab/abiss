@@ -14,5 +14,5 @@ try mv chunkmap.data chunkmap_"${output}".data
 try $COMPRESS_CMD chunkmap_"${output}".data
 try $UPLOAD_ST_CMD chunkmap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/chunkmap_"${output}".data."${COMPRESSED_EXT}"
 
-try touch $1.txt
-try $UPLOAD_CMD $1.txt $FILE_PATH/done/$1.txt
+try touch "${output}".txt
+try $UPLOAD_CMD "${output}".txt $FILE_PATH/done/"${output}".txt
