@@ -20,7 +20,10 @@ fi
 
 just_in_case rm -rf "$CHUNK"
 
-try mkdir "$CHUNK" && pushd "$CHUNK" && "$SCRIPT_PATH"/"$OP".sh "$WORK_PATH"/"$CHUNK".json && popd
+try mkdir "$CHUNK"
+try pushd "$CHUNK"
+try "$SCRIPT_PATH"/"$OP".sh "$WORK_PATH"/"$CHUNK".json
+try popd
 
 try touch "${CHUNK}".txt
 try $UPLOAD_ST_CMD "${CHUNK}".txt $FILE_PATH/done/"$OP"/"${CHUNK}".txt
