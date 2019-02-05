@@ -6,6 +6,27 @@ try() { "$@" || die "cannot $*";   }
 try_to_skip() { "$@" && bail "skip $*";  }
 just_in_case() { "$@" || true; }
 
+lock_prefix="${AIRFLOW_TMP_DIR}/.cpulock"
+last_cpu=7
+cpuid=""
+function acquire_cpu_slot() {
+    for i in $(seq 0 $last_cpu); do
+        local fn="${lock_prefix}_${i}"
+        if [ ! -f $fn ]; then
+            cpuid=$i
+            echo "Use cpu $i"
+            try touch "${lock_prefix}_${i}"
+            return
+        fi
+    done
+    die "All cpus are busy"
+}
+
+function release_cpu_slot() {
+    local fn="${lock_prefix}_${cpuid}"
+    try rm -rf $fn
+}
+
 SCRIPT_PATH="/root/agg/scripts"
 BIN_PATH="/root/agg/build"
 UPLOAD_CMD="gsutil -q -m cp"

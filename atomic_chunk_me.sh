@@ -3,6 +3,7 @@ set -euo pipefail
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
 output=`basename $1 .json`
+try acquire_cpu_slot
 
 just_in_case rm -rf remap
 just_in_case rm -rf chunked_rg
@@ -20,8 +21,8 @@ cp chunkmap_${output}.data localmap.data
 
 try python3 $SCRIPT_PATH/merge_chunkmap.py $1
 
-try python3 $SCRIPT_PATH/cut_chunk_agg.py $1
-try $BIN_PATH/acme param.txt $output
+try taskset -c $cpuid python3 $SCRIPT_PATH/cut_chunk_agg.py $1
+try taskset -c $cpuid $BIN_PATH/acme param.txt $output
 try cp edges_"$output".data input_rg.data
 
 for i in {0..5}
@@ -31,11 +32,11 @@ done
 
 try touch ns.data
 
-try $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data ns.data
+try taskset -c $cpuid $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data ns.data
 
 try cat remap.data >> localmap.data
-try $BIN_PATH/split_remap chunk_offset.txt $output
-try $BIN_PATH/assort $output $META
+try taskset -c $cpuid $BIN_PATH/split_remap chunk_offset.txt $output
+try taskset -c $cpuid $BIN_PATH/assort $output $META
 
 try mv meta.data meta_"$output".data
 try mv residual_rg.data residual_rg_"$output".data
@@ -79,3 +80,5 @@ try rm -rf remap
 for d in $META; do
     try rm -rf $d
 done
+
+try release_cpu_slot

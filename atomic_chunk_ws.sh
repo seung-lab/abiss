@@ -3,10 +3,10 @@ set -euo pipefail
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
 output=`basename $1 .json`
-
+try acquire_cpu_slot
 try mkdir remap
-try python3 $SCRIPT_PATH/cut_chunk_ws.py $1
-try $BIN_PATH/ws param.txt aff.raw $WS_HIGH_THRESHOLD $WS_LOW_THRESHOLD $WS_SIZE_THRESHOLD $output
+try taskset -c $cpuid python3 $SCRIPT_PATH/cut_chunk_ws.py $1
+try taskset -c $cpuid $BIN_PATH/ws param.txt aff.raw $WS_HIGH_THRESHOLD $WS_LOW_THRESHOLD $WS_SIZE_THRESHOLD $output
 try touch remap_"${output}".data
 try touch ongoing_"${output}".data
 try $COMPRESS_CMD seg_"${output}".data
@@ -23,3 +23,4 @@ try $UPLOAD_ST_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/dend/"${output
 try touch "${output}".txt
 try $UPLOAD_CMD "${output}".txt $FILE_PATH/done/"${output}".txt
 try rm -rf remap
+try release_cpu_slot
