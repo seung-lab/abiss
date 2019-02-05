@@ -3,7 +3,7 @@ from chunk_iterator import ChunkIterator
 import sys
 import json
 from chunk_utils import get_chunk_offset
-from dataset import data_bbox, chunk_size
+from dataset import chunk_size
 
 def process_atomic_chunks(c, top_mip, ac_offset):
     x,y,z = c.coordinate()
@@ -57,6 +57,11 @@ def process_composite_tasks(c, top_mip, f_task, f_deps):
             f_task.write('remap_chunks["{}_{}"]=remap_chunks_op(dag, ["{}"])\n'.format(tag,i,tags_b))
             f_deps.write('generate_chunks["{}_{}"].set_downstream(generate_chunks["{}"])\n'.format(tag,i,tag))
             f_deps.write('generate_chunks["{}"].set_downstream(remap_chunks["{}_{}"])\n'.format(top_tag,tag,i))
+
+
+with open(sys.argv[1]) as f:
+    data = json.load(f)
+    data_bbox = data["BBOX"]
 
 v = ChunkIterator(data_bbox, chunk_size)
 #offset = chunk_size[0]*chunk_size[1]*chunk_size[2]

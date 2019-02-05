@@ -37,11 +37,15 @@ COMPRESS_CMD="zstd -9 --rm -T0"
 PARALLEL_CMD="parallel --verbose --halt 2"
 COMPRESSED_EXT="zst"
 META=""
+PARAM_JSON=/root/.cloudvolume/secrets/param
+#PARAM_JSON="$SCRIPT_PATH"/param.json
 
+#export AIRFLOW_TMP_DIR="/tmp/airflow"
+
+if [ ! -f "$SCRIPT_PATH"/config.sh ]; then
+    try python3 $SCRIPT_PATH/set_env.py $PARAM_JSON > $SCRIPT_PATH/config.sh
+fi
 
 try source $SCRIPT_PATH/config.sh
-
-try dos2unix /root/.cloudvolume/secrets/config.sh
-try . /root/.cloudvolume/secrets/config.sh
 try . /root/google-cloud-sdk/path.bash.inc
 
