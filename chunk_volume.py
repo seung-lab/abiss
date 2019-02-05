@@ -37,26 +37,21 @@ def process_composite_chunks(c, top_mip, offset):
         json.dump(output, fp, indent=2)
 
 def process_composite_tasks(c, top_mip, f_task, f_deps):
+    batch_mip = 2
+    if c.mip_level() < batch_mip:
+        return
     top_tag = str(top_mip)+"_0_0_0"
     tag = str(c.mip_level()) + "_" + "_".join([str(i) for i in c.coordinate()])
     d = c.children()
-    bundle_size = 4;
-    if c.mip_level() >= 4:
-        f_task.write('generate_chunks["{}"]=composite_chunks_long_op(dag, ["{}"])\n'.format(tag,tag))
-    else:
-        f_task.write('generate_chunks["{}"]=composite_chunks_op(dag, ["{}"])\n'.format(tag,tag))
-    if c.mip_level() > 1:
+    if c.mip_level() > batch_mip:
+        f_task.write('generate_chunks["{}"]=composite_chunks_wrap_op(dag, "{}")\n'.format(tag,tag))
         for k in d:
             tag_c = str(c.mip_level()-1) + "_" + "_".join([str(i) for i in k.coordinate()])
             f_deps.write('generate_chunks["{}"].set_downstream(generate_chunks["{}"])\n'.format(tag_c, tag))
-    else:
-        tags_c = [str(c.mip_level()-1) + "_" + "_".join([str(i) for i in k.coordinate()]) for k in d]
-        for i in range(0, len(tags_c), bundle_size):
-            tags_b = '","'.join(tags_c[0+i:bundle_size+i])
-            f_task.write('generate_chunks["{}_{}"]=atomic_chunks_op(dag, ["{}"])\n'.format(tag,i,tags_b))
-            f_task.write('remap_chunks["{}_{}"]=remap_chunks_op(dag, ["{}"])\n'.format(tag,i,tags_b))
-            f_deps.write('generate_chunks["{}_{}"].set_downstream(generate_chunks["{}"])\n'.format(tag,i,tag))
-            f_deps.write('generate_chunks["{}"].set_downstream(remap_chunks["{}_{}"])\n'.format(top_tag,tag,i))
+    elif c.mip_level() == batch_mip:
+        f_task.write('generate_chunks["{}"]=composite_chunks_batch_op(dag, {}, "{}")\n'.format(tag,batch_mip,tag))
+        f_task.write('remap_chunks["{}"]=remap_chunks_batch_op(dag, {}, "{}")\n'.format(tag,batch_mip,tag))
+        f_deps.write('generate_chunks["{}"].set_downstream(remap_chunks["{}"])\n'.format(top_tag,tag))
 
 
 with open(sys.argv[1]) as f:
