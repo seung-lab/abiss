@@ -178,6 +178,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         auto & p = kv.first;
         rg.emplace_back(kv.second, p.first, p.second);
     }
+    free_container(edges);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "populate region graph in " << elapsed_secs << " seconds" << std::endl;
@@ -201,6 +202,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             descent[vr] = high_threshold;
         }
     }
+    free_container(same);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "merge plateau in " << elapsed_secs << " seconds" << std::endl;
@@ -235,6 +237,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             }
         }
     }
+    free_container(descent);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "merge descent in " << elapsed_secs << " seconds" << std::endl;
