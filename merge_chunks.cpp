@@ -28,66 +28,76 @@ std::vector<std::pair<T, T> > load_remaps(size_t data_size)
 }
 
 template<typename T>
-std::unordered_map<T, size_t> load_sizes(size_t data_size)
+std::vector<std::pair< T, size_t> >  load_sizes(size_t data_size)
 {
-    std::unordered_map<T, size_t> sizes(data_size);
     if (data_size > 0) {
         MMArray<std::pair<T, size_t>, 1> count_data("counts.data",std::array<size_t, 1>({data_size}));
         auto counts = count_data.data();
-        for (size_t i = 0; i != data_size; i++) {
-            sizes[counts[i].first] = counts[i].second;
-        }
+        std::vector<std::pair<T, size_t> > sizes(counts.begin(), counts.end());
+        return sizes;
+    } else {
+        return std::vector<std::pair<T, size_t> >();
     }
-    return sizes;
 }
 
 template<typename ID, typename F>
 region_graph<ID,F> load_dend(size_t data_size)
 {
-    region_graph<ID, F> rg;
     if (data_size > 0) {
         MMArray<std::tuple<F, ID, ID>, 1> dend_data("dend.data",std::array<size_t, 1>({data_size}));
         auto dend_tuple = dend_data.data();
-        for (size_t i = 0; i != data_size; i++) {
-            rg.push_back(dend_tuple[i]);
-        }
+        region_graph<ID, F> rg(dend_tuple.begin(), dend_tuple.end());
+        return rg;
+    } else {
+        return region_graph<ID,F>();
     }
-    return rg;
 }
 
 template<typename ID, typename F>
 std::tuple<std::unordered_map<ID, ID>, size_t, size_t>
-process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, region_graph<ID, F> & rg, auto high_threshold, auto low_threshold, auto size_threshold, const std::string & tag, size_t remap_size, size_t ac_offset)
+process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & size_pairs, region_graph<ID, F> & rg, auto high_threshold, auto low_threshold, auto size_threshold, const std::string & tag, size_t remap_size, size_t ac_offset)
 {
-    using traits = watershed_traits<ID>;
-    using rank_t = std::unordered_map<ID,std::size_t>;
-    using parent_t = std::unordered_map<ID,ID>;
-    rank_t rank_map;
-    parent_t parent_map;
-
-    boost::associative_property_map<rank_t> rank_pmap(rank_map);
-    boost::associative_property_map<parent_t> parent_pmap(parent_map);
-
-    boost::disjoint_sets<boost::associative_property_map<rank_t>, boost::associative_property_map<parent_t> > sets(rank_pmap, parent_pmap);
-    std::unordered_map<ID, F> descent(sizes.size());
-
-    sets.make_set(0);
+    std::vector<size_t> sizes;
     std::vector<ID> segids;
-    segids.reserve(sizes.size());
-
-    for (auto & kv : sizes) {
-        sets.make_set(kv.first);
-        descent[kv.first] = high_threshold;
-        segids.push_back(kv.first);
+    std::unordered_map<size_t, ID> reverse_lookup;
+    sizes.reserve(size_pairs.size());
+    segids.reserve(size_pairs.size());
+    reverse_lookup.reserve(size_pairs.size());
+    segids.push_back(0);
+    sizes.push_back(0);
+    reverse_lookup[0] = 0;
+    for (auto & kv : size_pairs) {
         if (kv.first == 0 || kv.second == 0) {
             std::cerr << "Impossible segid: " << kv.first << " or size: " << kv.second << std::endl;
             std::abort();
         }
+        if (reverse_lookup.count(kv.first) == 0) {
+            reverse_lookup[kv.first] = segids.size();
+            segids.push_back(kv.first);
+            sizes.push_back(kv.second);
+        } else {
+            std::cout << "!!!!! Should not happen, duplicated supervoxels in size list!" << std::endl;
+        }
     }
 
-    __gnu_parallel::stable_sort(std::begin(segids), std::end(segids));
+    using traits = watershed_traits<ID>;
+    using rank_t = std::unordered_map<ID,std::size_t>;
+    using parent_t = std::unordered_map<ID,ID>;
+    std::vector<ID> rank(sizes.size());
+    std::vector<ID> parent(sizes.size());
+    boost::disjoint_sets<ID*, ID*> sets(&rank[0], &parent[0]);
 
-    std::unordered_set<id_pair<ID>, boost::hash<id_pair<ID> > > same;
+    std::vector<F> descent(sizes.size(), high_threshold);
+
+    sets.make_set(0);
+
+    for (size_t i = 0; i != segids.size(); i++) {
+        sets.make_set(i);
+    }
+
+    __gnu_parallel::for_each(std::begin(rg), std::end(rg), [&reverse_lookup](auto & a) { std::get<1>(a) = reverse_lookup.at(std::get<1>(a)); std::get<2>(a) = reverse_lookup.at(std::get<2>(a));});
+
+    std::vector<id_pair<size_t> > same;
     std::unordered_map<id_pair<ID>, F, boost::hash<id_pair<ID> > > edges;
 
     auto fi_data = MMArray<ID, 1>("seg_fi.data", std::array<size_t, 1>({face_size}));
@@ -107,7 +117,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     for (size_t idx = 0; idx != face_size; idx++) {
         if ( fi[idx] && bi[idx] ) {
             bool needs_an_edge = false;
-            id_pair<ID> xp = std::minmax(fi[idx], bi[idx]);
+            id_pair<size_t> xp = std::minmax(reverse_lookup.at(fi[idx]), reverse_lookup.at(bi[idx]));
             if ( conn[idx] >= low_threshold ) {
                 if ( fo[idx] ) {
                     if (fi[idx] != fo[idx]) {
@@ -119,16 +129,16 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
                             std::cerr << "something is wrong in merge" << std::endl;
                             std::abort();
                         }
-                        same.insert(xp);
+                        same.push_back(xp);
                     } else {
                         needs_an_edge = true;
-                        if (descent[fi[idx]] != high_threshold && descent[fi[idx]] != conn[idx]) {
+                        if (descent[reverse_lookup.at(fi[idx])] != high_threshold && descent[reverse_lookup.at(fi[idx])] != conn[idx]) {
                             std::cerr << "This should not happen in a" << std::endl;
-                            std::cerr << fi[idx] << " " << bi[idx] << std::endl;
-                            std::cerr << descent[fi[idx]] << " " << conn[idx] << std::endl;
+                            std::cerr <<"index: " << idx << ", id: " << fi[idx] << ", id: " << bi[idx] << std::endl;
+                            std::cerr << descent[reverse_lookup.at(fi[idx])] << " " << conn[idx] << std::endl;
                             std::abort();
                         }
-                        descent[fi[idx]] = conn[idx];
+                        descent[reverse_lookup.at(fi[idx])] = conn[idx];
                     }
                 } else if ( bo[idx] ) {
                     if (bi[idx] != bo[idx]) {
@@ -140,16 +150,16 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
                             std::cerr << "something is wrong in merge" << std::endl;
                             std::abort();
                         }
-                        same.insert(xp);
+                        same.push_back(xp);
                     } else {
                         needs_an_edge = true;
-                        if (descent[bi[idx]] != high_threshold && descent[bi[idx]] != conn[idx]) {
+                        if (descent[reverse_lookup.at(bi[idx])] != high_threshold && descent[reverse_lookup.at(bi[idx])] != conn[idx]) {
                             std::cerr << "This should not happen in b" << std::endl;
                             std::cerr << fi[idx] << " " << bi[idx] << std::endl;
-                            std::cerr << descent[bi[idx]] << " " << conn[idx] << std::endl;
+                            std::cerr << descent[reverse_lookup.at(bi[idx])] << " " << conn[idx] << std::endl;
                             std::abort();
                         }
-                        descent[bi[idx]] = conn[idx];
+                        descent[reverse_lookup.at(bi[idx])] = conn[idx];
                     }
                 } else {
                     if (conn[idx] >= high_threshold) {
@@ -246,6 +256,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     std::cout << "merge" << std::endl;
     begin = clock();
     n_merger = 0;
+    region_graph<ID,F> res_rg;
     for (auto & t : rg) {
         const F val = std::get<0>(t);
         const ID v1 = sets.find_set( std::get<1>(t) );
@@ -259,27 +270,30 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             if (try_merge(sizes, sets, v1, v2, size_threshold)) {
                 n_merger += 1;
             }
+            else {
+                res_rg.push_back(t);
+            }
         }
     }
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "rg size: " << rg.size() << std::endl;
+    std::cout << "res rg size: " << res_rg.size() << std::endl;
+    free_container(rg);
     std::cout << "merge region graph in " << elapsed_secs << " seconds" << std::endl;
     std::cout << n_merger << " mergers" << std::endl;
 
-    parent_t remaps(sizes.size());
+    std::vector<size_t> remaps(sizes.size(), 0);
 
     ID next_id = 0;
 
     begin = clock();
 
-    for ( auto & kv : sizes ) {
-        const ID v = kv.first;
-        size_t size = kv.second;
+    for (size_t v = 0; v != sizes.size(); v++) {
+        size_t size = sizes[v];
         const ID s = sets.find_set(v);
         if (sizes[s] >= size_threshold) {
             remaps[v] = s;
-        } else {
-            remaps[v] = 0;
         }
 
         if ( (size & (~traits::on_border)) && size >= size_threshold  ) {
@@ -290,59 +304,62 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
         }
     }
 
-    free_container(rank_map);
-    free_container(parent_map);
-
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "generate remap in " << elapsed_secs << " seconds" << std::endl;
 
-    std::unordered_map<ID, std::set<ID> > in_rg;
+    std::unordered_map<size_t, std::set<size_t> > in_rg;
 
+    region_graph<ID,F> unique_rg;
     region_graph<ID,F> new_rg;
 
-
-    rank_t rank_mst_map;
-    parent_t parent_mst_map;
-
-    boost::associative_property_map<rank_t> rank_mst_pmap(rank_mst_map);
-    boost::associative_property_map<parent_t> parent_mst_pmap(parent_mst_map);
-
-    boost::disjoint_sets<boost::associative_property_map<rank_t>, boost::associative_property_map<parent_t> > mst(rank_mst_pmap, parent_mst_pmap);
     begin = clock();
 
-    mst.make_set(0);
+    __gnu_parallel::for_each(std::begin(res_rg), std::end(res_rg), [&remaps](auto & a) {
+            auto mm = std::minmax(remaps[std::get<1>(a)], remaps[std::get<2>(a)]);
+            std::get<1>(a) = mm.first;
+            std::get<2>(a) = mm.second;
+            });
 
-    for (auto & kv : sizes) {
-        mst.make_set(kv.first);
-    }
+    __gnu_parallel::stable_sort(std::begin(res_rg), std::end(res_rg), [](auto & a, auto & b) {
+            return (std::get<1>(a) < std::get<1>(b)) \
+            || ((std::get<1>(a) == std::get<1>(b)) && (std::get<2>(a) < std::get<2>(b))) \
+            || ((std::get<1>(a) == std::get<1>(b)) && (std::get<2>(a) == std::get<2>(b)) && (std::get<0>(a) > std::get<0>(b))); });
 
-    for ( auto& it: rg )
+    __gnu_parallel::unique_copy(std::begin(res_rg), std::end(res_rg), std::back_inserter(unique_rg), [](auto & a, auto & b) {return (std::get<1>(a) == std::get<1>(b) && std::get<2>(a) == std::get<2>(b));});
+
+    __gnu_parallel::stable_sort(std::begin(unique_rg), std::end(unique_rg), [](auto & a, auto & b) {return std::get<0>(a) > std::get<0>(b);});
+    //rank_t rank_mst_map;
+    //parent_t parent_mst_map;
+
+    //boost::associative_property_map<rank_t> rank_mst_pmap(rank_mst_map);
+    //boost::associative_property_map<parent_t> parent_mst_pmap(parent_mst_map);
+
+    //boost::disjoint_sets<boost::associative_property_map<rank_t>, boost::associative_property_map<parent_t> > mst(rank_mst_pmap, parent_mst_pmap);
+
+    for ( auto& it: unique_rg )
     {
-        ID s1 = remaps[std::get<1>(it)];
-        ID s2 = remaps[std::get<2>(it)];
-        //ID s1 = sets.find_set(std::get<1>(it));
-        //ID s2 = sets.find_set(std::get<2>(it));
-        ID a1 = mst.find_set(s1);
-        ID a2 = mst.find_set(s2);
+        ID s1 = std::get<1>(it);
+        ID s2 = std::get<2>(it);
+        ID a1 = sets.find_set(s1);
+        ID a2 = sets.find_set(s2);
 
         if ( a1 != a2 && a1 && a2 )
         {
-            mst.link(a1, a2);
-            auto mm = std::minmax(s1,s2);
-            if ( in_rg[mm.first].count(mm.second) == 0 && ((sizes[s1] & traits::on_border) && (sizes[s2] & traits::on_border)))
+            sets.link(a1, a2);
+            if (((sizes[s1] & traits::on_border) && (sizes[s2] & traits::on_border)))
             {
-                new_rg.emplace_back(std::get<0>(it), mm.first, mm.second);
-                in_rg[mm.first].insert(mm.second);
+                new_rg.emplace_back(std::get<0>(it), segids[s1], segids[s2]);
             }
         }
     }
 
     auto d = write_vector(str(boost::format("dend_%1%.data") % tag), new_rg);
+    free_container(res_rg);
     free_container(in_rg);
     free_container(new_rg);
-    free_container(rank_mst_map);
-    free_container(parent_mst_map);
+    free_container(rank);
+    free_container(parent);
 
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -350,13 +367,14 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
 
     begin = clock();
     std::vector<std::pair<ID, size_t> > counts;
-    for (const auto & kv : sizes) {
-        if (kv.second & traits::on_border) {
-            counts.emplace_back(kv.first,kv.second&(~traits::on_border));
+    for (size_t v = 0; v != sizes.size(); v++) {
+        if (sizes[v] & traits::on_border) {
+            counts.emplace_back(segids[v],sizes[v]&(~traits::on_border));
         }
     }
 
     auto c = write_vector(str(boost::format("counts_%1%.data") % tag), counts);
+    free_container(counts);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "write supervoxel sizes in " << elapsed_secs << " seconds" << std::endl;
@@ -394,12 +412,12 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
                 std::abort();
             }
         }
-        const auto seg = remaps[kv.second];
+        const auto seg = remaps[reverse_lookup.at(kv.second)];
         const auto size = sizes[seg];
         if (size & traits::on_border) {
             if (reps.count(seg) == 0) {
                 of_ongoing.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
-                of_ongoing.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
+                of_ongoing.write(reinterpret_cast<const char *>(&(segids[seg])), sizeof(ID));
                 reps[seg] = s;
             } else {
                 of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
@@ -407,7 +425,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             }
         } else {
             of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
-            of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
+            of_done.write(reinterpret_cast<const char *>(&(segids[seg])), sizeof(ID));
         }
         if (of_done.bad()) {
             std::cerr << "Error occurred when writing done remap file for " << tag << " " << current_ac << std::endl;
@@ -428,7 +446,9 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     current_ac = std::numeric_limits<std::size_t>::max();
 
     begin = clock();
-    for (auto & s : segids) {
+    std::vector<ID> segid_tmp(segids.begin()+1, segids.end());
+    __gnu_parallel::stable_sort(std::begin(segid_tmp), std::end(segid_tmp));
+    for (auto & s : segid_tmp) {
         if (current_ac != (s - (s % ac_offset))) {
             if (of_done.is_open()) {
                 of_done.close();
@@ -436,6 +456,7 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
                     std::cerr << "Failed to close done remap file for " << tag << " " << current_ac << std::endl;
                     std::abort();
                 }
+                reps.clear();
             }
             current_ac = s - (s % ac_offset);
             of_done.open(str(boost::format("remap/done_%1%_%2%.data") % tag % current_ac), std::ios_base::app);
@@ -448,14 +469,20 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
             std::cerr << "svid = 0, should not happen" << std::endl;
             std::abort();
         }
-        const auto seg = remaps[s];
+        const auto seg = remaps[reverse_lookup.at(s)];
         const auto size = sizes[seg];
         if (size & traits::on_border) {
-            of_ongoing.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
-            of_ongoing.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
+            if (reps.count(seg) == 0) {
+                of_ongoing.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
+                of_ongoing.write(reinterpret_cast<const char *>(&(segids[seg])), sizeof(ID));
+                reps[seg] = s;
+            } else {
+                of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
+                of_done.write(reinterpret_cast<const char *>(&(reps.at(seg))), sizeof(ID));
+            }
         } else {
             of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
-            of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(ID));
+            of_done.write(reinterpret_cast<const char *>(&(segids[seg])), sizeof(ID));
         }
         if (of_done.bad()) {
             std::cerr << "Error occurred when writing done remap file for " << tag << " " << current_ac << std::endl;
@@ -475,11 +502,15 @@ process_chunk_borders(size_t face_size, std::unordered_map<ID, size_t> & sizes, 
     std::cout << "generate new remap in " << elapsed_secs << " seconds" << std::endl;
 
     std::cout << "number of supervoxels:" << remaps.size() << "," << next_id << std::endl;
-    return std::make_tuple(std::move(remaps), c, d);
+    std::unordered_map<ID, ID> remaps_map;
+    for (size_t i = 0; i != segids.size(); i++) {
+        remaps_map[segids[i]] = segids[remaps[i]];
+    }
+    return std::make_tuple(std::move(remaps_map), c, d);
 }
 
 template<typename T>
-void mark_border_supervoxels(std::unordered_map<T, size_t> & sizes, const std::array<bool,6> & boundary_flags, const std::array<size_t, 6> & face_dims, const std::string & tag)
+void mark_border_supervoxels(std::vector<std::pair<T, size_t> > & sizes, const std::array<bool,6> & boundary_flags, const std::array<size_t, 6> & face_dims, const std::string & tag)
 {
     using traits = watershed_traits<T>;
     for (size_t i = 0; i != 6; i++) {
@@ -488,15 +519,21 @@ void mark_border_supervoxels(std::unordered_map<T, size_t> & sizes, const std::a
             std::cout << "loading: " << fn << std::endl;
             MMArray<T, 1> face_array(fn,std::array<size_t, 1>({face_dims[i]}));
             auto face_data = face_array.data();
-            for (size_t j = 0; j != face_dims[i]; j++) {
-                if (sizes.count(face_data[j]) != 0 && face_data[j]!=0) {
-                    sizes[face_data[j]] |= traits::on_border;
-                } else {
-                    if (face_data[j] != 0) {
-                        std::cout << "supervoxels does not exist" << std::endl;
-                    }
+            std::unordered_set<T> boundary_segs(face_data.begin(), face_data.end());
+            __gnu_parallel::for_each(sizes.begin(), sizes.end(), [&boundary_segs](auto & p) {
+                if (p.first != 0 && boundary_segs.find(p.first) != boundary_segs.end()) {
+                    p.second |= traits::on_border;
                 }
-            }
+            });
+            //for (size_t j = 0; j != face_dims[i]; j++) {
+            //    if (sizes.count(face_data[j]) != 0 && face_data[j]!=0) {
+            //        sizes[face_data[j]] |= traits::on_border;
+            //    } else {
+            //        if (face_data[j] != 0) {
+            //            std::cout << "supervoxels does not exist" << std::endl;
+            //        }
+            //    }
+            //}
         }
     }
     //std::cout << "check supervoxel: 240854 " << sizes[240854] << std::endl;
@@ -512,20 +549,22 @@ void update_border_supervoxels(const std::unordered_map<T, T> & remaps, const st
             std::cout << "update: " << fi << ",size:" << face_dims[i] << std::endl;
             MMArray<T, 1> face_i_array(fi,std::array<size_t, 1>({face_dims[i]}));
             auto face_i_data = face_i_array.data();
-            for (size_t j = 0; j != face_dims[i]; j++) {
-                if (remaps.count(face_i_data[j]) > 0) {
-                    face_i_data[j] = remaps.at(face_i_data[j]);
-                }
-            }
+            __gnu_parallel::for_each(face_i_data.begin(), face_i_data.end(), [&remaps](size_t & a) {
+                    auto newid = remaps.find(a);
+                    if (newid != remaps.end()) {
+                        a = newid->second;
+                    }
+            });
             auto fo = str(boost::format("seg_o_%1%_%2%.data") % i % tag);
             std::cout << "update: " << fo << ",size:" << face_dims[i] << std::endl;
             MMArray<T, 1> face_o_array(fo,std::array<size_t, 1>({face_dims[i]}));
             auto face_o_data = face_o_array.data();
-            for (size_t j = 0; j != face_dims[i]; j++) {
-                if (remaps.count(face_o_data[j]) > 0) {
-                    face_o_data[j] = remaps.at(face_o_data[j]);
-                }
-            }
+            __gnu_parallel::for_each(face_o_data.begin(), face_o_data.end(), [&remaps](size_t & a) {
+                    auto newid = remaps.find(a);
+                    if (newid != remaps.end()) {
+                        a = newid->second;
+                    }
+            });
         }
     }
 }
@@ -562,11 +601,15 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "supervoxel id offset:" << face_size << " " << counts << " " << dend_size << std::endl;
-    auto sizes = load_sizes<seg_t>(counts);
     clock_t begin = clock();
-    mark_border_supervoxels(sizes, flags, std::array<size_t, 6>({ydim*zdim, xdim*zdim, xdim*ydim, ydim*zdim, xdim*zdim, xdim*ydim}), tag);
+    auto sizes = load_sizes<seg_t>(counts);
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "load size in " << elapsed_secs << " seconds" << std::endl;
+    begin = clock();
+    mark_border_supervoxels(sizes, flags, std::array<size_t, 6>({ydim*zdim, xdim*zdim, xdim*ydim, ydim*zdim, xdim*zdim, xdim*ydim}), tag);
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "mark boundary supervoxels in " << elapsed_secs << " seconds" << std::endl;
     begin = clock();
     auto dend = load_dend<seg_t, aff_t>(dend_size);
