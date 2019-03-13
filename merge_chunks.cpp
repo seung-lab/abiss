@@ -100,6 +100,8 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     std::vector<id_pair<size_t> > same;
     std::unordered_map<id_pair<ID>, F, boost::hash<id_pair<ID> > > edges;
 
+    clock_t begin = clock();
+{
     auto fi_data = MMArray<ID, 1>("seg_fi.data", std::array<size_t, 1>({face_size}));
     auto fo_data = MMArray<ID, 1>("seg_fo.data", std::array<size_t, 1>({face_size}));
     auto bi_data = MMArray<ID, 1>("seg_bi.data", std::array<size_t, 1>({face_size}));
@@ -112,7 +114,6 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     auto bo = bo_data.data();
     auto conn = conn_data.data();
 
-    clock_t begin = clock();
 
     for (size_t idx = 0; idx != face_size; idx++) {
         if ( fi[idx] && bi[idx] ) {
@@ -177,6 +178,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
             }
         }
     }
+}
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
