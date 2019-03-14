@@ -59,26 +59,29 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
 {
     std::vector<size_t> sizes;
     std::vector<ID> segids;
-    std::unordered_map<size_t, ID> reverse_lookup;
+    std::vector<std::pair<size_t, ID>> reverse_lookup_pairs;
     sizes.reserve(size_pairs.size());
     segids.reserve(size_pairs.size());
-    reverse_lookup.reserve(size_pairs.size());
+    reverse_lookup_pairs.reserve(size_pairs.size());
     segids.push_back(0);
     sizes.push_back(0);
-    reverse_lookup[0] = 0;
+    reverse_lookup_pairs.push_back(std::make_pair(size_t(0),ID(0)));
+    __gnu_parallel::stable_sort(std::begin(size_pairs), std::end(size_pairs), [](auto & a, auto & b) { return a.first < b.first; });
+    clock_t begin = clock();
+    std::cout << size_pairs.size() << "supervoxels to populate" << std::endl;
     for (auto & kv : size_pairs) {
         if (kv.first == 0 || kv.second == 0) {
             std::cerr << "Impossible segid: " << kv.first << " or size: " << kv.second << std::endl;
             std::abort();
         }
-        if (reverse_lookup.count(kv.first) == 0) {
-            reverse_lookup[kv.first] = segids.size();
-            segids.push_back(kv.first);
-            sizes.push_back(kv.second);
-        } else {
-            std::cout << "!!!!! Should not happen, duplicated supervoxels in size list!" << std::endl;
-        }
+        reverse_lookup_pairs.push_back(std::make_pair(kv.first, segids.size()));
+        segids.push_back(kv.first);
+        sizes.push_back(kv.second);
     }
+    std::unordered_map<size_t, ID> reverse_lookup(reverse_lookup_pairs.begin(), reverse_lookup_pairs.end());
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "populate maps in " << elapsed_secs << " seconds" << std::endl;
 
     using traits = watershed_traits<ID>;
     using rank_t = std::unordered_map<ID,std::size_t>;
@@ -100,7 +103,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     std::vector<id_pair<size_t> > same;
     std::unordered_map<id_pair<ID>, F, boost::hash<id_pair<ID> > > edges;
 
-    clock_t begin = clock();
+    begin = clock();
 {
     auto fi_data = MMArray<ID, 1>("seg_fi.data", std::array<size_t, 1>({face_size}));
     auto fo_data = MMArray<ID, 1>("seg_fo.data", std::array<size_t, 1>({face_size}));
@@ -179,8 +182,8 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
         }
     }
 }
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
     std::cout << "merge faces in " << elapsed_secs << " seconds" << std::endl;
 
