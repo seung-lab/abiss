@@ -28,6 +28,7 @@
 #include <vector>
 #include <unordered_set>
 #include <sys/stat.h>
+#include <parallel/algorithm>
 
 using seg_t = uint64_t;
 using aff_t = float;
@@ -254,7 +255,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     }
     std::fclose(f);
 
-    std::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return a.v0 < b.v0;  });
+    __gnu_parallel::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return a.v0 < b.v0;  });
 
     auto v0_cache = seg_t(0);
     auto local_v0_cache = seg_t(0);
@@ -289,7 +290,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
         e.v1 = v1;
     }
 
-    std::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
+    __gnu_parallel::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
 
     std::ofstream fout(rg_filename, (std::ios::out | std::ios::binary) );
     assert(fout);
