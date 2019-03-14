@@ -340,7 +340,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     seg_t sv;
     while (fs_file.read(reinterpret_cast<char *>(&sv), sizeof(sv))) {
         if (reverse_lookup.count(sv) == 0) {
-            std::cout << "frozen seg not in rg: " << sv << std::endl;
+            //std::cout << "frozen seg not in rg: " << sv << std::endl;
             reverse_lookup[sv] = supervoxel_counts.size();
             supervoxel_counts.push_back(1);
             seg_indices.push_back(sv);
@@ -480,7 +480,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             if (e.edge.w.sum/e.edge.w.num < 0.5) {
                 auto p = std::minmax({(supervoxel_counts[v0] & (~frozen)), (supervoxel_counts[v1] & (~frozen))});
                 if (p.first > 1000 and p.second > 10000) {
-                    std::cout << "reject edge between " << seg_indices[v0] << "(" << supervoxel_counts[v0] << ")"<< " and " << seg_indices[v1] << "(" << supervoxel_counts[v1] << ")"<< std::endl;
+                    //std::cout << "reject edge between " << seg_indices[v0] << "(" << supervoxel_counts[v0] << ")"<< " and " << seg_indices[v1] << "(" << supervoxel_counts[v1] << ")"<< std::endl;
                     of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
                     of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
                     write_edge(of_reject, e.edge.w);
