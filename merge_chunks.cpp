@@ -104,66 +104,87 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     std::unordered_map<id_pair<ID>, F, boost::hash<id_pair<ID> > > edges;
 
     begin = clock();
+    std::vector<ID> vfi;
+    std::vector<ID> vfo;
+    std::vector<ID> vbi;
+    std::vector<ID> vbo;
+    auto conn_data = MMArray<F, 1>("aff_b.data", std::array<size_t, 1>({face_size}));
+    auto conn = conn_data.data();
 {
     auto fi_data = MMArray<ID, 1>("seg_fi.data", std::array<size_t, 1>({face_size}));
     auto fo_data = MMArray<ID, 1>("seg_fo.data", std::array<size_t, 1>({face_size}));
     auto bi_data = MMArray<ID, 1>("seg_bi.data", std::array<size_t, 1>({face_size}));
     auto bo_data = MMArray<ID, 1>("seg_bo.data", std::array<size_t, 1>({face_size}));
-    auto conn_data = MMArray<F, 1>("aff_b.data", std::array<size_t, 1>({face_size}));
 
     auto fi = fi_data.data();
     auto fo = fo_data.data();
     auto bi = bi_data.data();
     auto bo = bo_data.data();
-    auto conn = conn_data.data();
 
+    __gnu_parallel::transform(fi.begin(), fi.end(), std::back_inserter(vfi), [&reverse_lookup](ID a){
+            return reverse_lookup.at(a);
+            });
 
+    __gnu_parallel::transform(fo.begin(), fo.end(), std::back_inserter(vfo), [&reverse_lookup](ID a){
+            return reverse_lookup.at(a);
+            });
+
+    __gnu_parallel::transform(bi.begin(), bi.end(), std::back_inserter(vbi), [&reverse_lookup](ID a){
+            return reverse_lookup.at(a);
+            });
+
+    __gnu_parallel::transform(bo.begin(), bo.end(), std::back_inserter(vbo), [&reverse_lookup](ID a){
+            return reverse_lookup.at(a);
+            });
+
+}
     for (size_t idx = 0; idx != face_size; idx++) {
-        if ( fi[idx] && bi[idx] ) {
+        if ( vfi[idx] && vbi[idx] ) {
             bool needs_an_edge = false;
-            id_pair<size_t> xp = std::minmax(reverse_lookup.at(fi[idx]), reverse_lookup.at(bi[idx]));
+            //std::cout << "id: " << fi[idx] << ", id: " << bi[idx] << std::endl;
+            id_pair<size_t> xp = std::minmax(vfi[idx], vbi[idx]);
             if ( conn[idx] >= low_threshold ) {
-                if ( fo[idx] ) {
-                    if (fi[idx] != fo[idx]) {
+                if ( vfo[idx] ) {
+                    if (vfi[idx] != vfo[idx]) {
                         std::cerr << "something is wrong in fo" << std::endl;
                         std::abort();
                     }
                     if ( conn[idx] >= high_threshold ) {
-                        if (bi[idx] != bo[idx]) {
+                        if (vbi[idx] != vbo[idx]) {
                             std::cerr << "something is wrong in merge" << std::endl;
                             std::abort();
                         }
                         same.push_back(xp);
                     } else {
                         needs_an_edge = true;
-                        if (descent[reverse_lookup.at(fi[idx])] != high_threshold && descent[reverse_lookup.at(fi[idx])] != conn[idx]) {
+                        if (descent[vfi[idx]] != high_threshold && descent[vfi[idx]] != conn[idx]) {
                             std::cerr << "This should not happen in a" << std::endl;
-                            std::cerr <<"index: " << idx << ", id: " << fi[idx] << ", id: " << bi[idx] << std::endl;
-                            std::cerr << descent[reverse_lookup.at(fi[idx])] << " " << conn[idx] << std::endl;
+                            std::cerr << vfi[idx] << " " << vbi[idx] << std::endl;
+                            std::cerr << descent[vfi[idx]] << " " << conn[idx] << std::endl;
                             std::abort();
                         }
-                        descent[reverse_lookup.at(fi[idx])] = conn[idx];
+                        descent[vfi[idx]] = conn[idx];
                     }
-                } else if ( bo[idx] ) {
-                    if (bi[idx] != bo[idx]) {
+                } else if ( vbo[idx] ) {
+                    if (vbi[idx] != vbo[idx]) {
                         std::cerr << "something is wrong in bo" << std::endl;
                         std::abort();
                     }
                     if ( conn[idx] >= high_threshold ) {
-                        if (fi[idx] != fo[idx]) {
+                        if (vfi[idx] != vfo[idx]) {
                             std::cerr << "something is wrong in merge" << std::endl;
                             std::abort();
                         }
                         same.push_back(xp);
                     } else {
                         needs_an_edge = true;
-                        if (descent[reverse_lookup.at(bi[idx])] != high_threshold && descent[reverse_lookup.at(bi[idx])] != conn[idx]) {
+                        if (descent[vbi[idx]] != high_threshold && descent[vbi[idx]] != conn[idx]) {
                             std::cerr << "This should not happen in b" << std::endl;
-                            std::cerr << fi[idx] << " " << bi[idx] << std::endl;
-                            std::cerr << descent[reverse_lookup.at(bi[idx])] << " " << conn[idx] << std::endl;
+                            std::cerr << vfi[idx] << " " << vbi[idx] << std::endl;
+                            std::cerr << descent[vbi[idx]] << " " << conn[idx] << std::endl;
                             std::abort();
                         }
-                        descent[reverse_lookup.at(bi[idx])] = conn[idx];
+                        descent[vbi[idx]] = conn[idx];
                     }
                 } else {
                     if (conn[idx] >= high_threshold) {
@@ -181,7 +202,10 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
             }
         }
     }
-}
+    free_container(vfi);
+    free_container(vfo);
+    free_container(vbi);
+    free_container(vbo);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
