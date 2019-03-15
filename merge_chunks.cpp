@@ -534,10 +534,11 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     std::cout << "generate new remap in " << elapsed_secs << " seconds" << std::endl;
 
     std::cout << "number of supervoxels:" << remaps.size() << "," << next_id << std::endl;
-    std::unordered_map<ID, ID> remaps_map;
+    std::vector<std::pair<ID, ID> > remap_pairs;
     for (size_t i = 0; i != segids.size(); i++) {
-        remaps_map[segids[i]] = segids[remaps[i]];
+        remap_pairs.push_back(std::make_pair(segids[i], segids[remaps[i]]));
     }
+    std::unordered_map<ID, ID> remaps_map(remap_pairs.begin(), remap_pairs.end());
     return std::make_tuple(std::move(remaps_map), c, d);
 }
 
