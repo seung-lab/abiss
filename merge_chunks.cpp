@@ -418,6 +418,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     }
 
     auto remap_vector = load_remaps<ID>(remap_size);
+    __gnu_parallel::for_each(std::begin(remap_vector), std::end(remap_vector), [&reverse_lookup](auto & a) { a.second = reverse_lookup.at(a.second);});
 
     std::unordered_map<ID, ID> reps;
 
@@ -441,7 +442,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
                 std::abort();
             }
         }
-        const auto seg = remaps[reverse_lookup.at(kv.second)];
+        const auto seg = remaps[kv.second];
         const auto size = sizes[seg];
         if (size & traits::on_border) {
             if (reps.count(seg) == 0) {
@@ -475,9 +476,11 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     current_ac = std::numeric_limits<std::size_t>::max();
 
     begin = clock();
-    std::vector<ID> segid_tmp(segids.begin()+1, segids.end());
-    __gnu_parallel::stable_sort(std::begin(segid_tmp), std::end(segid_tmp));
-    for (auto & s : segid_tmp) {
+    std::vector<ID> segid_tmp(segids.begin(), segids.end());
+    __gnu_parallel::for_each(std::begin(segid_tmp), std::end(segid_tmp), [&reverse_lookup](auto & a) { a = reverse_lookup.at(a);});
+    for (size_t i = 1; i != segid_tmp.size(); i++) {
+        auto s = segids[i];
+        auto s_reversed = segid_tmp[i];
         if (current_ac != (s - (s % ac_offset))) {
             if (of_done.is_open()) {
                 of_done.close();
@@ -498,7 +501,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
             std::cerr << "svid = 0, should not happen" << std::endl;
             std::abort();
         }
-        const auto seg = remaps[reverse_lookup.at(s)];
+        const auto seg = remaps[s_reversed];
         const auto size = sizes[seg];
         if (size & traits::on_border) {
             if (reps.count(seg) == 0) {
