@@ -220,6 +220,37 @@ struct agglomeration_data_t
     std::vector<seg_t> seg_indices;
 };
 
+template <class T>
+std::vector<T> read_array(const char * filename)
+{
+    std::vector<T> array;
+
+    std::cout << "filesize:" << filesize(filename)/sizeof(T) << std::endl;
+    size_t data_size = filesize(filename);
+    if (data_size % sizeof(T) != 0) {
+        std::cerr << "File incomplete!: " << filename << std::endl;
+        std::abort();
+    }
+
+    FILE* f = std::fopen(filename, "rbXS");
+    if ( !f ) {
+        std::cerr << "Cannot open the region graph file" << std::endl;
+        std::abort();
+    }
+
+    size_t array_size = data_size / sizeof(T);
+
+    array.resize(array_size);
+    std::size_t nread = std::fread(array.data(), sizeof(T), array_size, f);
+    if (nread != array_size) {
+        std::cerr << "Reading: " << nread << " entries, but expecting: " << array_size << std::endl;
+        std::abort();
+    }
+    std::fclose(f);
+
+    return array;
+}
+
 template <class T, class Compare = std::greater<T> >
 inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename)
 {
@@ -228,128 +259,79 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
 
-    std::vector<edge_t<T> > rg_vector;
+    std::vector<edge_t<T> > rg_vector = read_array<edge_t<T> >(rg_filename);
+
+    std::vector<std::pair<seg_t, size_t> > ns_pair_array = read_array<std::pair<seg_t, size_t> >(ns_filename);
+    std::vector<seg_t> fs_array = read_array<seg_t>(fs_filename);
+
+    __gnu_parallel::transform(fs_array.begin(), fs_array.end(), std::back_inserter(ns_pair_array), [](seg_t &a){
+            return std::make_pair(a, size_t(1|frozen));
+            });
+
+    __gnu_parallel::sort(std::begin(ns_pair_array), std::end(ns_pair_array), [](auto & a, auto & b) { return a.first < b.first;  });
+
+    seg_t prev_seg = 0;
+    for (auto & kv : ns_pair_array) {
+        auto seg = kv.first;
+        auto count = kv.second;
+        if (seg == 0) {
+            std::cerr << "Impossible, there is no 0 segment" <<std::endl;
+            std::abort();
+        }
+        if (seg != prev_seg) {
+            seg_indices.push_back(seg);
+            supervoxel_counts.push_back(count);
+            prev_seg = seg;
+        } else {
+            supervoxel_counts.back() += count & (~frozen) - 1;
+            supervoxel_counts.back() |= count & frozen;
+        }
+    }
 
     std::unordered_map<seg_t, size_t> reverse_lookup;
 
-    std::cout << "filesize:" << filesize(rg_filename)/sizeof(edge_t<T>) << std::endl;
-    size_t rg_size = filesize(rg_filename);
-    if (rg_size % sizeof(edge_t<T>) != 0) {
-        std::cerr << "Region graph file incomplete!" << std::endl;
-        std::abort();
-    }
-
-    size_t rg_entries = rg_size / sizeof(edge_t<T>);
-
-    FILE* f = std::fopen(rg_filename, "rbXS");
-    if ( !f ) {
-        std::cerr << "Cannot open the region graph file" << std::endl;
-        std::abort();
-    }
-
-    rg_vector.resize(rg_entries);
-    std::size_t nread = std::fread(rg_vector.data(), sizeof(edge_t<T>), rg_entries, f);
-    if (nread != rg_entries) {
-        std::cerr << "Reading: " << nread << " entries, but expecting: " << rg_entries << std::endl;
-        std::abort();
-    }
-    std::fclose(f);
-
-    __gnu_parallel::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return a.v0 < b.v0;  });
-
-    auto v0_cache = seg_t(0);
-    auto local_v0_cache = seg_t(0);
-    for (auto & e : rg_vector) {
-        auto v0 = e.v0;
-        auto v1 = e.v1;
-        if (v0_cache != v0) {
-            v0_cache = v0;
-            if (reverse_lookup.count(v0) == 0){
-                reverse_lookup[v0] = seg_indices.size();
-                seg_indices.push_back(v0);
-                supervoxel_counts.push_back(1);
+    std::for_each(rg_vector.begin(), rg_vector.end(), [&seg_indices](auto & a) {
+            size_t u0, u1;
+            auto it = std::lower_bound(seg_indices.begin(), seg_indices.end(), a.v0);
+            if (it == seg_indices.end()) {
+                std::cerr << "Should not happen, rg element does not exist: " << a.v0 << std::endl;
+                std::abort();
             }
-            local_v0_cache = v0 = reverse_lookup.at(v0);
-            assert(supervoxel_counts.size() == seg_indices.size());
-        } else {
-            v0 = local_v0_cache;
-        }
-        if (reverse_lookup.count(v1) == 0) {
-            reverse_lookup[v1] = seg_indices.size();
-            seg_indices.push_back(v1);
-            v1 = supervoxel_counts.size();
-            supervoxel_counts.push_back(1);
-            assert(supervoxel_counts.size() == seg_indices.size());
-        } else {
-            v1 = reverse_lookup.at(v1);
-        }
-        if (v0 < v1) {
-            std::swap(v0, v1);
-        }
-        e.v0 = v0;
-        e.v1 = v1;
-    }
+            if (a.v0 == *it) {
+                u0 = std::distance(seg_indices.begin(), it);
+            } else {
+                std::cerr << "Should not happen, cannot find entry: " << a.v0  << "," << *it << std::endl;
+                std::abort();
+            }
+            it = std::lower_bound(seg_indices.begin(), seg_indices.end(), a.v1);
+            if (it == seg_indices.end()) {
+                std::cerr << "Should not happen, rg element does not exist: " << a.v1 << std::endl;
+                std::abort();
+            }
+            if (a.v1 == *it) {
+                u1 = std::distance(seg_indices.begin(), it);
+            } else {
+                std::cerr << "Should not happen, cannot find entry: " << a.v1  << "," << *it << std::endl;
+                std::abort();
+            }
+            if (u0 < u1) {
+                a.v0 = u0;
+                a.v1 = u1;
+            } else {
+                a.v0 = u1;
+                a.v1 = u0;
+            }
+        });
 
     __gnu_parallel::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
 
     std::ofstream fout(rg_filename, (std::ios::out | std::ios::binary) );
     assert(fout);
 
-    fout.write( reinterpret_cast<const char*>(rg_vector.data()), rg_entries * sizeof(edge_t<T>));
+    fout.write( reinterpret_cast<const char*>(rg_vector.data()), rg_vector.size() * sizeof(edge_t<T>));
     assert(!fout.bad());
     fout.close();
 
-    std::ifstream ns_file(ns_filename);
-    if (!ns_file.is_open()) {
-        std::cout << "Cannot open the supervoxel count file" << std::endl;
-        std::abort();
-    }
-
-    seg_t seg;
-    size_t count;
-    while (ns_file.read(reinterpret_cast<char *>(&seg), sizeof(seg))) {
-        ns_file.read(reinterpret_cast<char *>(&count), sizeof(count));
-        if (count == 0) {
-            std::cout << "SHOULD NOT HAPPEN, 0 supervoxel for : " << seg << std::endl;
-            std::abort();
-        }
-        if (reverse_lookup.count(seg) > 0) {
-            auto id = reverse_lookup.at(seg);
-            if (supervoxel_counts[id] == 0) {
-                supervoxel_counts[id] = count;
-            } else {
-                if (supervoxel_counts[id] != 1 && count != 1) {
-                    std::cout << "multiple entries for " << seg << " " << supervoxel_counts[id] << ", " << count << std::endl;
-                //    std::abort();
-                }
-                supervoxel_counts[id] += (count - 1);
-            }
-        } else {
-            reverse_lookup[seg] = supervoxel_counts.size();
-            supervoxel_counts.push_back(count);
-            seg_indices.push_back(seg);
-        }
-    }
-    std::ifstream fs_file(fs_filename);
-    if (!fs_file.is_open()) {
-        std::cout << "Cannot open the frozen supervoxel file" << std::endl;
-        std::abort();
-    }
-
-    std::cout << "reading frozen sv" << std::endl;
-    seg_t sv;
-    while (fs_file.read(reinterpret_cast<char *>(&sv), sizeof(sv))) {
-        if (reverse_lookup.count(sv) == 0) {
-            //std::cout << "frozen seg not in rg: " << sv << std::endl;
-            reverse_lookup[sv] = supervoxel_counts.size();
-            supervoxel_counts.push_back(1);
-            seg_indices.push_back(sv);
-        }
-        supervoxel_counts[reverse_lookup.at(sv)] |= frozen;
-    }
-
-    fs_file.close();
-    ns_file.close();
     return agg_data;
 }
 
@@ -373,17 +355,10 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     size_t i = 0;
     edge_t<T> e;
     incident.resize(seg_indices.size());
-    while (rg_file.read(reinterpret_cast<char *>(&e), sizeof(edge_t<T>)))
-    {
+    while (rg_file.read(reinterpret_cast<char *>(&e), sizeof(edge_t<T>))) {
         auto handle = heap.emplace(e);
         incident[e.v0].push_back(handle_wrapper<T, Compare>(handle));
         incident[e.v1].push_back(handle_wrapper<T, Compare>(handle));
-        if (supervoxel_counts[e.v0] == 0) {
-            supervoxel_counts[e.v0] = 1;
-        }
-        if (supervoxel_counts[e.v1] == 0) {
-            supervoxel_counts[e.v1] = 1;
-        }
         i++;
         if (i % 10000000 == 0) {
             std::cout << "reading " << i << "th edge" << std::endl;
