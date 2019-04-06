@@ -68,16 +68,16 @@ public:
                 }
                 current_ac1 = s1 - (s1 % ac_offset);
                 current_ac2 = s2 - (s2 % ac_offset);
-                ofInChunk.open(str(boost::format("chunked_rg/in_chunk_%1%_%2%.data") % tag % current_ac1));
+                ofInChunk.open(str(boost::format("chunked_rg/in_chunk_%1%_%2%.data") % tag % current_ac1), std::ofstream::out | std::ofstream::app);
                 if (!ofInChunk.is_open()) {
                     std::abort();
                 }
                 if (current_ac1 != current_ac2) {
-                    ofBetweenChunks.open(str(boost::format("chunked_rg/between_chunk_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
+                    ofBetweenChunks.open(str(boost::format("chunked_rg/between_chunk_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2), std::ofstream::out | std::ofstream::app);
                     if (!ofBetweenChunks.is_open()) {
                         std::abort();
                     }
-                    ofFake.open(str(boost::format("chunked_rg/fake_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
+                    ofFake.open(str(boost::format("chunked_rg/fake_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2), std::ofstream::out | std::ofstream::app);
                     if (!ofFake.is_open()) {
                         std::abort();
                     }
@@ -99,11 +99,11 @@ public:
                 }
                 current_ac2 = s2 - (s2 % ac_offset);
                 if (current_ac1 != current_ac2) {
-                    ofBetweenChunks.open(str(boost::format("chunked_rg/between_chunk_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
+                    ofBetweenChunks.open(str(boost::format("chunked_rg/between_chunk_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2), std::ofstream::out | std::ofstream::app);
                     if (!ofBetweenChunks.is_open()) {
                         std::abort();
                     }
-                    ofFake.open(str(boost::format("chunked_rg/fake_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
+                    ofFake.open(str(boost::format("chunked_rg/fake_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2), std::ofstream::out | std::ofstream::app);
                     if (!ofFake.is_open()) {
                         std::abort();
                     }

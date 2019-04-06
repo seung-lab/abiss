@@ -4,23 +4,53 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
+#include <sys/stat.h>
 #include <boost/pending/disjoint_sets.hpp>
 #include <boost/format.hpp>
 
+size_t filesize(std::string filename)
+{
+    struct stat stat_buf;
+    int rc = stat(filename.c_str(), &stat_buf);
+    return rc == 0 ? stat_buf.st_size : 0;
+}
+
+template <class T>
+std::vector<T> read_array(const char * filename)
+{
+    std::vector<T> array;
+
+    std::cout << "filesize:" << filesize(filename)/sizeof(T) << std::endl;
+    size_t data_size = filesize(filename);
+    if (data_size % sizeof(T) != 0) {
+        std::cerr << "File incomplete!: " << filename << std::endl;
+        std::abort();
+    }
+
+    FILE* f = std::fopen(filename, "rbXS");
+    if ( !f ) {
+        std::cerr << "Cannot open the region graph file" << std::endl;
+        std::abort();
+    }
+
+    size_t array_size = data_size / sizeof(T);
+
+    array.resize(array_size);
+    std::size_t nread = std::fread(array.data(), sizeof(T), array_size, f);
+    if (nread != array_size) {
+        std::cerr << "Reading: " << nread << " entries, but expecting: " << array_size << std::endl;
+        std::abort();
+    }
+    std::fclose(f);
+
+    return array;
+}
+
 template<typename T>
-std::vector<std::pair<T, T> > load_remap(std::string filename)
+std::vector<std::pair<T, T> > load_remap(const char * filename)
 {
     std::unordered_map<T, T> parent_map;
-    std::vector<std::pair<T, T> > remap_vector;
-
-    std::ifstream in(filename);
-
-    T s1,s2;
-
-    while (in.read(reinterpret_cast<char *>(&s1), sizeof(s1))) {
-        in.read(reinterpret_cast<char *>(&s2), sizeof(s2));
-        remap_vector.push_back(std::make_pair(s1,s2));
-    }
+    std::vector<std::pair<T, T> > remap_vector = read_array<std::pair<T, T> >(filename);
 
     for (size_t i = remap_vector.size(); i != 0; i--) {
         auto & p = remap_vector[i-1];
@@ -43,14 +73,10 @@ std::vector<std::pair<T, T> > load_remap(std::string filename)
 template<typename T>
 std::unordered_set<T> load_seg(const char * filename)
 {
-    std::unordered_set<T> segs;
-    seg_t s;
-    size_t count;
-    std::ifstream in(filename);
-    while (in.read(reinterpret_cast<char *>(&s), sizeof(s))) {
-        in.read(reinterpret_cast<char *>(&count), sizeof(count));
-        segs.insert(s);
-    }
+    std::vector<std::pair<T, size_t> > ssize = read_array<std::pair<T, size_t> >(filename);
+    std::vector<T> segids;
+    std::transform(ssize.begin(), ssize.end(), std::back_inserter(segids), [](auto p) {return p.first;});
+    std::unordered_set<T> segs(segids.begin(), segids.end());
     return segs;
 }
 
