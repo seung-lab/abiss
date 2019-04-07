@@ -80,6 +80,16 @@ int main(int argc, char * argv[])
 
 #ifdef EXTRACT_SIZE
     size_extractor.output(incomplete_segments, "sizes.data", "incomplete_sizes_"+output_path+".data");
+    auto sv_sizes = size_extractor.sizes();
+    std::ofstream nsfile("ns.data", std::ios_base::binary);
+    assert(nsfile.is_open());
+    size_t count = 1;
+    for (const auto & [k,v] : sv_sizes) {
+        nsfile.write(reinterpret_cast<const char *>(&k), sizeof(k));
+        nsfile.write(reinterpret_cast<const char *>(&count), sizeof(count));
+        assert(!nsfile.bad());
+    }
+    nsfile.close();
 #endif
 
 #ifdef EXTRACT_BBOX
