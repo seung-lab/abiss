@@ -7,6 +7,15 @@
 #include <sys/stat.h>
 #include <boost/pending/disjoint_sets.hpp>
 #include <boost/format.hpp>
+#include <parallel/algorithm>
+
+template <typename T>
+struct remap_t{
+    enum SegType {undef, ongoing, done};
+    std::vector<T> remaps;
+    std::vector<T> segids;
+    std::vector<SegType> segtype;
+};
 
 size_t filesize(std::string filename)
 {
@@ -47,41 +56,98 @@ std::vector<T> read_array(const char * filename)
 }
 
 template<typename T>
-std::vector<std::pair<T, T> > load_remap(const char * filename)
+remap_t<T> load_remap(const char * filename)
 {
-    std::unordered_map<T, T> parent_map;
     std::vector<std::pair<T, T> > remap_vector = read_array<std::pair<T, T> >(filename);
+    std::vector<T> segids;
+    std::transform(remap_vector.begin(), remap_vector.end(), std::back_inserter(segids), [](auto & p){
+            return p.first;
+    });
+    std::transform(remap_vector.begin(), remap_vector.end(), std::back_inserter(segids), [](auto & p){
+            return p.second;
+    });
+    std::sort(segids.begin(), segids.end());
+    auto last = std::unique(segids.begin(), segids.end());
+    segids.erase(last, segids.end());
+    std::cout << segids.size() << " segments to consider" << std::endl;
+
+    std::vector<T> remaps(segids.size());
+    std::iota(remaps.begin(), remaps.end(), 0);
+
+    __gnu_parallel::for_each(remap_vector.begin(), remap_vector.end(), [&segids](auto & p) {
+            auto it = std::lower_bound(segids.begin(), segids.end(), p.first);
+            if (it == segids.end() || *it != p.first) {
+                std::cerr << "Should not happen, cannot find first segid: " << p.first << std::endl;
+                std::abort();
+            }
+            p.first = std::distance(segids.begin(), it);
+            it = std::lower_bound(segids.begin(), segids.end(), p.second);
+            if (it == segids.end() || *it != p.second) {
+                std::cerr << "Should not happen, cannot find second segid: " << p.second << std::endl;
+                std::abort();
+            }
+            p.second = std::distance(segids.begin(), it);
+    });
 
     for (size_t i = remap_vector.size(); i != 0; i--) {
         auto & p = remap_vector[i-1];
-        if (parent_map.count(p.second) == 0) {
-            parent_map[p.first] = p.second;
-        } else {
-            parent_map[p.first] = parent_map[p.second];
-        }
+        remaps[p.first] = remaps[p.second];
     }
-    remap_vector.clear();
-    for (auto & kv : parent_map) {
-        remap_vector.push_back(kv);
-    }
-    std::stable_sort(std::begin(remap_vector), std::end(remap_vector), [](auto & a, auto & b) {
-        return a.first < b.first;
-    });
-    return remap_vector;
+
+    remap_t<T> remap_data;
+    remap_data.segtype.resize(segids.size(), remap_t<T>::undef);
+    remap_data.remaps.swap(remaps);
+    remap_data.segids.swap(segids);
+
+    return remap_data;
 }
 
 template<typename T>
-std::unordered_set<T> load_seg(const char * filename)
+std::vector<std::pair<T, size_t> > load_seg(const char * filename)
 {
     std::vector<std::pair<T, size_t> > ssize = read_array<std::pair<T, size_t> >(filename);
-    std::vector<T> segids;
-    std::transform(ssize.begin(), ssize.end(), std::back_inserter(segids), [](auto p) {return p.first;});
-    std::unordered_set<T> segs(segids.begin(), segids.end());
-    return segs;
+    return ssize;
 }
 
 template<typename T>
-void split_remap(const std::vector<std::pair<T, T> > & remap, const std::unordered_set<T> & ongoing, const std::unordered_set<T> & done, size_t ac_offset, const std::string & tag)
+void classify_segments(remap_t<T> & remap_data, const char * ongoing_fn, const char * done_fn)
+{
+    auto done = load_seg<seg_t>(done_fn);
+    auto ongoing = load_seg<seg_t>(ongoing_fn);
+    std::cout << "seg done:" << done.size() << std::endl;
+    std::cout << "seg ongoing:" << ongoing.size() << std::endl;
+    auto & segids = remap_data.segids;
+    auto & segtype = remap_data.segtype;
+    __gnu_parallel::for_each(done.begin(), done.end(), [&segids, &segtype](auto & p) {
+            auto s = p.first;
+            auto it = std::lower_bound(segids.begin(), segids.end(), s);
+            if (it != segids.end() && *it == s) {
+                auto ind = std::distance(segids.begin(), it);
+                if (segtype[ind] == remap_t<T>::undef) {
+                    segtype[ind] = remap_t<T>::done;
+                } else {
+                    std::cerr << "segment " << segids[ind] << " should be done, but marked as " << segtype[ind] << std::endl;
+                    std::abort();
+                }
+            }
+    });
+    __gnu_parallel::for_each(ongoing.begin(), ongoing.end(), [&segids, &segtype](auto & p) {
+            auto s = p.first;
+            auto it = std::lower_bound(segids.begin(), segids.end(), s);
+            if (it != segids.end() &&  *it == s) {
+                auto ind = std::distance(segids.begin(), it);
+                if (segtype[ind] == remap_t<T>::undef) {
+                    segtype[ind] = remap_t<T>::ongoing;
+                } else {
+                    std::cerr << "segment " << segids[ind] << " should be ongoing, but marked as " << segtype[ind] << std::endl;
+                    std::abort();
+                }
+            }
+    });
+}
+
+template<typename T>
+void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::string & tag)
 {
     size_t current_ac = std::numeric_limits<std::size_t>::max();
     std::ofstream of_done;
@@ -91,11 +157,18 @@ void split_remap(const std::vector<std::pair<T, T> > & remap, const std::unorder
         std::cerr << "Failed to open ongoing remap file for " << tag << std::endl;
         std::abort();
     }
+    auto & segids = remap_data.segids;
+    auto & remaps = remap_data.remaps;
+    auto & segtype = remap_data.segtype;
 
     std::unordered_map<T, T> reps;
 
-
-    for (const auto & [s, seg] : remap) {
+    for (size_t i = 0; i != remaps.size(); i++) {
+        if (remaps[i] == i) {
+            continue;
+        }
+        auto s = segids[i];
+        auto seg = segids[remaps[i]];
         if (current_ac != (s - (s % ac_offset))) {
             if (of_done.is_open()) {
                 of_done.close();
@@ -112,7 +185,7 @@ void split_remap(const std::vector<std::pair<T, T> > & remap, const std::unorder
                 std::abort();
             }
         }
-        if (ongoing.count(seg) > 0) {
+        if (segtype[remaps[i]] == remap_t<T>::ongoing) {
             if (reps.count(seg) == 0) {
                 of_ongoing.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
                 of_ongoing.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
@@ -121,7 +194,7 @@ void split_remap(const std::vector<std::pair<T, T> > & remap, const std::unorder
                 of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
                 of_done.write(reinterpret_cast<const char *>(&(reps.at(seg))), sizeof(T));
             }
-        } else if (done.count(seg) > 0){
+        } else if (segtype[remaps[i]] == remap_t<T>::done){
             of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
             of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
         } else {
@@ -141,16 +214,13 @@ void split_remap(const std::vector<std::pair<T, T> > & remap, const std::unorder
 
 int main(int argc, char *argv[])
 {
-    auto remap_vector = load_remap<seg_t>("localmap.data");
-    auto ongoing = load_seg<seg_t>("ongoing_segments.data");
-    auto done = load_seg<seg_t>("done_segments.data");
+    auto remap_data = load_remap<seg_t>("localmap.data");
+    classify_segments(remap_data, "ongoing_segments.data", "done_segments.data");
     size_t ac_offset = 0;
-    std::cout << "remap size:" << remap_vector.size() << std::endl;
-    std::cout << "seg done:" << done.size() << std::endl;
-    std::cout << "seg ongoing:" << ongoing.size() << std::endl;
+    std::cout << "remap size:" << remap_data.remaps.size() << std::endl;
     std::ifstream param_file(argv[1]);
     param_file >> ac_offset;
     param_file.close();
     std::string tag(argv[2]);
-    split_remap(remap_vector, ongoing, done, ac_offset, tag);
+    split_remap(remap_data, ac_offset, tag);
 }
