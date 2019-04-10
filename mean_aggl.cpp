@@ -290,7 +290,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
 
     std::unordered_map<seg_t, size_t> reverse_lookup;
 
-    std::for_each(rg_vector.begin(), rg_vector.end(), [&seg_indices](auto & a) {
+    __gnu_parallel::for_each(rg_vector.begin(), rg_vector.end(), [&seg_indices](auto & a) {
             size_t u0, u1;
             auto it = std::lower_bound(seg_indices.begin(), seg_indices.end(), a.v0);
             if (it == seg_indices.end()) {
