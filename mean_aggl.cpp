@@ -492,6 +492,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             // v0 is dissapearing from the graph
 
             // loop over other edges e0 = {v0,v}
+            std::vector<handle_wrapper<T, Compare> > new_entry;
             for (auto e0 : incident[v0])
             {
                 auto v = e0.segid(v0);
@@ -528,9 +529,12 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                     if (e.edge.v1 == v0)
                         e.edge.v1 = v1;
                     insert_neighbor(incident[v], v, v1, e0);
-                    insert_neighbor(incident[v1], v1, v, e0);
+                    new_entry.push_back(e0);
                 }
             }
+            std::vector<handle_wrapper<T, Compare> > merged_result;
+            std::merge(incident[v1].begin(), incident[v1].end(), new_entry.begin(), new_entry.end(), std::back_inserter(merged_result), [v1](auto & a, auto & b) { return a.segid(v1) < b.segid(v1);  });
+            std::swap(incident[v1], merged_result);
             incident[v0].clear();
         }
     }
