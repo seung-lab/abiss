@@ -532,9 +532,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                     new_entry.push_back(e0);
                 }
             }
-            std::vector<handle_wrapper<T, Compare> > merged_result;
-            std::merge(incident[v1].begin(), incident[v1].end(), new_entry.begin(), new_entry.end(), std::back_inserter(merged_result), [v1](auto & a, auto & b) { return a.segid(v1) < b.segid(v1);  });
-            std::swap(incident[v1], merged_result);
+            auto it = incident[v1].insert(incident[v1].end(), new_entry.begin(), new_entry.end());
+            std::inplace_merge(incident[v1].begin(), it, incident[v1].end(), [v1](auto & a, auto & b) { return a.segid(v1) < b.segid(v1); });
             incident[v0].clear();
         }
     }
