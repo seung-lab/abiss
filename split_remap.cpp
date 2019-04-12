@@ -72,7 +72,7 @@ remap_t<T> load_remap(const char * filename)
     std::cout << segids.size() << " segments to consider" << std::endl;
 
     std::vector<T> remaps(segids.size());
-    std::iota(remaps.begin(), remaps.end(), 0);
+    std::iota(remaps.begin(), remaps.end(), size_t(0));
 
     __gnu_parallel::for_each(remap_vector.begin(), remap_vector.end(), [&segids](auto & p) {
             auto it = std::lower_bound(segids.begin(), segids.end(), p.first);
@@ -123,7 +123,7 @@ void classify_segments(remap_t<T> & remap_data, const char * ongoing_fn, const c
             auto it = std::lower_bound(segids.begin(), segids.end(), s);
             if (it != segids.end() && *it == s) {
                 auto ind = std::distance(segids.begin(), it);
-                if (segtype[ind] == remap_t<T>::undef) {
+                if (segtype[ind] == remap_t<T>::undef || segtype[ind] == remap_t<T>::done) {
                     segtype[ind] = remap_t<T>::done;
                 } else {
                     std::cerr << "segment " << segids[ind] << " should be done, but marked as " << segtype[ind] << std::endl;
@@ -136,7 +136,7 @@ void classify_segments(remap_t<T> & remap_data, const char * ongoing_fn, const c
             auto it = std::lower_bound(segids.begin(), segids.end(), s);
             if (it != segids.end() &&  *it == s) {
                 auto ind = std::distance(segids.begin(), it);
-                if (segtype[ind] == remap_t<T>::undef) {
+                if (segtype[ind] == remap_t<T>::undef || segtype[ind] == remap_t<T>::ongoing) {
                     segtype[ind] = remap_t<T>::ongoing;
                 } else {
                     std::cerr << "segment " << segids[ind] << " should be ongoing, but marked as " << segtype[ind] << std::endl;
