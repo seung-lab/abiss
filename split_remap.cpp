@@ -60,13 +60,16 @@ remap_t<T> load_remap(const char * filename)
 {
     std::vector<std::pair<T, T> > remap_vector = read_array<std::pair<T, T> >(filename);
     std::vector<T> segids;
-    std::transform(remap_vector.begin(), remap_vector.end(), std::back_inserter(segids), [](auto & p){
+    std::cout << "load remaps" << std::endl;
+    __gnu_parallel::transform(remap_vector.begin(), remap_vector.end(), std::back_inserter(segids), [](auto & p){
             return p.first;
     });
-    std::transform(remap_vector.begin(), remap_vector.end(), std::back_inserter(segids), [](auto & p){
+    __gnu_parallel::transform(remap_vector.begin(), remap_vector.end(), std::back_inserter(segids), [](auto & p){
             return p.second;
     });
-    std::sort(segids.begin(), segids.end());
+    __gnu_parallel::sort(segids.begin(), segids.end());
+
+    std::cout << "create segids" << std::endl;
     auto last = std::unique(segids.begin(), segids.end());
     segids.erase(last, segids.end());
     std::cout << segids.size() << " segments to consider" << std::endl;
