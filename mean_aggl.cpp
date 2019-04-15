@@ -184,7 +184,7 @@ struct heapable_edge_compare
                     heapable_edge<T, C> const & b) const
     {
         C c;
-        return c(b.edge.w, a.edge.w);
+        return c(b.edge->w, a.edge->w);
     }
 };
 
@@ -198,20 +198,24 @@ using heap_handle_type = typename heap_type<T, C>::handle_type;
 template <class T, class C>
 struct __attribute__((packed)) heapable_edge
 {
-    edge_t<T> edge;
-    explicit constexpr heapable_edge(edge_t<T> & e)
+    edge_t<T> * edge;
+    explicit constexpr heapable_edge(edge_t<T> * e)
         : edge(e) {};
 };
 
 template <class T, class C>
 struct handle_wrapper
 {
+    edge_t<T> * edge;
     heap_handle_type<T, C> handle;
 
-    explicit constexpr handle_wrapper(heap_handle_type<T, C> & h)
-        : handle(h) {};
+    explicit constexpr handle_wrapper(edge_t<T> * e, heap_handle_type<T, C> & h)
+        : handle(h) {
+            edge = e;
+        };
+    bool valid_handle() const { return handle != heap_handle_type<T, C>(); }
     seg_t segid(const seg_t exclude) const {
-        return exclude == (*handle).edge.v0 ? (*handle).edge.v1 : (*handle).edge.v0;
+        return exclude == edge->v0 ? edge->v1 : edge->v0;
     }
 };
 
@@ -219,6 +223,7 @@ template <class T, class Compare = std::greater<T> >
 struct agglomeration_data_t
 {
     std::vector<std::vector<handle_wrapper<T, Compare> > > incident;
+    std::vector<edge_t<T> > rg_vector;
     heap_type<T, Compare> heap;
     std::vector<size_t> supervoxel_counts;
     std::vector<seg_t> seg_indices;
@@ -263,7 +268,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
 
-    std::vector<edge_t<T> > rg_vector = read_array<edge_t<T> >(rg_filename);
+    agg_data.rg_vector = read_array<edge_t<T> >(rg_filename);
 
     std::vector<std::pair<seg_t, size_t> > ns_pair_array = read_array<std::pair<seg_t, size_t> >(ns_filename);
     std::vector<seg_t> fs_array = read_array<seg_t>(fs_filename);
@@ -292,7 +297,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
         }
     }
 
-    std::unordered_map<seg_t, size_t> reverse_lookup;
+    auto & rg_vector = agg_data.rg_vector;
 
     __gnu_parallel::for_each(rg_vector.begin(), rg_vector.end(), [&seg_indices](auto & a) {
             size_t u0, u1;
@@ -329,40 +334,30 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
 
     __gnu_parallel::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
 
-    std::ofstream fout(rg_filename, (std::ios::out | std::ios::binary) );
-    assert(fout);
-
-    fout.write( reinterpret_cast<const char*>(rg_vector.data()), rg_vector.size() * sizeof(edge_t<T>));
-    assert(!fout.bad());
-    fout.close();
-
     return agg_data;
 }
 
 template <class T, class Compare = std::greater<T> >
-inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename)
+inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename, T const & threshold)
 {
+    Compare comp;
     auto agg_data = preprocess_inputs<T, Compare>(rg_filename, fs_filename, ns_filename);
     using neighbor_vector = std::vector<handle_wrapper<T, Compare> >;
     auto & incident = agg_data.incident;
     auto & heap = agg_data.heap;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
+    auto & rg_vector = agg_data.rg_vector;
     auto & seg_indices = agg_data.seg_indices;
 
-    std::cout << "reading rg:" << sizeof(edge_t<T>) << " " << sizeof(heapable_edge<T, Compare>)<< std::endl;
-    std::ifstream rg_file(rg_filename);
-    if (!rg_file.is_open()) {
-        std::cout << "Cannot open the region graph file" << std::endl;
-        std::abort();
-    }
-
     size_t i = 0;
-    edge_t<T> e;
     incident.resize(seg_indices.size());
-    while (rg_file.read(reinterpret_cast<char *>(&e), sizeof(edge_t<T>))) {
-        auto handle = heap.emplace(e);
-        incident[e.v0].push_back(handle_wrapper<T, Compare>(handle));
-        incident[e.v1].push_back(handle_wrapper<T, Compare>(handle));
+    for (auto & e : rg_vector) {
+        heap_handle_type<T, Compare> handle;
+        if (comp(e.w, threshold)){
+            handle = heap.emplace(& e);
+        }
+        incident[e.v0].push_back(handle_wrapper<T, Compare>(&e, handle));
+        incident[e.v1].push_back(handle_wrapper<T, Compare>(&e, handle));
         i++;
         if (i % 10000000 == 0) {
             std::cout << "reading " << i << "th edge" << std::endl;
@@ -378,13 +373,17 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     Compare comp;
     Plus    plus;
 
+    T const h_threshold = T(0.5,1);
+    const size_t small_threshold = 1000;
+    const size_t large_threshold = 10000;
+
     size_t mst_size = 0;
     size_t residue_size = 0;
 
     float print_th = 1.0 - 0.01;
     size_t num_of_edges = 0;
 
-    auto agg_data = load_inputs<T, Compare>(rg_filename, fs_filename, ns_filename);
+    auto agg_data = load_inputs<T, Compare>(rg_filename, fs_filename, ns_filename, threshold);
     auto & incident = agg_data.incident;
     auto & heap = agg_data.heap;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
@@ -407,19 +406,20 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
     std::cout << "looping through the heap" << std::endl;
 
-    while (!heap.empty() && comp(heap.top().edge.w, threshold))
+
+    while (!heap.empty() && comp(heap.top().edge->w, threshold))
     {
         num_of_edges += 1;
         auto e = heap.top();
-        auto v0 = e.edge.v0;
-        auto v1 = e.edge.v1;
+        auto v0 = e.edge->v0;
+        auto v1 = e.edge->v1;
         //std::cout << "process edges related to: " << v0 << " and " << v1 << std::endl;
         //print_neighbors(incident[1262222], 1262222);
         erase_neighbors(incident[v0], v0, v1);
         erase_neighbors(incident[v1], v1, v0);
         heap.pop();
 
-        if (e.edge.w.sum/e.edge.w.num < print_th) {
+        if (e.edge->w.sum/e.edge->w.num < print_th) {
             std::cout << "Processing threshold: " << print_th << std::endl;
             std::cout << "Numer of edges: " << num_of_edges << "(" << rg_size << ")"<< std::endl;
             print_th -= 0.01;
@@ -434,27 +434,25 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 s = v1;
             }
 
-            //std::cout << "Test " << v0 << " and " << v1 << std::endl;
-                       //<< " at " << e->edge.w << "\n";
-            if (e.edge.w.sum/e.edge.w.num < 0.5) {
+            if (!comp(e.edge->w, h_threshold)) {
                 auto p = std::minmax({(supervoxel_counts[v0] & (~frozen)), (supervoxel_counts[v1] & (~frozen))});
-                if (p.first > 1000 and p.second > 10000) {
-                    //std::cout << "reject edge between " << seg_indices[v0] << "(" << supervoxel_counts[v0] << ")"<< " and " << seg_indices[v1] << "(" << supervoxel_counts[v1] << ")"<< std::endl;
+                if (p.first > small_threshold and p.second > large_threshold) {
+                    std::cout << "reject edge between " << seg_indices[v0] << "(" << (supervoxel_counts[v0] & (~frozen)) << ")"<< " and " << seg_indices[v1] << "(" << (supervoxel_counts[v1] & (~frozen)) << ")"<< std::endl;
                     of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
                     of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
-                    write_edge(of_reject, e.edge.w);
+                    write_edge(of_reject, e.edge->w);
                     continue;
                 }
             }
 
             if ((is_frozen(supervoxel_counts[v0]) && is_frozen(supervoxel_counts[v1]))
-                || (is_frozen(supervoxel_counts[v0]) && (frozen_neighbors(incident[v1], supervoxel_counts, v1) || (e.edge.w.sum/e.edge.w.num < 0.5 && supervoxel_counts[v1] > 1000)))
-                || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (e.edge.w.sum/e.edge.w.num < 0.5 && supervoxel_counts[v0] > 1000)))) {
+                || (is_frozen(supervoxel_counts[v0]) && (frozen_neighbors(incident[v1], supervoxel_counts, v1) || (comp(e.edge->w, h_threshold) && supervoxel_counts[v1] > small_threshold)))
+                || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (comp(e.edge->w, h_threshold) && supervoxel_counts[v0] > small_threshold)))) {
                 supervoxel_counts[v0] |= frozen;
                 supervoxel_counts[v1] |= frozen;
                 of_res.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
                 of_res.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
-                write_edge(of_res, e.edge.w);
+                write_edge(of_res, e.edge->w);
                 residue_size++;
                 continue;
             }
@@ -475,7 +473,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             of_mst.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
             of_mst.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
             mst_size++;
-            write_edge(of_mst, e.edge.w);
+            write_edge(of_mst, e.edge->w);
             if (v0 == s) {
                 of_remap.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
                 of_remap.write(reinterpret_cast<const char *>(&(seg_indices[s])), sizeof(seg_t));
@@ -496,44 +494,66 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             // v0 is dissapearing from the graph
 
             // loop over other edges e0 = {v0,v}
-            std::vector<handle_wrapper<T, Compare> > new_entry;
-            for (auto e0 : incident[v0])
-            {
+            std::vector<std::pair<handle_wrapper<T, Compare>, handle_wrapper<T, Compare> > > results;
+            size_t count = 0;
+            __gnu_parallel::transform(incident[v0].begin(), incident[v0].end(), std::back_inserter(results), [&incident, &threshold, &comp, &plus, &count, v0, v1](auto e0) -> std::pair<handle_wrapper<T, Compare>, handle_wrapper<T, Compare> > {
                 auto v = e0.segid(v0);
                 if (v == v0) {
                     std::cerr << "loop in the incident matrix: " << v << std::endl;
                     std::abort();
                 }
+                count += 1;
 
                 erase_neighbors(incident[v], v, v0);
 
                 auto it = search_neighbors(incident[v1], v1, v);
-                if (it != std::cend(incident[v1]) && (*it).segid(v1) == v)
+                if (it != std::end(incident[v1]) && (*it).segid(v1) == v)
                                                   // {v0,v} and {v1,v} exist, we
                                                   // need to merge them
                 {
-                    auto& e1   = *((*it).handle); // edge {v1,v}
-                    e1.edge.w = plus(e1.edge.w, (*(e0.handle)).edge.w);
-                    heap.update((*it).handle);
-                    heap.erase(e0.handle);
-                    {
-                        //std::cout
-                        //     << "Removing: " <<
-                        //     (*(e0.handle)).edge.v0
-                        //     << " to " <<
-                        //     (*(e0.handle)).edge.v1
-                        //     << " of " << (*(e0.handle)).edge.w << std::endl;
+                    if(e0.edge->v0 == v0) {
+                        e0.edge->v0 = v1;
                     }
+                    if(e0.edge->v1 == v0) {
+                        e0.edge->v1 = v1;
+                    }
+                    if (!(*it).valid_handle()) {
+                        auto it_dual = search_neighbors(incident[v], v, v1);
+                        std::swap(e0.edge, (*it).edge);
+                        std::swap(e0.handle, (*it).handle);
+                        (*it_dual).edge = (*it).edge;
+                        (*it_dual).handle = (*it).handle;
+                    }
+                    (*it).edge->w=plus((*it).edge->w, e0.edge->w);
+                    e0.edge->w = Limits::nil();
+                    return std::make_pair(e0, *it);
                 }
                 else
                 {
-                    auto & e = (*(e0.handle));
-                    if (e.edge.v0 == v0)
-                        e.edge.v0 = v1;
-                    if (e.edge.v1 == v0)
-                        e.edge.v1 = v1;
+                    auto e = e0.edge;
+                    if (e->v0 == v0)
+                        e->v0 = v1;
+                    if (e->v1 == v0)
+                        e->v1 = v1;
                     insert_neighbor(incident[v], v, v1, e0);
-                    new_entry.push_back(e0);
+                    heap_handle_type<T, Compare> h_null;
+                    return std::make_pair(e0, handle_wrapper<T, Compare>(nullptr, h_null));
+                }
+            });
+            //std::cout << "update heap" << std::endl;
+            std::vector<handle_wrapper<T, Compare> > new_entry;
+            for (auto p: results) {
+                if (p.second.edge == nullptr) {
+                    new_entry.push_back(p.first);
+                } else {
+                    auto & e0 = p.first;
+                    auto & e1 = p.second;
+                    if (e1.valid_handle()) {
+                        heap.update(e1.handle);
+                        if (e0.valid_handle()) {
+                            heap.erase(e0.handle);
+                        }
+                    }
                 }
             }
             auto it = incident[v1].insert(incident[v1].end(), new_entry.begin(), new_entry.end());
@@ -555,23 +575,29 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     std::ofstream of_frg;
     of_frg.open("final_rg.data", std::ofstream::out | std::ofstream::trunc);
 
-    for (auto it = heap.begin(); it != heap.end(); ++it)
+    for (auto e : agg_data.rg_vector)
     {
-        auto e = *(heap_type<T, Compare>::s_handle_from_iterator(it));
-        auto v0 = e.edge.v0;
-        auto v1 = e.edge.v1;
+        if (e.w.sum == 0 && e.w.num == 0) {
+            continue;
+        }
+        if (comp(e.w, threshold)) {
+            continue;
+        }
+        auto v0 = e.v0;
+        auto v1 = e.v1;
         if (is_frozen(supervoxel_counts[v0]) && is_frozen(supervoxel_counts[v1])) {
             of_res.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
             of_res.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
             residue_size++;
-            write_edge(of_res, e.edge.w);
+            write_edge(of_res, e.w);
         } else {
             of_frg.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
             of_frg.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
-            write_edge(of_frg, e.edge.w);
+            write_edge(of_frg, e.w);
 
         }
     }
+
 
     std::cout << "edges frozen: " << residue_size << std::endl;
 
