@@ -165,6 +165,10 @@ struct mean_edge_limits
     {
         return mean_edge(std::numeric_limits<aff_t>::max());
     }
+    static constexpr mean_edge nil()
+    {
+        return mean_edge(0,0);
+    }
 };
 
 template <class T>
