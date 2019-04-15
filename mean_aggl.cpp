@@ -54,7 +54,7 @@ void print_neighbors(auto neighbors, const auto source)
     std::cout << std::endl;
 }
 
-auto search_neighbors(const auto & neighbors, const auto source, const auto target)
+auto search_neighbors(auto & neighbors, const auto source, const auto target)
 {
     return std::lower_bound(std::begin(neighbors), std::end(neighbors), target, [source](auto & a, auto & b) { return a.segid(source) < b; });
 }
