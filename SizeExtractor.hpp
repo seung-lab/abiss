@@ -20,6 +20,23 @@ public:
     const std::unordered_map<T, size_t> & sizes() {
         return m_sizes;
     }
+
+    const std::unordered_map<T, size_t> svSizes(const std::unordered_map<T, T> & chunkMap) {
+        std::unordered_map<T, size_t> mergedSize;
+        for (auto & [ k, v ]: m_sizes) {
+            auto sid = k;
+            if (chunkMap.count(sid) > 0) {
+                sid = chunkMap.at(k);
+            }
+            if (mergedSize.count(sid) == 0) {
+                mergedSize[sid] = 1;
+            } else {
+                mergedSize[sid] += 1;
+            }
+        }
+        return mergedSize;
+    }
+
     void output(const std::unordered_set<T> & incompleteSegments, const std::string & completeFileName, const std::string & incompleteFileName)
     {
         std::ofstream complete(completeFileName, std::ios_base::binary);
