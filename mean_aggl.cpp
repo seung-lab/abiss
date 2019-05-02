@@ -54,53 +54,15 @@ void print_neighbors(auto neighbors, const auto source)
     std::cout << std::endl;
 }
 
-auto search_neighbors(auto & neighbors, const auto source, const auto target)
-{
-    return std::lower_bound(std::begin(neighbors), std::end(neighbors), target, [source](auto & a, auto & b) { return a.segid(source) < b; });
-}
-
 bool frozen_neighbors(const auto & neighbors, const auto & supervoxel_counts, const auto source)
 {
-    for (auto & n : neighbors) {
-        auto sid = n.segid(source);
+    for (auto & kv : neighbors) {
+        auto sid = kv.first;
         if (is_frozen(supervoxel_counts[sid])) {
             return true;
         }
     }
     return false;
-}
-
-bool erase_neighbors(auto & neighbors, const auto source, auto target)
-{
-    auto it = search_neighbors(neighbors, source, target);
-    if (it != std::end(neighbors)) {
-        if ((*it).segid(source) == target) {
-            neighbors.erase(it);
-            return true;
-        } else {
-            std::cerr << "edge "<< source << " to " << target << " NOT FOUND" << std::endl;
-            print_neighbors(neighbors, source);
-            return false;
-        }
-    }
-    std::cerr << "edge " << source << " to " << target << " NOT FOUND" << std::endl;
-    print_neighbors(neighbors, source);
-    return false;
-}
-
-void insert_neighbor(auto & neighbors, const auto source, auto target, auto new_value)
-{
-    auto it = search_neighbors(neighbors, source, target);
-    if (it != std::end(neighbors)) {
-        if ((*it).segid(source) == target) {
-            std::cerr << "Should not happen, edge: " << source << " to " << target << " is already a neighbors" << std::endl;
-            //print_neighbors(neighbors, source);
-            it = neighbors.erase(it);
-        }
-        neighbors.insert(it, new_value);
-    } else {
-        neighbors.push_back(new_value);
-    }
 }
 
 template <class T>
@@ -222,7 +184,7 @@ struct handle_wrapper
 template <class T, class Compare = std::greater<T> >
 struct agglomeration_data_t
 {
-    std::vector<std::vector<handle_wrapper<T, Compare> > > incident;
+    std::vector<std::unordered_map<seg_t, handle_wrapper<T, Compare> > > incident;
     std::vector<edge_t<T> > rg_vector;
     heap_type<T, Compare> heap;
     std::vector<size_t> supervoxel_counts;
@@ -356,8 +318,10 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
         if (comp(e.w, threshold)){
             handle = heap.emplace(& e);
         }
-        incident[e.v0].push_back(handle_wrapper<T, Compare>(&e, handle));
-        incident[e.v1].push_back(handle_wrapper<T, Compare>(&e, handle));
+        auto v0 = e.v0;
+        auto v1 = e.v1;
+        incident[e.v0].insert({v1,handle_wrapper<T, Compare>(&e, handle)});
+        incident[e.v1].insert({v0,handle_wrapper<T, Compare>(&e, handle)});
         i++;
         if (i % 10000000 == 0) {
             std::cout << "reading " << i << "th edge" << std::endl;
@@ -415,8 +379,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         auto v1 = e.edge->v1;
         //std::cout << "process edges related to: " << v0 << " and " << v1 << std::endl;
         //print_neighbors(incident[1262222], 1262222);
-        erase_neighbors(incident[v0], v0, v1);
-        erase_neighbors(incident[v1], v1, v0);
+        incident[v0].erase(v1);
+        incident[v1].erase(v0);
         heap.pop();
 
         if (e.edge->w.sum/e.edge->w.num < print_th) {
@@ -494,39 +458,49 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             // v0 is dissapearing from the graph
 
             // loop over other edges e0 = {v0,v}
-            std::vector<std::pair<handle_wrapper<T, Compare>, handle_wrapper<T, Compare> > > results;
-            size_t count = 0;
-            __gnu_parallel::transform(incident[v0].begin(), incident[v0].end(), std::back_inserter(results), [&incident, &threshold, &comp, &plus, &count, v0, v1](auto e0) -> std::pair<handle_wrapper<T, Compare>, handle_wrapper<T, Compare> > {
-                auto v = e0.segid(v0);
+            for (auto p: incident[v0]) {
+                auto v = p.first;
+                auto e0 = p.second;
                 if (v == v0) {
                     std::cerr << "loop in the incident matrix: " << v << std::endl;
                     std::abort();
                 }
-                count += 1;
 
-                erase_neighbors(incident[v], v, v0);
+                incident[v].erase(v0);
 
-                auto it = search_neighbors(incident[v1], v1, v);
-                if (it != std::end(incident[v1]) && (*it).segid(v1) == v)
+                //auto it = search_neighbors(incident[v1], v1, v);
+                //if (it != std::end(incident[v1]) && (*it).segid(v1) == v)
+                if (incident[v1].count(v) != 0)
                                                   // {v0,v} and {v1,v} exist, we
                                                   // need to merge them
                 {
+                    auto & e = incident[v1].at(v);
                     if(e0.edge->v0 == v0) {
                         e0.edge->v0 = v1;
                     }
                     if(e0.edge->v1 == v0) {
                         e0.edge->v1 = v1;
                     }
-                    if (!(*it).valid_handle()) {
-                        auto it_dual = search_neighbors(incident[v], v, v1);
-                        std::swap(e0.edge, (*it).edge);
-                        std::swap(e0.handle, (*it).handle);
-                        (*it_dual).edge = (*it).edge;
-                        (*it_dual).handle = (*it).handle;
+                    if (!e.valid_handle()) {
+                        auto & e_dual = incident[v].at(v1);
+                        std::swap(e0.edge, e.edge);
+                        std::swap(e0.handle, e.handle);
+                        e_dual.edge = e.edge;
+                        e_dual.handle = e.handle;
                     }
-                    (*it).edge->w=plus((*it).edge->w, e0.edge->w);
+                    e.edge->w=plus(e.edge->w, e0.edge->w);
                     e0.edge->w = Limits::nil();
-                    return std::make_pair(e0, *it);
+                    if (e.valid_handle()) {
+                        //if (comp(e.edge->w, threshold)) {
+                        //    heap.update(e.handle);
+                        //} else {
+                        //    heap.erase(e.handle);
+                        //}
+                        heap.update(e.handle);
+                        if (e0.valid_handle()) {
+                            heap.erase(e0.handle);
+                        }
+                    }
                 }
                 else
                 {
@@ -535,29 +509,10 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                         e->v0 = v1;
                     if (e->v1 == v0)
                         e->v1 = v1;
-                    insert_neighbor(incident[v], v, v1, e0);
-                    heap_handle_type<T, Compare> h_null;
-                    return std::make_pair(e0, handle_wrapper<T, Compare>(nullptr, h_null));
-                }
-            });
-            //std::cout << "update heap" << std::endl;
-            std::vector<handle_wrapper<T, Compare> > new_entry;
-            for (auto p: results) {
-                if (p.second.edge == nullptr) {
-                    new_entry.push_back(p.first);
-                } else {
-                    auto & e0 = p.first;
-                    auto & e1 = p.second;
-                    if (e1.valid_handle()) {
-                        heap.update(e1.handle);
-                        if (e0.valid_handle()) {
-                            heap.erase(e0.handle);
-                        }
-                    }
+                    incident[v].insert({v1,e0});
+                    incident[v1].insert({v,e0});
                 }
             }
-            auto it = incident[v1].insert(incident[v1].end(), new_entry.begin(), new_entry.end());
-            std::inplace_merge(incident[v1].begin(), it, incident[v1].end(), [v1](auto & a, auto & b) { return a.segid(v1) < b.segid(v1); });
             incident[v0].clear();
         }
     }
