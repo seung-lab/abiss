@@ -398,17 +398,6 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 s = v1;
             }
 
-            if (!comp(e.edge->w, h_threshold)) {
-                auto p = std::minmax({(supervoxel_counts[v0] & (~frozen)), (supervoxel_counts[v1] & (~frozen))});
-                if (p.first > small_threshold and p.second > large_threshold) {
-                    std::cout << "reject edge between " << seg_indices[v0] << "(" << (supervoxel_counts[v0] & (~frozen)) << ")"<< " and " << seg_indices[v1] << "(" << (supervoxel_counts[v1] & (~frozen)) << ")"<< std::endl;
-                    of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
-                    of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
-                    write_edge(of_reject, e.edge->w);
-                    continue;
-                }
-            }
-
             if ((is_frozen(supervoxel_counts[v0]) && is_frozen(supervoxel_counts[v1]))
                 || (is_frozen(supervoxel_counts[v0]) && (frozen_neighbors(incident[v1], supervoxel_counts, v1) || (comp(e.edge->w, h_threshold) && supervoxel_counts[v1] > small_threshold)))
                 || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (comp(e.edge->w, h_threshold) && supervoxel_counts[v0] > small_threshold)))) {
@@ -421,12 +410,22 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 continue;
             }
 
+            if (!comp(e.edge->w, h_threshold)) {
+                auto p = std::minmax({(supervoxel_counts[v0] & (~frozen)), (supervoxel_counts[v1] & (~frozen))});
+                if (p.first > small_threshold and p.second > large_threshold) {
+                    std::cout << "reject edge between " << seg_indices[v0] << "(" << (supervoxel_counts[v0] & (~frozen)) << ")"<< " and " << seg_indices[v1] << "(" << (supervoxel_counts[v1] & (~frozen)) << ")"<< std::endl;
+                    of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
+                    of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
+                    write_edge(of_reject, e.edge->w);
+                    continue;
+                }
+            }
+
             if (is_frozen(supervoxel_counts[v0])) {
                 s = v0;
             } else if (is_frozen(supervoxel_counts[v1])) {
                 s = v1;
             }
-
 
             //std::cout << "Join " << v0 << " and " << v1 << std::endl;
             supervoxel_counts[v0] += (supervoxel_counts[v1] & (~frozen));
