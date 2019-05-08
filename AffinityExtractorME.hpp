@@ -1,5 +1,5 @@
-#ifndef AFFINITY_EXTRACTOR_HPP
-#define AFFINITY_EXTRACTOR_HPP
+#ifndef AFFINITY_EXTRACTOR_ME_HPP
+#define AFFINITY_EXTRACTOR_ME_HPP
 
 #include "Types.h"
 #include <cassert>
