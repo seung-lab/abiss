@@ -43,7 +43,13 @@ public:
         size_t current_ac1 = std::numeric_limits<std::size_t>::max();
         size_t current_ac2 = std::numeric_limits<std::size_t>::max();
         std::vector<std::pair<SegPair<Ts>, std::pair<Ta, size_t> > > sorted_edges(std::begin(m_edges), std::end(m_edges));
-        std::sort(std::begin(sorted_edges), std::end(sorted_edges), [](auto & a, auto & b) { return (a.first.first < b.first.first) || (a.first.first == b.first.first && a.first.second < b.first.second);});
+
+        std::stable_sort(std::begin(sorted_edges), std::end(sorted_edges), [ac_offset](auto & a, auto & b) {
+                auto c1 = a.first.first - (a.first.first % ac_offset);
+                auto c2 = b.first.first - (b.first.first % ac_offset);
+                return (c1 < c2) || (c1 == c2 && a.first.second < b.first.second);
+                });
+
         for (const auto & [k,v] : sorted_edges) {
             auto s1 = k.first;
             auto s2 = k.second;
@@ -68,16 +74,16 @@ public:
                 }
                 current_ac1 = s1 - (s1 % ac_offset);
                 current_ac2 = s2 - (s2 % ac_offset);
-                ofInChunk.open(str(boost::format("chunked_rg/in_chunk_%1%_%2%.data") % tag % current_ac1), std::ofstream::out | std::ofstream::app);
+                ofInChunk.open(str(boost::format("chunked_rg/in_chunk_%1%_%2%.data") % tag % current_ac1));
                 if (!ofInChunk.is_open()) {
                     std::abort();
                 }
                 if (current_ac1 != current_ac2) {
-                    ofBetweenChunks.open(str(boost::format("chunked_rg/between_chunk_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2), std::ofstream::out | std::ofstream::app);
+                    ofBetweenChunks.open(str(boost::format("chunked_rg/between_chunks_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
                     if (!ofBetweenChunks.is_open()) {
                         std::abort();
                     }
-                    ofFake.open(str(boost::format("chunked_rg/fake_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2), std::ofstream::out | std::ofstream::app);
+                    ofFake.open(str(boost::format("chunked_rg/fake_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
                     if (!ofFake.is_open()) {
                         std::abort();
                     }
@@ -99,11 +105,11 @@ public:
                 }
                 current_ac2 = s2 - (s2 % ac_offset);
                 if (current_ac1 != current_ac2) {
-                    ofBetweenChunks.open(str(boost::format("chunked_rg/between_chunk_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2), std::ofstream::out | std::ofstream::app);
+                    ofBetweenChunks.open(str(boost::format("chunked_rg/between_chunks_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
                     if (!ofBetweenChunks.is_open()) {
                         std::abort();
                     }
-                    ofFake.open(str(boost::format("chunked_rg/fake_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2), std::ofstream::out | std::ofstream::app);
+                    ofFake.open(str(boost::format("chunked_rg/fake_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
                     if (!ofFake.is_open()) {
                         std::abort();
                     }
