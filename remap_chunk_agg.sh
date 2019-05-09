@@ -14,6 +14,4 @@ try taskset -c $cpuid $BIN_PATH/ws3 param.txt seg_"${output}".data
 #try python3 $SCRIPT_PATH/ssim.py $1
 try taskset -c $cpuid python3 $SCRIPT_PATH/upload_chunk.py $1 $SEG_PATH $SEG_MIP
 
-try touch "${output}".txt
-try $UPLOAD_CMD "${output}".txt $FILE_PATH/done/"${output}".txt
 try release_cpu_slot

@@ -72,9 +72,6 @@ try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_
 try tar -cvf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch/"${output}".tar."${COMPRESSED_EXT}"
 
-try touch "${output}".txt
-try $UPLOAD_CMD "${output}".txt $FILE_PATH/done/"${output}".txt
-
 try rm -rf chunked_rg
 try rm -rf remap
 for d in $META; do

@@ -17,6 +17,4 @@ try mv chunkmap.data chunkmap_"${output}".data
 try $COMPRESS_CMD chunkmap_"${output}".data
 try $UPLOAD_ST_CMD chunkmap_"${output}".data."${COMPRESSED_EXT}" $CHUNKMAP_PATH/chunkmap_"${output}".data."${COMPRESSED_EXT}"
 
-try touch "${output}".txt
-try $UPLOAD_CMD "${output}".txt $FILE_PATH/done/"${output}".txt
 try release_cpu_slot

@@ -77,10 +77,6 @@ try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch/"${output}".tar."${COMPRESSED_EXT}"
 
-try touch "${output}".txt
-try $UPLOAD_CMD "${output}".txt $FILE_PATH/done/"${output}".txt
-
-
 for fn in $(cat filelist.txt)
 do
     try rm -rf $fn
