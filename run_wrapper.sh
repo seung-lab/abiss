@@ -6,6 +6,7 @@ OP=$2
 CHUNK=$3
 WORK_PATH="$(realpath "$1")"
 
+set +e
 try_to_skip $DOWNLOAD_ST_CMD $FILE_PATH/done/"$OP"/"$CHUNK".txt .
 
 set -euo pipefail
