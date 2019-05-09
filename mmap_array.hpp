@@ -41,7 +41,9 @@ public:
 
     ~MMArray()
     {
-        m_mapped_file.close();
+        if (m_mapped_file.is_open()) {
+            m_mapped_file.close();
+        }
     }
 
 private:
