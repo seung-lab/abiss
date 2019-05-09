@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <iostream>
+#include <boost/format.hpp>
 
 template<typename T>
 std::unordered_map<T,T> loadChunkMap(const char * filename)
@@ -105,6 +106,44 @@ void traverseSegments(const Ts& seg, Ta& ... extractors)
                     (extractors.collectContactingSurface(2, c, seg[x][y][z], seg[x][y][z-1]), ...);
                 }
             }
+        }
+    }
+}
+
+template <typename Ts, typename Tp>
+void chunkedOutput(const std::unordered_map<Ts,Tp> & data, const std::string & prefix, const std::string & tag, size_t ac_offset) {
+    std::ofstream ofChunk;
+    size_t current_ac1 = std::numeric_limits<std::size_t>::max();
+
+    std::vector<std::pair<Ts, Tp> > sorted_data(std::begin(data), std::end(data));
+    std::sort(std::begin(sorted_data), std::end(sorted_data), [ac_offset](auto & a, auto & b) {
+         return a.first < b.first;
+    });
+
+    for (const auto & [k,v] : sorted_data) {
+        if (current_ac1 != (k - (k % ac_offset))) {
+            if (ofChunk.is_open()) {
+                ofChunk.close();
+                if (ofChunk.is_open()) {
+                    std::abort();
+                }
+            }
+            current_ac1 = k - (k % ac_offset);
+            ofChunk.open(str(boost::format("%1%_%2%_%3%.data") % prefix % tag % current_ac1));
+            if (!ofChunk.is_open()) {
+                std::abort();
+            }
+        }
+
+        ofChunk.write(reinterpret_cast<const char *>(&k), sizeof(k));
+        ofChunk.write(reinterpret_cast<const char *>(&v), sizeof(v));
+        assert(!ofChunk.bad());
+    }
+
+    if (ofChunk.is_open()) {
+        ofChunk.close();
+        if (ofChunk.is_open()) {
+            std::abort();
         }
     }
 }
