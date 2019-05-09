@@ -5,6 +5,7 @@
 #include "ChunkedRGExtractor.hpp"
 #include "BoundaryExtractor.hpp"
 #include "SizeExtractor.hpp"
+#include "COMExtractor.hpp"
 #include "BBoxExtractor.hpp"
 #include "MeanEdge.hpp"
 #include "ReweightedLocalMeanEdge.hpp"
@@ -55,6 +56,7 @@ int main(int argc, char * argv[])
     AffinityExtractorME<seg_t, aff_t, ConstChunkRef<aff_t, 4> > affinity_extractor(aff_chunk);
     ChunkedRGExtractor<seg_t, aff_t, ConstChunkRef<aff_t, 4> > chunked_rg_extractor(aff_chunk);
     BoundaryExtractor<seg_t> boundary_extractor;
+    COMExtractor<seg_t> com_extractor;
 
     //traverseSegments(seg_chunk, true, boundary_extractor, affinity_extractor);
 #ifdef EXTRACT_SIZE
@@ -64,7 +66,7 @@ int main(int argc, char * argv[])
     BBoxExtractor<seg_t, int64_t> bbox_extractor;
 #endif
 
-    traverseSegments<true>(seg_chunk, boundary_extractor, affinity_extractor, chunked_rg_extractor
+    traverseSegments<true>(seg_chunk, boundary_extractor, affinity_extractor, chunked_rg_extractor, com_extractor
 #ifdef EXTRACT_SIZE
                      ,size_extractor
 #endif
@@ -79,6 +81,8 @@ int main(int argc, char * argv[])
 
     affinity_extractor.output(incomplete_segments, map, "edges_"+chunk_tag+".data", "incomplete_edges_"+chunk_tag+".data");
     chunked_rg_extractor.output(map, chunk_tag, ac_offset);
+
+    chunkedOutput(com_extractor.com(), "chunked_rg/com", chunk_tag, ac_offset);
 
 #ifdef EXTRACT_SIZE
     size_extractor.output(incomplete_segments, "sizes.data", "incomplete_sizes_"+chunk_tag+".data");
