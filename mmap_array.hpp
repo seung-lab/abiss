@@ -26,6 +26,19 @@ public:
         return *m_data_ptr;
     }
 
+    bool close()
+    {
+        if (m_mapped_file.is_open()) {
+            m_mapped_file.close();
+            if (m_mapped_file.is_open()) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+        return false;
+    }
+
     ~MMArray()
     {
         m_mapped_file.close();
