@@ -65,7 +65,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     sizes.push_back(0);
     __gnu_parallel::stable_sort(std::begin(size_pairs), std::end(size_pairs), [](auto & a, auto & b) { return a.first < b.first; });
     clock_t begin = clock();
-    std::cout << size_pairs.size() << "supervoxels to populate" << std::endl;
+    std::cout << size_pairs.size() << " supervoxels to populate" << std::endl;
     for (auto & kv : size_pairs) {
         if (kv.first == 0 || kv.second == 0) {
             std::cerr << "Impossible segid: " << kv.first << " or size: " << kv.second << std::endl;
@@ -215,7 +215,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
                         needs_an_edge = true;
                         if (descent[vfi[idx]] != high_threshold && descent[vfi[idx]] != conn[idx]) {
                             std::cerr << "This should not happen in a" << std::endl;
-                            std::cerr << vfi[idx] << " " << vbi[idx] << std::endl;
+                            std::cerr << idx << " " << segids[vfi[idx]] << " " << segids[vbi[idx]] << std::endl;
                             std::cerr << descent[vfi[idx]] << " " << conn[idx] << std::endl;
                             std::abort();
                         }
@@ -236,7 +236,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
                         needs_an_edge = true;
                         if (descent[vbi[idx]] != high_threshold && descent[vbi[idx]] != conn[idx]) {
                             std::cerr << "This should not happen in b" << std::endl;
-                            std::cerr << vfi[idx] << " " << vbi[idx] << std::endl;
+                            std::cerr << segids[vfi[idx]] << " " << segids[vbi[idx]] << std::endl;
                             std::cerr << descent[vbi[idx]] << " " << conn[idx] << std::endl;
                             std::abort();
                         }
