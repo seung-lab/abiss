@@ -11,6 +11,11 @@ def warp_z(z):
 
     #return z_min+z_dist
 
+def fold_aff(a):
+    #b = numpy.multiply(numpy.heaviside(0.9-a, 0),a)+numpy.multiply(numpy.heaviside(a-0.9, 1), 1.8-a)
+    #return b
+    return a
+
 def load_data(url, mip=0):
     print("cloud volume url: ", url)
     print("mip level: ", mip)

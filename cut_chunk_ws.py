@@ -1,6 +1,6 @@
 import sys
 import chunk_utils as cu
-from cut_chunk_common import load_data, cut_data, save_raw_data, warp_z
+from cut_chunk_common import load_data, cut_data, save_raw_data, warp_z, fold_aff
 import numpy
 from scipy import ndimage
 import os
@@ -49,7 +49,7 @@ offset = param["offset"]
 aff = load_data(os.environ['AFF_PATH'],mip=int(os.environ['AFF_MIP']))
 start_coord = [aff_bbox[i]-1+boundary_flags[i] for i in range(3)]
 end_coord = [aff_bbox[i+3]+1-boundary_flags[i+3] for i in range(3)]
-aff_cutout = cut_data(aff, start_coord, end_coord, boundary_flags)
+aff_cutout = fold_aff(cut_data(aff, start_coord, end_coord, boundary_flags))
 #erode_params = [[20,0.995],[20,0.995],[2,0.99]]
 #start_coord = [bbox[i]-(1-boundary_flags[i])*(1+erode_params[i][0]) for i in range(3)]
 #end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*(1+erode_params[i][0]) for i in range(3)]
