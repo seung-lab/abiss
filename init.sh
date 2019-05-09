@@ -27,8 +27,8 @@ function release_cpu_slot() {
     try rm -rf $fn
 }
 
-SCRIPT_PATH="/root/agg/scripts"
-BIN_PATH="/root/agg/build"
+SCRIPT_PATH="/root/$STAGE/scripts"
+BIN_PATH="/root/$STAGE/build"
 UPLOAD_CMD="gsutil -q -m cp"
 UPLOAD_ST_CMD="gsutil -q cp"
 DOWNLOAD_CMD="gsutil -m cp"
