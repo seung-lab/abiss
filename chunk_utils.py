@@ -132,6 +132,17 @@ def generate_siblings(f):
 
     return mip, indices, volume, faces, edges, vertices
 
+def touch_done_files(f, tag):
+    d = generate_descedants(f,target=0)
+    path = os.path.dirname(f)
+    with open("done_remap.txt","w") as f:
+        for c in d:
+            cp = read_inputs(os.path.join(path,c+".json"))
+            fn_done = "remap/done_{}_{}.data".format(tag, cp["offset"])
+            open(fn_done,'a').close()
+            f.write("{}\n".format(fn_done))
+
+
 def generate_descedants(f, target=None):
     path = os.path.dirname(f)
     p = read_inputs(f)

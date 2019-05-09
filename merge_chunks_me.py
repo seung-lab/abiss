@@ -42,14 +42,6 @@ def merge_chunks(p):
     face_maps = {i : [d[k] for k in cu.generate_subface_keys(i) if k in d] for i in range(6)}
     merge_faces(p,face_maps)
 
-def touch_done_files(f, tag):
-    d = cu.generate_descedants(f,target=0)
-    path = os.path.dirname(f)
-    for c in d:
-        cp = cu.read_inputs(os.path.join(path,c+".json"))
-        fn_done = "remap/done_{}_{}.data".format(tag, cp["offset"])
-        open(fn_done,'a').close()
-
 
 param = cu.read_inputs(sys.argv[1])
 ac_offset = param["ac_offset"]
@@ -59,7 +51,7 @@ if param["mip_level"] == 0:
 else:
     print("mip level:", param["mip_level"])
     merge_chunks(param)
-    touch_done_files(sys.argv[1], cu.chunk_tag(param["mip_level"], param["indices"]))
+    cu.touch_done_files(sys.argv[1], cu.chunk_tag(param["mip_level"], param["indices"]))
 
     with open("chunk_offset.txt", "w") as f:
         f.write(str(ac_offset))
