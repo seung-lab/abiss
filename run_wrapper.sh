@@ -16,7 +16,7 @@ echo $WORK_PATH
 try pushd $WORK_PATH
 
 if [ ! -f "$CHUNK".json ]; then
-    try python3 $SCRIPT_PATH/chunk_volume.py $PARAM_JSON
+    try python3 $SCRIPT_PATH/chunk_volume.py $CHUNK $PARAM_JSON
 fi
 
 just_in_case rm -rf "$CHUNK"

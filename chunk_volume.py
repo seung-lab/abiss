@@ -1,9 +1,8 @@
-from cloudvolume import CloudVolume
 from chunk_iterator import ChunkIterator
 import sys
 import json
-from chunk_utils import get_chunk_offset
-from dataset import chunk_size
+from joblib import Parallel, delayed
+from chunk_utils import get_chunk_offset, chunk_voxels
 
 def process_atomic_chunks(c, top_mip, ac_offset):
     x,y,z = c.coordinate()
@@ -36,56 +35,38 @@ def process_composite_chunks(c, top_mip, offset):
     with open(fn, 'w') as fp:
         json.dump(output, fp, indent=2)
 
-def process_composite_tasks(c, top_mip, f_task, f_deps):
-    batch_mip = 2
-    if c.mip_level() < batch_mip:
-        return
-    top_tag = str(top_mip)+"_0_0_0"
-    tag = str(c.mip_level()) + "_" + "_".join([str(i) for i in c.coordinate()])
-    d = c.children()
-    if c.mip_level() > batch_mip:
-        f_task.write('generate_chunks["{}"]=composite_chunks_wrap_op(dag, "{}")\n'.format(tag,tag))
-        for k in d:
-            tag_c = str(c.mip_level()-1) + "_" + "_".join([str(i) for i in k.coordinate()])
-            f_deps.write('generate_chunks["{}"].set_downstream(generate_chunks["{}"])\n'.format(tag_c, tag))
-    elif c.mip_level() == batch_mip:
-        f_task.write('generate_chunks["{}"]=composite_chunks_batch_op(dag, {}, "{}")\n'.format(tag,batch_mip,tag))
-        f_task.write('remap_chunks["{}"]=remap_chunks_batch_op(dag, {}, "{}")\n'.format(tag,batch_mip,tag))
-        f_deps.write('generate_chunks["{}"].set_downstream(remap_chunks["{}"])\n'.format(top_tag,tag))
+def process_batch_chunk(sv, offset):
+    for c in sv:
+        if c.mip_level() == 0:
+            process_atomic_chunks(c, top_mip, offset)
+        else:
+            process_composite_chunks(c, top_mip, offset)
 
-
-with open(sys.argv[1]) as f:
+root_tag = sys.argv[1]
+with open(sys.argv[2]) as f:
     data = json.load(f)
     data_bbox = data["BBOX"]
+    chunk_size = data["CHUNK_SIZE"]
 
-v = ChunkIterator(data_bbox, chunk_size)
+a = [int(x) for x in root_tag.split("_")]
+v = ChunkIterator(data_bbox, chunk_size, start_from=a)
 #offset = chunk_size[0]*chunk_size[1]*chunk_size[2]
-offset = 1<<32
 
 top_mip = v.top_mip_level()
 
-f_task = open("task.txt", "w")
-f_deps = open("deps.txt", "w")
+batch_mip = 3
 
-if (len(sys.argv) == 2):
-    metadata_seg = CloudVolume.create_new_info(
-            num_channels    = 1,
-            layer_type      = 'segmentation',
-            data_type       = 'uint64',
-            encoding        = 'raw',
-            resolution      = [8, 8, 40], # Pick scaling for your data!
-            voxel_offset    = data_bbox[0:3],
-            chunk_size      = [128,128,16], # This must divide evenly into image length or you won't cover the whole cube
-            volume_size     = [data_bbox[i+3] - data_bbox[i] for i in range(3)]
-            )
+batch_chunks = []
+if a[0] > batch_mip and top_mip > batch_mip:
+    for c in v:
+        if c.mip_level() < batch_mip:
+            break
+        elif c.mip_level() == batch_mip:
+            batch_chunks.append(ChunkIterator(data_bbox, chunk_size, start_from = [batch_mip]+c.coordinate()))
+        else:
+            process_composite_chunks(c, top_mip, chunk_voxels)
+else:
+    batch_chunks=[v]
 
-    vol_ws = CloudVolume(sys.argv[1], mip=0, info=metadata_seg)
-    vol_ws.commit_info()
-
-for c in v:
-    if c.mip_level() == 0:
-        process_atomic_chunks(c, top_mip, offset)
-        #process_atomic_tasks(c, top_mip, f_task, f_deps)
-    else:
-        process_composite_chunks(c, top_mip, offset)
-        process_composite_tasks(c, top_mip, f_task, f_deps)
+print("parallel starts: {}".format(len(batch_chunks)))
+Parallel(n_jobs=-2)(delayed(process_batch_chunk)(sv, chunk_voxels) for sv in batch_chunks)

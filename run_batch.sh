@@ -2,7 +2,7 @@
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh
 
-try python3 $SCRIPT_PATH/chunk_volume.py $PARAM_JSON
+try python3 $SCRIPT_PATH/chunk_volume.py $3 $PARAM_JSON
 
 try python3 $SCRIPT_PATH/generate_batches.py $3 $PARAM_JSON
 
