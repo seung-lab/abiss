@@ -6,7 +6,7 @@ def warp_z(z):
     #z_min = 256
     #z_range = 256
     #z_dist = z - z_min
-    #if z_dist > z_range:
+    #if z_dist >= z_range:
     #    z_dist = z_dist % z_range
 
     #return z_min+z_dist
