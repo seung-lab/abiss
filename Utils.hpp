@@ -66,8 +66,8 @@ std::vector<ContactRegion> connectComponent(const ContactRegion & cr)
 }
 
 
-template <typename Ts, typename ... Ta>
-void traverseSegments(const Ts& seg, bool overlappingChunk, Ta& ... extractors)
+template <bool overlappingChunk, typename Ts, typename ... Ta>
+void traverseSegments(const Ts& seg, Ta& ... extractors)
 {
     auto base = seg.index_bases();
     auto shape = seg.shape();

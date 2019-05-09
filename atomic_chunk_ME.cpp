@@ -62,7 +62,7 @@ int main(int argc, char * argv[])
     BBoxExtractor<seg_t, int64_t> bbox_extractor;
 #endif
 
-    traverseSegments(seg_chunk, true, boundary_extractor, affinity_extractor
+    traverseSegments<true>(seg_chunk, boundary_extractor, affinity_extractor
 #ifdef EXTRACT_SIZE
                      ,size_extractor
 #endif
