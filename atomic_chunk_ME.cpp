@@ -33,7 +33,7 @@ int main(int argc, char * argv[])
     param_file >> ac_offset;
     std::cout << offset[0] << " " << offset[1] << " " << offset[2] << std::endl;
     std::cout << dim[0] << " " << dim[1] << " " << dim[2] << std::endl;
-    std::string output_path(argv[2]);
+    std::string chunk_tag(argv[2]);
 
     //FIXME: wrap these in classes
     bio::mapped_file_source seg_file;
@@ -75,13 +75,13 @@ int main(int argc, char * argv[])
 
     auto incomplete_segments = boundary_extractor.incompleteSupervoxels(map);
 
-    boundary_extractor.output("boundary_%1%_"+output_path+".data", map);
+    boundary_extractor.output("boundary_%1%_"+chunk_tag+".data", map);
 
-    affinity_extractor.output(incomplete_segments, map, "edges_"+output_path+".data", "incomplete_edges_"+output_path+".data");
-    chunked_rg_extractor.output(map, output_path, ac_offset);
+    affinity_extractor.output(incomplete_segments, map, "edges_"+chunk_tag+".data", "incomplete_edges_"+chunk_tag+".data");
+    chunked_rg_extractor.output(map, chunk_tag, ac_offset);
 
 #ifdef EXTRACT_SIZE
-    size_extractor.output(incomplete_segments, "sizes.data", "incomplete_sizes_"+output_path+".data");
+    size_extractor.output(incomplete_segments, "sizes.data", "incomplete_sizes_"+chunk_tag+".data");
     auto sv_sizes = size_extractor.svSizes(map);
     std::ofstream nsfile("ns.data", std::ios_base::binary);
     assert(nsfile.is_open());
@@ -94,7 +94,7 @@ int main(int argc, char * argv[])
 #endif
 
 #ifdef EXTRACT_BBOX
-    bbox_extractor.output(incomplete_segments, "bboxes.data", "incomplete_bboxes_"+output_path+".data");
+    bbox_extractor.output(incomplete_segments, "bboxes.data", "incomplete_bboxes_"+chunk_tag+".data");
 #endif
 
     std::cout << "finished" << std::endl;
