@@ -7,10 +7,10 @@ try_to_skip() { "$@" && bail "skip $*";  }
 just_in_case() { "$@" || true; }
 
 lock_prefix="${AIRFLOW_TMP_DIR}/.cpulock"
-last_cpu=7
+ncpu=$(nproc)
 cpuid=""
 function acquire_cpu_slot() {
-    for i in $(seq 0 $last_cpu); do
+    for i in $(seq 0 $((ncpu-1))); do
         local fn="${lock_prefix}_${i}"
         if [ ! -f $fn ]; then
             cpuid=$i
