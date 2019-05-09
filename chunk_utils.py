@@ -2,6 +2,11 @@ import json
 import os
 import shutil
 
+bits_per_dim = 10
+n_bits_for_layer_id = 8
+
+chunk_voxels = 1 << (64-n_bits_for_layer_id-bits_per_dim*3)
+
 def get_chunk_offset(layer=None, x=None, y=None, z=None):
         """ (1) Extract Chunk ID from Node ID
             (2) Build Chunk ID from Layer, X, Y and Z components
@@ -11,9 +16,6 @@ def get_chunk_offset(layer=None, x=None, y=None, z=None):
         :param z: int
         :return: np.uint64
         """
-
-        bits_per_dim = 8
-        n_bits_for_layer_id = 8
 
         if not(x < 2 ** bits_per_dim and
                y < 2 ** bits_per_dim and
