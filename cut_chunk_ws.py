@@ -2,7 +2,7 @@ import sys
 import chunk_utils as cu
 from cut_chunk_common import load_data, cut_data, save_raw_data, warp_z, fold_aff
 import numpy
-from scipy import ndimage
+#from scipy import ndimage
 import os
 from cloudvolume import CloudVolume
 
