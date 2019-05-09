@@ -49,5 +49,6 @@ fi
 try source $SCRIPT_PATH/config.sh
 try . /root/google-cloud-sdk/path.bash.inc
 
+export SEG_MIP=0
+export WS_MIP=0
 export FILE_PATH=$SCRATCH_PATH/$STAGE
-export CHUNKMAP_PATH=$SCRATCH_PATH/chunkmap
