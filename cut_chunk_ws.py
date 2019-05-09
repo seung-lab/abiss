@@ -14,26 +14,26 @@ def write_metadata(fn, size, boundaries, offset):
         f.write("\n")
         f.write(str(offset))
 
-def adjust_affinitymap(data, params, threshold):
-    data[:,:,:,2] *= 0.99
-    idx = data[:] > 0.9
-    data[idx] = 0.9
-    for i in range(3):
-        mask = numpy.ones_like(data[:,:,:,i])
-        idx = data[:,:,:,i] < threshold
-        mask[idx] = 0
-        step = -2
-        if (i == 2):
-            step = -2
-        for r in (range(params[i][0]*2+1, 2, step)):
-            sz = [0,0,0]
-            sz[i] = r
-            print(sz)
-            lr_mask = ndimage.grey_erosion(mask, size=sz)
-            lr_idx = lr_mask < threshold
-            data[lr_idx,:] *= params[i][1]
-
-    return data
+#def adjust_affinitymap(data, params, threshold):
+#    data[:,:,:,2] *= 0.99
+#    idx = data[:] > 0.9
+#    data[idx] = 0.9
+#    for i in range(3):
+#        mask = numpy.ones_like(data[:,:,:,i])
+#        idx = data[:,:,:,i] < threshold
+#        mask[idx] = 0
+#        step = -2
+#        if (i == 2):
+#            step = -2
+#        for r in (range(params[i][0]*2+1, 2, step)):
+#            sz = [0,0,0]
+#            sz[i] = r
+#            print(sz)
+#            lr_mask = ndimage.grey_erosion(mask, size=sz)
+#            lr_idx = lr_mask < threshold
+#            data[lr_idx,:] *= params[i][1]
+#
+#    return data
 
 
 param = cu.read_inputs(sys.argv[1])
