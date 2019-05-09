@@ -19,7 +19,7 @@ def fold_aff(a):
 def load_data(url, mip=0):
     print("cloud volume url: ", url)
     print("mip level: ", mip)
-    return CloudVolume(url, fill_missing=True, mip=mip)
+    return CloudVolume(url, fill_missing=False, mip=mip)
     #return CloudVolumeGSUtil(url, fill_missing=True)
 
 def save_raw_data(fn,data, data_type):
