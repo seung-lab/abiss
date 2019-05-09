@@ -86,9 +86,11 @@ def merge_intermediate_outputs(p, prefix):
     output = prefix+".data"
     merge_files(output, inputs)
 
-def generate_ancestors(f, target=None):
+def generate_ancestors(f, target=None, ceiling=None):
     p = read_inputs(f)
     top_mip = p["top_mip_level"]
+    if ceiling is not None:
+        top_mip = ceiling
     mip = p["mip_level"]
     indices = p["indices"]
     ancestor = [chunk_tag(mip, indices)]
