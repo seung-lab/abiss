@@ -5,18 +5,35 @@ import chunk_utils as cu
 def merge_incomplete(p, typ):
     d = p["children"]
     mip_c = p["mip_level"]-1
-    prefix = "incomplete_{}_".format(typ)
+    prefix= "incomplete_{}_".format(typ)
     fn = [prefix+cu.chunk_tag(mip_c, d[k])+".data" for k in d]
+    prefix = "o_incomplete_{}_".format(typ) if os.environ['OVERLAP'] == '1' else "incomplete_{}_".format(typ)
     cu.merge_files(prefix+cu.chunk_tag(p["mip_level"],p["indices"])+".tmp", fn)
 
 def merge_face(p,idx,subFaces):
     mip_c = p["mip_level"]-1
+
     prefix = "boundary_"
+
     fn = [prefix+str(idx)+"_"+cu.chunk_tag(mip_c,f)+".data" for f in subFaces]
+
+    prefix = "o_boundary_" if os.environ['OVERLAP'] == '1' else "boundary_"
 
     output = prefix+str(idx)+"_"+cu.chunk_tag(p["mip_level"],p["indices"])+".tmp"
 
     cu.merge_files(output, fn)
+
+
+def merge_vanished_faces(p, faces):
+    mip_c = p["mip_level"]-1
+    d = p["children"]
+    prefix = "boundary_"
+    fn = []
+    for k in faces:
+        if k in d:
+            fn+=[prefix+str(i)+"_"+cu.chunk_tag(mip_c,d[k])+".data" for i in faces[k]]
+    cu.merge_files("matching_faces.data", fn)
+
 
 def merge_faces(p, faceMaps):
     merge_incomplete(p, "edges")
@@ -30,6 +47,9 @@ def merge_faces(p, faceMaps):
     print(faceMaps)
     for k in faceMaps:
         merge_face(p,k,faceMaps[k])
+
+    vanished_faces = cu.generate_vanished_subface()
+    merge_vanished_faces(p, vanished_faces)
 
 def merge_chunks(p):
     #cu.merge_intermediate_outputs(p, "complete_edges")

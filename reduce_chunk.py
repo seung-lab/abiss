@@ -1,0 +1,112 @@
+import sys
+import numpy as np
+import logging
+
+def consolidate_remaps(remaps):
+    nEntries = len(remaps)
+    dic = dict()
+    for i in range(nEntries):
+        e = remaps[nEntries-i-1]
+        dic[e['oid']] = dic.get(e['nid'], e['nid'])
+    return dic
+
+def load_remaps(fn):
+    remaps = np.fromfile(fn, dtype=[('oid', np.uint64), ('nid', np.uint64)])
+    return consolidate_remaps(remaps)
+
+def load_sizes(ongoing, done):
+    ongoing_counts = {x['sid']:x['s'] for x in np.fromfile(ongoing, dtype=[('sid', np.uint64), ('s', np.uint64)]) }
+    done_counts = {x['sid']:x['s'] for x in np.fromfile(done, dtype=[('sid', np.uint64), ('s', np.uint64)]) }
+    return ongoing_counts, done_counts
+
+def minmax_remap_pair(pair, remaps):
+    npair = [remaps.get(x, x) for x in pair]
+    return (min(npair), max(npair))
+
+def reduce_boundaries(tag, remaps, counts):
+    reduced_map = dict()
+    for i in range(6):
+        new_sids = []
+        data = np.fromfile("boundary_{}_{}.data".format(i, tag), dtype=np.uint64)
+        logger.info("frozen sv before: {}".format(len(data)))
+        for bs in data:
+            nbs = remaps.get(bs, bs)
+            if bs != nbs:
+                reduced_map[bs] = nbs
+            if nbs in counts:
+                new_sids.append((bs, nbs, counts[nbs]))
+            else:
+                logger.warning("face: {}; Impossible: no supervoxel count for {} ({})".format(i, nbs, bs))
+        logger.info("frozen sv after: {}".format(len(new_sids)))
+        np.array(new_sids,dtype=np.uint64).tofile("reduced_boundary_{}_{}.data".format(i, tag))
+
+    return reduced_map
+
+def reduce_edges(tag, remaps):
+    d_rg = [("s1", np.uint64), ("s2", np.uint64), ("aff", np.float64), ("area", np.uint64),
+          ("v1", np.uint64), ("v2", np.uint64), ("local_aff", np.float64), ("local_area", np.uint64)]
+    d_ie = [("s1", np.uint64), ("s2", np.uint64), ("aff", np.float64), ("area", np.uint64)]
+    rg_array = np.fromfile("residual_rg_{}.data".format(tag), dtype=d_rg)
+    edge_array = np.fromfile("incomplete_edges_{}.data".format(tag), dtype=d_ie)
+    logger.info("Total number of edges: {}".format(len(rg_array)+len(edge_array)))
+    merged_edges = dict()
+    for l in [rg_array, edge_array]:
+        for e in l:
+            key = minmax_remap_pair((e['s1'], e['s2']), remaps)
+            if key[0] == key[1]:
+                continue;
+            if key in merged_edges:
+                merged_edges[key][0] += e['aff']
+                merged_edges[key][1] += e['area']
+            else:
+                merged_edges[key] = [e['aff'], e['area']]
+
+    logger.info("Total number of reduced edges: {}".format(len(merged_edges)))
+
+    reduced_edges = []
+    for k,v in merged_edges.items():
+        logger.debug("new edge: {} {} {} {}".format(k[0],k[1],v[0],v[1]))
+        reduced_edges.append((k[0], k[1], v[0], v[1]))
+
+    np.array(reduced_edges, dtype=d_ie).tofile("reduced_edges_{}.data".format(tag))
+
+def reduce_sizes(tag, remaps):
+    dt = [('sid', np.uint64), ('s', np  .uint64)]
+    sizes = np.fromfile("ongoing_supervoxel_counts_{}.data".format(tag), dtype=dt)
+    reduced_sizes = dict()
+    reduced_map = dict()
+    for e in sizes:
+        sid = remaps.get(e[0], e[0])
+        if sid != e[0]:
+            reduced_map[e[0]] = sid
+        if sid in reduced_sizes:
+            reduced_sizes[sid] += e[1]
+        else:
+            reduced_sizes[sid] = e[1]
+
+    np.array([(k,v) for k, v in reduced_sizes.items()], dtype=dt).tofile("reduced_ongoing_supervoxel_counts_{}.data".format(tag))
+
+    return reduced_map
+
+
+def write_reduced_map(remaps):
+    np.array([(k,v) for k, v in remaps.items()], dtype=[('os', np.uint64), ('ns', np.uint64)]).tofile("extra_remaps.data")
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+remaps = load_remaps("remap.data")
+
+tag = sys.argv[1]
+ongoing_counts, done_counts = load_sizes("ongoing_segments.data", "done_segments.data")
+counts = {**ongoing_counts, **done_counts}
+reduced_map1 = reduce_boundaries(tag, remaps, counts)
+reduced_map2 = reduce_sizes(tag, remaps)
+reduce_edges(tag, remaps)
+write_reduced_map({**reduced_map1, **reduced_map2})
+#print(load_segids("0_0_0_0"))
+#bs_fname = sys.argv[1]
+#bs_array = np.fromfile(bs_fname, dtype=[("chunkid", np.uint64), ("globalid", np.uint64)])
+
+
