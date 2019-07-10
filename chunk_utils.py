@@ -45,6 +45,7 @@ def chunk_tag(mip_level, indices):
 def parent(indices):
     return [i//2 for i in indices]
 
+# 0: -x-axis, 1: -y-axis, 2: -z-axis, 3: +x-axis, 4: +y-axis, 5: +z-axis
 def generate_subface_keys(idx):
     pos = idx % 3
     offset = idx // 3
