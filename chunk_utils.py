@@ -53,6 +53,16 @@ def generate_subface_keys(idx):
     list(map(lambda l: l.insert(pos, offset), faces))
     return ["_".join([str(i) for i in l]) for l in faces]
 
+def generate_superface_keys(idx):
+    pos = idx % 3
+    offset = -1 + idx // 3 * 2
+    faces = [[i,j] for i in range(-1,2,1) for j in range(-1,2,1)]
+    list(map(lambda l: l.insert(pos, offset), faces))
+    return ["_".join([str(i) for i in l]) for l in faces]
+
+def generate_vanished_subface():
+    return {"_".join([str(x) for x in [i,j,k]]): [3-3*i,4-3*j,5-3*k] for i in range(2) for j in range(2) for k in range(2)}
+
 def merge_files(target, fnList):
     if len(fnList) == 1:
         os.rename(fnList[0],target)
