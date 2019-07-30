@@ -65,10 +65,6 @@ int main(int argc, char * argv[])
         ofs.write(reinterpret_cast<const char *>(&(p.second)), sizeof(seg_t));
         ofs.write(reinterpret_cast<const char *>(&(me[i].first)), sizeof(aff_t));
         ofs.write(reinterpret_cast<const char *>(&(me[i].second)), sizeof(size_t));
-        ofs.write(reinterpret_cast<const char *>(&(p.first)), sizeof(seg_t));
-        ofs.write(reinterpret_cast<const char *>(&(p.second)), sizeof(seg_t));
-        ofs.write(reinterpret_cast<const char *>(&(affinities[i])), sizeof(aff_t));
-        ofs.write(reinterpret_cast<const char *>(&(areas[i])), sizeof(size_t));
     }
     assert(!ofs.bad());
     ofs.close();

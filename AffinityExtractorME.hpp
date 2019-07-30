@@ -78,7 +78,6 @@ public:
         for (size_t i = 0; i != complete_segpairs.size(); i++) {
             const auto & p = complete_segpairs[i];
             writeEdge(complete, p, me_complete[i]);
-            writeEdge(complete, p, me_complete[i]);
         }
         for (size_t i = 0; i != incomplete_segpairs.size(); i++) {
             const auto & p = incomplete_segpairs[i];
@@ -141,10 +140,6 @@ void writeRegionGraph(const std::unordered_set<Ts> & incompleteSegments, const R
             incomplete.write(reinterpret_cast<const char *>(&(v.affinity)), sizeof(aff_t));
             incomplete.write(reinterpret_cast<const char *>(&(v.area)), sizeof(size_t));
         } else {
-            complete.write(reinterpret_cast<const char *>(&(k.first)), sizeof(seg_t));
-            complete.write(reinterpret_cast<const char *>(&(k.second)), sizeof(seg_t));
-            complete.write(reinterpret_cast<const char *>(&(v.affinity)), sizeof(aff_t));
-            complete.write(reinterpret_cast<const char *>(&(v.area)), sizeof(size_t));
             complete.write(reinterpret_cast<const char *>(&(k.first)), sizeof(seg_t));
             complete.write(reinterpret_cast<const char *>(&(k.second)), sizeof(seg_t));
             complete.write(reinterpret_cast<const char *>(&(v.affinity)), sizeof(aff_t));
