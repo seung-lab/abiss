@@ -30,9 +30,9 @@ public:
             }
             if (mergedSize.count(sid) == 0) {
                 mergedSize[sid] = 1;
-            } else {
+            } /* else {
                 mergedSize[sid] += 1;
-            }
+            } */
         }
         return mergedSize;
     }
