@@ -20,7 +20,7 @@ do
     just_in_case rm -rf $fn
 done
 
-if [ -n "$OVERLAP"   ]; then
+if [ "$OVERLAP" = "1" ]; then
     try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/scratch2/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
 else
     try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/scratch/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
@@ -29,7 +29,7 @@ fi
 try python3 $SCRIPT_PATH/merge_chunks_me.py $1 $META
 try mv ongoing.data localmap.data
 
-if [ -n "$OVERLAP"  ]; then
+if [ "$OVERLAP" = "1"  ]; then
     try mv residual_rg.data o_residual_rg.data
     try mv ongoing_supervoxel_counts.data o_ongoing_supervoxel_counts.data
     for i in {0..5}
@@ -63,7 +63,7 @@ done
 try $BIN_PATH/split_remap chunk_offset.txt $output
 try $BIN_PATH/assort $output $META
 
-if [ -n "$OVERLAP"  ]; then
+if [ "$OVERLAP" = 1 ]; then
     for i in {0..5}
     do
         mv o_boundary_"$i"_"$output".data boundary_"$i"_"$output".data
@@ -98,7 +98,7 @@ try $UPLOAD_CMD edges_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_gra
 try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/final_rg_"${output}".data."${COMPRESSED_EXT}"
 try cat done_remap.txt | $PARALLEL_CMD -X $UPLOAD_ST_CMD {}.$COMPRESSED_EXT $FILE_PATH/remap/
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
-if [ -n "$OVERLAP"  ]; then
+if [ "$OVERLAP" = 1  ]; then
     try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch2/"${output}".tar."${COMPRESSED_EXT}"
 else
     try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch/"${output}".tar."${COMPRESSED_EXT}"
