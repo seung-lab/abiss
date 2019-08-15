@@ -88,13 +88,13 @@ typedef struct __attribute__((packed)) atomic_edge
     }
 } atomic_edge_t;
 
-struct __attribute__((packed)) mean_edge
+struct __attribute__((packed)) mst_edge
 {
     aff_t sum;
     size_t num;
     atomic_edge_t repr;
 
-    explicit constexpr mean_edge(aff_t s = 0, size_t n = 1, atomic_edge_t r = atomic_edge_t() )
+    explicit constexpr mst_edge(aff_t s = 0, size_t n = 1, atomic_edge_t r = atomic_edge_t() )
         : sum(s)
         , num(n)
         , repr(r)
@@ -102,15 +102,15 @@ struct __attribute__((packed)) mean_edge
     }
 };
 
-struct mean_edge_plus
+struct mst_edge_plus
 {
-    mean_edge operator()(mean_edge const& a, mean_edge const& b) const
+    mst_edge operator()(mst_edge const& a, mst_edge const& b) const
     {
         atomic_edge_t new_repr = a.repr;
         if (a.repr.area < b.repr.area) {
             new_repr = b.repr;
         }
-        return mean_edge(a.sum + b.sum, a.num + b.num, new_repr);
+        return mst_edge(a.sum + b.sum, a.num + b.num, new_repr);
     }
 };
 
@@ -605,14 +605,14 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
 template <class CharT, class Traits>
 ::std::basic_ostream<CharT, Traits>&
-operator<<(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
+operator<<(::std::basic_ostream<CharT, Traits>& os, mst_edge const& v)
 {
     os << v.sum << " " << v.num << " " << v.repr.u1 << " " <<  v.repr.u2 << " " << v.repr.sum_aff << " " << v.repr.area;
     return os;
 }
 
 template <class CharT, class Traits>
-void write_edge(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
+void write_edge(::std::basic_ostream<CharT, Traits>& os, Edge const& v)
 {
     os.write(reinterpret_cast<const char *>(&v), sizeof(v));
 }
