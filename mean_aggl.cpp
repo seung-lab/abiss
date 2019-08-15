@@ -277,10 +277,10 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     std::vector<seg_t> fs_array = read_array<seg_t>(fs_filename);
 
     __gnu_parallel::transform(fs_array.begin(), fs_array.end(), std::back_inserter(ns_pair_array), [](seg_t &a){
-            return std::make_pair(a, size_t(1|frozen));
+            return std::make_pair(a, size_t(boundary));
             });
 
-    __gnu_parallel::sort(std::begin(ns_pair_array), std::end(ns_pair_array), [](auto & a, auto & b) { return a.first < b.first;  });
+    __gnu_parallel::sort(std::begin(ns_pair_array), std::end(ns_pair_array), [](auto & a, auto & b) { return a.first < b.first || (a.first == b.first && a.second < b.second); });
 
     seg_t prev_seg = 0;
     for (auto & kv : ns_pair_array) {
@@ -295,8 +295,17 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
             supervoxel_counts.push_back(count);
             prev_seg = seg;
         } else {
-            supervoxel_counts.back() += count & (~frozen) - 1;
-            supervoxel_counts.back() |= count & frozen;
+            if (boundary & count) {
+                supervoxel_counts.back() |= boundary;
+            }
+#ifdef OVERLAP
+            else {
+                supervoxel_counts.back() += count;
+            }
+#endif
+            //if ((boundary & count) && (supervoxel_counts.back() & (~boundary)) > 1) {
+            //    std::cout << "multi-sv frozen segments: " << seg << " " << (supervoxel_counts.back() & (~boundary)) << std::endl;
+            //}
         }
     }
 
@@ -627,8 +636,13 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             }
             continue;
         }
+#ifndef OVERLAP
+        if (supervoxel_counts[i] == (boundary)) {
+            supervoxel_counts[i] = 1|boundary;
+        }
+#endif
         if (is_frozen(supervoxel_counts[i])) {
-            auto size = supervoxel_counts[i] & (~frozen);
+            auto size = supervoxel_counts[i] & (~boundary);
             of_fs_ongoing.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
             of_fs_ongoing.write(reinterpret_cast<const char *>(&(size)), sizeof(size_t));
         } else {
