@@ -114,6 +114,46 @@ struct mst_edge_plus
     }
 };
 
+struct mst_edge_greater
+{
+    bool operator()(mst_edge const& a, mst_edge const& b) const
+    {
+        return a.sum / a.num > b.sum / b.num;
+    }
+};
+
+struct mst_edge_limits
+{
+    static constexpr mst_edge max()
+    {
+        return mst_edge(std::numeric_limits<aff_t>::max());
+    }
+    static constexpr mst_edge nil()
+    {
+        return mst_edge(0,0);
+    }
+};
+
+struct __attribute__((packed)) mean_edge
+{
+    aff_t sum;
+    size_t num;
+
+    explicit constexpr mean_edge(aff_t s = 0, size_t n = 1)
+        : sum(s)
+        , num(n)
+    {
+    }
+};
+
+struct mean_edge_plus
+{
+    mean_edge operator()(mean_edge const& a, mean_edge const& b) const
+    {
+        return mean_edge(a.sum + b.sum, a.num + b.num);
+    }
+};
+
 struct mean_edge_greater
 {
     bool operator()(mean_edge const& a, mean_edge const& b) const
@@ -612,6 +652,14 @@ operator<<(::std::basic_ostream<CharT, Traits>& os, mst_edge const& v)
 }
 
 template <class CharT, class Traits>
+::std::basic_ostream<CharT, Traits>&
+operator<<(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
+{
+    os << v.sum << " " << v.num;
+    return os;
+}
+
+template <class CharT, class Edge, class Traits>
 void write_edge(::std::basic_ostream<CharT, Traits>& os, Edge const& v)
 {
     os.write(reinterpret_cast<const char *>(&v), sizeof(v));
