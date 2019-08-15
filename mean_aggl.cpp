@@ -32,7 +32,8 @@
 
 using seg_t = uint64_t;
 using aff_t = float;
-static const size_t frozen = (1ul<<(std::numeric_limits<std::size_t>::digits-1));
+static const size_t frozen = (1ul<<(std::numeric_limits<std::size_t>::digits-2));
+static const size_t boundary = (1ul<<(std::numeric_limits<std::size_t>::digits-1))|frozen;
 
 size_t filesize(std::string filename)
 {
