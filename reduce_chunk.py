@@ -25,12 +25,14 @@ def minmax_remap_pair(pair, remaps):
 
 def reduce_boundaries(tag, remaps, counts):
     reduced_map = dict()
+    boundary_sv = set()
     for i in range(6):
         new_sids = []
         data = np.fromfile("boundary_{}_{}.data".format(i, tag), dtype=np.uint64)
         logger.info("frozen sv before: {}".format(len(data)))
         nbs_seeds = set()
         for bs in data:
+            boundary_sv.add(bs)
             nbs = remaps.get(bs, bs)
             if bs != nbs:
                 reduced_map[bs] = nbs
@@ -46,7 +48,7 @@ def reduce_boundaries(tag, remaps, counts):
         logger.info("frozen sv after: {}".format(len(new_sids)))
         np.array(new_sids,dtype=np.uint64).tofile("reduced_boundary_{}_{}.data".format(i, tag))
 
-    return reduced_map
+    return reduced_map, boundary_sv
 
 def reduce_edges(tag, remaps):
     d_ie = [("s1", np.uint64), ("s2", np.uint64), ("aff", np.float64), ("area", np.uint64)]
@@ -74,12 +76,14 @@ def reduce_edges(tag, remaps):
 
     np.array(reduced_edges, dtype=d_ie).tofile("reduced_edges_{}.data".format(tag))
 
-def reduce_sizes(tag, remaps):
+def reduce_sizes(tag, remaps, bs):
     dt = [('sid', np.uint64), ('s', np  .uint64)]
     sizes = np.fromfile("ongoing_supervoxel_counts_{}.data".format(tag), dtype=dt)
     reduced_sizes = dict()
     reduced_map = dict()
     for e in sizes:
+        if e[0] in bs:
+            continue
         sid = remaps.get(e[0], e[0])
         if sid != e[0]:
             reduced_map[e[0]] = sid
@@ -105,8 +109,8 @@ remaps = load_remaps("remap.data")
 tag = sys.argv[1]
 ongoing_counts, done_counts = load_sizes("ongoing_segments.data", "done_segments.data")
 counts = {**ongoing_counts, **done_counts}
-reduced_map1 = reduce_boundaries(tag, remaps, counts)
-reduced_map2 = reduce_sizes(tag, remaps)
+reduced_map1, bs = reduce_boundaries(tag, remaps, counts)
+reduced_map2 = reduce_sizes(tag, remaps, bs)
 reduce_edges(tag, remaps)
 write_reduced_map({**reduced_map1, **reduced_map2})
 #print(load_segids("0_0_0_0"))
