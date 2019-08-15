@@ -38,6 +38,7 @@ if [ "$OVERLAP" = "1"  ]; then
     done
     try python3 $SCRIPT_PATH/match_chunks.py $output
     try cat extra_remaps.data >> localmap.data
+    try cat extra_sv_counts.data >> ongoing_supervoxel_counts.data
 fi
 
 
