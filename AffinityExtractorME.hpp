@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <boost/format.hpp>
+#include <parallel/algorithm>
 
 template<typename Ts, typename Ta, typename Chunk>
 class AffinityExtractorME
@@ -94,56 +95,63 @@ private:
     std::unordered_map<SegPair<Ts>, std::pair<Ta, size_t>, boost::hash<SegPair<Ts> > > m_edges;
 };
 
-template <typename Ts, typename Te>
-using RegionGraph = std::unordered_map<SegPair<Ts>, Te, boost::hash<SegPair<Ts> > >;
-
-template<typename Ta>
+template<typename Ts, typename Ta>
 struct SimpleEdge{
+    Ts s1;
+    Ts s2;
     Ta affinity;
     size_t area;
-    explicit constexpr SimpleEdge(Ta a = 0.0, size_t b = 0)
-        :affinity(a),area(b) {};
+    explicit constexpr SimpleEdge(Ts v1 = 0 , Ts v2 = 0, Ta a = 0.0, size_t b = 0)
+        :s1(v1), s2(v2), affinity(a),area(b) {};
 };
 
 template<typename Ts, typename Ta>
-RegionGraph<Ts, SimpleEdge<Ta> > loadRegionGraph(const std::string & fileName)
+std::vector<SimpleEdge<Ts, Ta> > loadRegionGraph(const std::string & fileName)
 {
-    RegionGraph<Ts, SimpleEdge<Ta> > rg;
+    std::vector<SimpleEdge<Ts, Ta> > output_rg;
+    auto input_rg = read_array<SimpleEdge<Ts, Ta> >(fileName);
     std::cout << "loading: " << fileName << std::endl;
-    std::ifstream in(fileName);
-    Ts s1, s2;
-    size_t area;
-    Ta aff;
-    while (in.read(reinterpret_cast<char *>(&s1), sizeof(s1))) {
-        in.read(reinterpret_cast<char *>(&s2), sizeof(s2));
-        in.read(reinterpret_cast<char *>(&aff), sizeof(aff));
-        in.read(reinterpret_cast<char *>(&area), sizeof(area));
-        auto & e = rg[std::minmax(s1,s2)];
-        e.affinity +=  aff;
-        e.area += area;
+    __gnu_parallel::for_each(input_rg.begin(), input_rg.end(), [](auto & a) {
+        if (a.s1 < a.s2) {
+            std::swap(a.s1, a.s2);
+        }
+    });
+
+    __gnu_parallel::sort(input_rg.begin(), input_rg.end(), [](const auto & a, const auto & b) {
+        return ((a.s1 < b.s1) || (a.s1 == b.s1 && a.s2 < b.s2));
+    });
+
+    SimpleEdge<Ts, Ta> current_edge;
+    for(const auto & e : input_rg) {
+        if (current_edge.s1 != e.s1 || current_edge.s2 != e.s2) {
+            if (current_edge.s1 != Ts(0) && current_edge.s2 != Ts(0)) {
+                output_rg.push_back(current_edge);
+            }
+            current_edge = e;
+        } else {
+            current_edge.affinity += e.affinity;
+            current_edge.area += e.area;
+        }
     }
-    assert(!in.bad());
-    in.close();
-    return rg;
+
+    if (current_edge.s1 != Ts(0) && current_edge.s2 != Ts(0)) {
+        output_rg.push_back(current_edge);
+    }
+
+    return output_rg;
 }
 
 template <typename Ts, typename Ta>
-void writeRegionGraph(const std::unordered_set<Ts> & incompleteSegments, const RegionGraph<Ts, SimpleEdge<Ta> >  rg, const std::string & incompleteFileName, const std::string & completeFileName)
+void writeRegionGraph(const std::unordered_set<Ts> & incompleteSegments, const std::vector<SimpleEdge<Ts, Ta> >  rg, const std::string & incompleteFileName, const std::string & completeFileName)
 {
     std::ofstream incomplete(incompleteFileName, std::ios_base::binary);
     std::ofstream complete(completeFileName, std::ios_base::binary);
 
-    for (const auto &[k, v] : rg) {
-        if (incompleteSegments.count(k.first) > 0 && incompleteSegments.count(k.second) > 0) {
-            incomplete.write(reinterpret_cast<const char *>(&(k.first)), sizeof(seg_t));
-            incomplete.write(reinterpret_cast<const char *>(&(k.second)), sizeof(seg_t));
-            incomplete.write(reinterpret_cast<const char *>(&(v.affinity)), sizeof(aff_t));
-            incomplete.write(reinterpret_cast<const char *>(&(v.area)), sizeof(size_t));
+    for (const auto &e : rg) {
+        if (incompleteSegments.count(e.s1) > 0 && incompleteSegments.count(e.s2) > 0) {
+            incomplete.write(reinterpret_cast<const char *>(&(e)), sizeof(e));
         } else {
-            complete.write(reinterpret_cast<const char *>(&(k.first)), sizeof(seg_t));
-            complete.write(reinterpret_cast<const char *>(&(k.second)), sizeof(seg_t));
-            complete.write(reinterpret_cast<const char *>(&(v.affinity)), sizeof(aff_t));
-            complete.write(reinterpret_cast<const char *>(&(v.area)), sizeof(size_t));
+            complete.write(reinterpret_cast<const char *>(&(e)), sizeof(e));
         }
     }
     assert(!incomplete.bad());
