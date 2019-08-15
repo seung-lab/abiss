@@ -32,10 +32,6 @@ try mv ongoing.data localmap.data
 if [ "$OVERLAP" = "1"  ]; then
     try mv residual_rg.data o_residual_rg.data
     try mv ongoing_supervoxel_counts.data o_ongoing_supervoxel_counts.data
-    for i in {0..5}
-    do
-        try cat o_boundary_"$i"_"$output".tmp >> matching_faces.data
-    done
     try python3 $SCRIPT_PATH/match_chunks.py $output
     try cat extra_remaps.data >> localmap.data
     try cat extra_sv_counts.data >> ongoing_supervoxel_counts.data
