@@ -7,6 +7,47 @@
 #include <fstream>
 #include <iostream>
 #include <boost/format.hpp>
+#include <sys/stat.h>
+
+size_t filesize(const std::string & filename)
+{
+    struct stat stat_buf;
+    int rc = stat(filename.c_str(), &stat_buf);
+    return rc == 0 ? stat_buf.st_size : 0;
+}
+
+
+template <class T>
+std::vector<T> read_array(const std::string & filename)
+{
+    std::vector<T> array;
+
+    std::cout << "filesize:" << filename << ", " <<  filesize(filename)/sizeof(T) << std::endl;
+    size_t data_size = filesize(filename);
+    if (data_size % sizeof(T) != 0) {
+        std::cerr << "File incomplete!: " << filename << std::endl;
+        std::abort();
+    }
+
+    FILE* f = std::fopen(filename.c_str(), "rbXS");
+    if ( !f ) {
+        std::cerr << "Cannot open the input file" << std::endl;
+        std::abort();
+    }
+
+    size_t array_size = data_size / sizeof(T);
+
+    array.resize(array_size);
+    std::size_t nread = std::fread(array.data(), sizeof(T), array_size, f);
+    if (nread != array_size) {
+        std::cerr << "Reading: " << nread << " entries, but expecting: " << array_size << std::endl;
+        std::abort();
+    }
+    std::fclose(f);
+
+    return array;
+}
+
 
 template<typename T>
 std::unordered_map<T,T> loadChunkMap(const char * filename)
