@@ -38,8 +38,12 @@ if [ "$OVERLAP" = "1"  ]; then
 fi
 
 
-try mv residual_rg.data input_rg.data
-try touch input_rg.data
+if [ "$OVERLAP" = "1" ]; then
+    try touch input_rg.data
+else
+    try mv residual_rg.data input_rg.data
+fi
+
 try $BIN_PATH/meme $output $META
 try cat new_edges.data >> input_rg.data
 try mv new_edges.data edges_"$output".data
@@ -49,7 +53,11 @@ do
     cat boundary_"$i"_"$output".data >> frozen.data
 done
 
-try $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
+if [ "$OVERLAP" = "1" ]; then
+    try $BIN_PATH/agg_overlap $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
+else
+    try $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
+fi
 
 try cat remap.data >> localmap.data
 
