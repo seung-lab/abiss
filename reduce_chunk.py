@@ -51,7 +51,7 @@ def reduce_boundaries(tag, remaps, counts):
     return reduced_map, boundary_sv
 
 def reduce_edges(tag, remaps):
-    d_ie = [("s1", np.uint64), ("s2", np.uint64), ("aff", np.float64), ("area", np.uint64)]
+    d_ie = [("s1", np.uint64), ("s2", np.uint64), ("aff", np.float32), ("area", np.uint64)]
     rg_array = np.fromfile("residual_rg_{}.data".format(tag), dtype=d_ie)
     edge_array = np.fromfile("incomplete_edges_{}.data".format(tag), dtype=d_ie)
     logger.info("Total number of edges: {}".format(len(rg_array)+len(edge_array)))
