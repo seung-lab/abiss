@@ -9,7 +9,7 @@
 #include <parallel/algorithm>
 
 template <class T>
-struct matching_entry_t
+struct __attribute__((packed)) matching_entry_t
 {
     T oid;
     size_t boundary_size;
@@ -18,7 +18,7 @@ struct matching_entry_t
 };
 
 template <class T>
-struct matching_value
+struct __attribute__((packed)) matching_value
 {
     T sid;
     size_t size;
@@ -35,7 +35,7 @@ struct remap_data
 };
 
 template <class T_seg, class T_aff>
-struct rg_entry
+struct __attribute__((packed)) rg_entry
 {
     T_seg s1;
     T_seg s2;
@@ -174,7 +174,9 @@ void process_edges(std::string & tag, remap_data<T_seg> & rep)
             }
         }
         if (e.s1 > e.s2) {
-            std::swap(e.s1, e.s2);
+            auto tmp = e.s1;
+            e.s1 = e.s2;
+            e.s2 = tmp;
         }
     });
     std::ofstream ofs(str(boost::format("incomplete_edges_%1%.tmp") % tag), std::ios_base::binary);

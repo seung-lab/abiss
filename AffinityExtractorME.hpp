@@ -96,7 +96,7 @@ private:
 };
 
 template<typename Ts, typename Ta>
-struct SimpleEdge{
+struct __attribute__((packed)) SimpleEdge{
     Ts s1;
     Ts s2;
     Ta affinity;
@@ -113,7 +113,9 @@ std::vector<SimpleEdge<Ts, Ta> > loadRegionGraph(const std::string & fileName)
     std::cout << "loading: " << fileName << std::endl;
     __gnu_parallel::for_each(input_rg.begin(), input_rg.end(), [](auto & a) {
         if (a.s1 < a.s2) {
-            std::swap(a.s1, a.s2);
+            auto tmp = a.s1;
+            a.s1 = a.s2;
+            a.s2 = tmp;
         }
     });
 
