@@ -18,6 +18,24 @@ def merge_face(p,idx,subFaces):
 
     cu.merge_files(output, fn)
 
+def merge_cut_plane(p, idx):
+    mip = p["mip_level"]
+    prefix = "boundary_"
+    pos = idx % 3
+    offset = 0
+    faces = [[i,j] for i in range(-1,2,1) for j in range(-1,2,1)]
+    list(map(lambda l: l.insert(pos, offset), faces))
+    candidates = ["_".join([str(i) for i in l]) for l in faces]
+    d = p["neighbours"]
+    neighbours = [d[c] for c in candidates if c in d]
+    fn = [prefix+str(idx)+"_"+cu.chunk_tag(mip,f)+".data" for f in neighbours]
+    print("merge face {} with {}".format(idx, neighbours))
+
+    output = "cut_plane_"+str(idx)+"_"+cu.chunk_tag(p["mip_level"],p["indices"])+".data"
+
+    cu.merge_files(output, fn)
+
+
 def merge_faces(p, faceMaps):
     merge_incomplete(p, "edges")
 
@@ -56,6 +74,8 @@ ac_offset = param["ac_offset"]
 
 print("mip level:", param["mip_level"])
 merge_chunks(param)
+for i in range(6):
+    merge_cut_plane(param, i)
 cu.touch_done_files(sys.argv[1], cu.chunk_tag(param["mip_level"], param["indices"]))
 
 with open("chunk_offset.txt", "w") as f:

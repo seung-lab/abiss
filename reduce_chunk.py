@@ -29,6 +29,7 @@ def reduce_boundaries(tag, remaps, counts):
     for i in range(6):
         new_sids = []
         data = np.fromfile("boundary_{}_{}.data".format(i, tag), dtype=np.uint64)
+        extra_data = np.fromfile("cut_plane_{}_{}.data".format(i, tag), dtype=np.uint64)
         logger.info("frozen sv before: {}".format(len(data)))
         nbs_seeds = set()
         for bs in data:
@@ -41,6 +42,10 @@ def reduce_boundaries(tag, remaps, counts):
                 nbs_seeds.add(nbs)
             else:
                 logger.warning("face: {}; Impossible: no supervoxel count for {} ({})".format(i, nbs, bs))
+        for bs in extra_data:
+            nbs = remaps.get(bs, bs)
+            if nbs in counts:
+                nbs_seeds.add(nbs)
         for k in remaps:
             if remaps[k] in nbs_seeds and k not in reduced_map:
                 new_sids.append((k, 0, remaps[k], counts[remaps[k]]))
