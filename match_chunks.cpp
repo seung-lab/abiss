@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <boost/format.hpp>
 #include <parallel/algorithm>
+#include <boost/pending/disjoint_sets.hpp>
 
 template <class T>
 struct __attribute__((packed)) matching_entry_t
@@ -93,39 +94,62 @@ remap_data<T> generate_remaps()
     std::vector<matching_value<T> > remaps(rep.segids.size());
     std::vector<matching_value<T> > extra_remaps(rep.segids.size());
 
+    std::vector<T> rank(rep.segids.size());
+    std::vector<T> parent(rep.segids.size());
+    boost::disjoint_sets<T*, T*> sets(&rank[0], &parent[0]);
+
+    for (size_t i = 0; i != rep.segids.size(); i++) {
+        sets.make_set(i);
+    }
+
     for (auto & e : remap_vector) {
-        //std::cout << rep.segids[e.oid] << ", " << rep.segids[e.nid] << std::endl;
-        //if (e.oid == e.nid) {
-        //    continue;
-        //}
-        if (remaps[e.oid].sid != 0) {
-            if (remaps[e.oid].sid != e.nid) { // Already have a more advanced agglomerated segment
-                extra_remaps[e.nid] = extra_remaps[e.oid].sid != 0 ? extra_remaps[e.oid] : remaps[e.oid];
-            }
-        } else if (remaps[e.nid].sid != 0) {
-            extra_remaps[e.nid] = remaps[e.nid];
-            remaps[e.oid] = remaps[e.nid];
+        if (remaps[e.oid].sid == 0) {
+            remaps[e.oid] = matching_value(e.nid, e.agg_size);
         } else {
-            if (e.oid != e.nid) {
-                remaps[e.oid] = extra_remaps[e.nid].sid != 0 ? extra_remaps[e.nid] :matching_value(e.nid, e.agg_size);
-            }
+            // Placeholder for later
+            extra_remaps[e.nid] = remaps[e.oid];
+        }
+        if (remaps[e.nid].sid == 0) {
+            remaps[e.nid] = matching_value(e.nid, e.agg_size);
+        }
+        sets.union_set(e.oid, e.nid);
+    }
+
+    {
+        std::vector<T> idx;
+        std::iota(idx.begin(), idx.end(), T(0));
+        sets.compress_sets(idx.begin(), idx.end());
+    }
+
+    std::vector<T> normalized_parent(rep.segids.size());
+
+    // Pick the largest segment to represent, it is required because the way we populated extra_remaps above
+    for (auto & e: remap_vector) {
+        auto nid = parent[e.nid];
+        if (normalized_parent[nid] == 0) {
+            normalized_parent[nid] = e.nid;
         }
     }
-    for (size_t i = 0; i < remaps.size(); i++) {
-        if (remaps[i].sid == 0) {
-            if (extra_remaps[i].sid == 0) {
-                continue;
-            } else {
-                remaps[i] = extra_remaps[i];
-            }
-        }
-        auto & new_map = extra_remaps[remaps[i].sid];
-        //std::cout << rep.segids[i] << ", " << rep.segids[remaps[i].sid] << std::endl;
-        if (new_map.sid != 0 && new_map.sid != remaps[i].sid) {
-            std::cout << "update maps " << rep.segids[i] << " from " << remaps[i].sid << " to " << new_map.sid << std::endl;
-            remaps[i] = new_map;
+
+    for (size_t i = 0; i != rep.segids.size(); i++) {
+        auto p = parent[i];
+        if (normalized_parent[p] != 0) {
+            parent[i] = normalized_parent[p];
         }
     }
+
+    for (size_t i = 0; i < rep.segids.size(); i++) {
+        if (remaps[i].sid != parent[i]) {
+            if (i == remaps[i].sid) {
+                extra_remaps[remaps[i].sid] = remaps[parent[i]];
+            }
+            remaps[i] = remaps[parent[i]];
+        }
+        if (extra_remaps[i].sid != 0) {
+            extra_remaps[i] = remaps[parent[extra_remaps[i].sid]];
+        }
+    }
+
     rep.remaps = remaps;
     rep.extra_remaps = extra_remaps;
     return rep;
@@ -159,7 +183,7 @@ void process_edges(std::string & tag, remap_data<T_seg> & rep)
             //if (e.s1 == 72057594172159552) {
             //    std::cout << "remap " << e.s1 << " to " << rep.segids[rep.remaps[idx].sid] << std::endl;
             //}
-            if (rep.remaps[idx].sid != 0) {
+            if (rep.remaps[idx].sid != idx) {
                 e.s1 = rep.segids[rep.remaps[idx].sid];
             }
         }
@@ -169,7 +193,7 @@ void process_edges(std::string & tag, remap_data<T_seg> & rep)
             //if (e.s2 == 72057594172159552) {
             //    std::cout << "remap " << e.s2 << " to " << rep.segids[rep.remaps[idx].sid] << std::endl;
             //}
-            if (rep.remaps[idx].sid != 0) {
+            if (rep.remaps[idx].sid != idx) {
                 e.s2 = rep.segids[rep.remaps[idx].sid];
             }
         }
@@ -309,7 +333,7 @@ void write_extra_remaps(remap_data<T> & rep)
 {
     std::ofstream ofs("extra_remaps.data", std::ios_base::binary);
     for (size_t i = 0; i < rep.segids.size(); i++) {
-        if (rep.extra_remaps[i].sid != 0) {
+        if (rep.extra_remaps[i].sid != i && rep.extra_remaps[i].sid != 0) {
             //std::cout << rep.segids[i] << ", " << rep.extra_remaps[i].sid << std::endl;
             ofs.write(reinterpret_cast<const char *>(&(rep.segids[i])), sizeof(T));
             ofs.write(reinterpret_cast<const char *>(&(rep.segids[rep.extra_remaps[i].sid])), sizeof(T));
