@@ -201,8 +201,8 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
             of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
             of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
         } else {
-            std::cerr << "segment "<< seg << " (" << s << ") is neither done or onoging, impossible!" << std::endl;
-            std::abort();
+            std::cerr << "segment "<< seg << " (" << s << ") is neither done or onoging, ignoring it!" << std::endl;
+            //std::abort();
         }
         if (of_done.bad()) {
             std::cerr << "Error occurred when writing done remap file for " << tag << " " << current_ac << std::endl;
