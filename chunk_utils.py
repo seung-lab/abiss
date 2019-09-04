@@ -65,7 +65,10 @@ def generate_vanished_subface():
 
 def merge_files(target, fnList):
     if len(fnList) == 1:
-        os.rename(fnList[0],target)
+        if os.path.exists(fnList[0]):
+            os.rename(fnList[0],target)
+        else:
+            open(target, 'a').close()
         return
 
     with open(target,"wb") as outfile:
