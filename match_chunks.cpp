@@ -224,7 +224,7 @@ std::vector<T> process_boundary_supervoxels(const std::string & tag, const remap
             if (it != rep.segids.end() && bs.nid == *it) {
                 auto idx = std::distance(rep.segids.begin(), it);
                 auto new_rep = rep.remaps[idx];
-                if (new_rep.sid != 0 and bs.agg_size < new_rep.size) {
+                if (new_rep.sid != 0) {
                     bs.nid = rep.segids[new_rep.sid];
                     bs.agg_size = new_rep.size;
                 }
