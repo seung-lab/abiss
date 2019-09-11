@@ -50,7 +50,7 @@ remap_data<T> generate_remaps()
     auto remap_vector = read_array<matching_entry_t<T> >("matching_faces.data");
     //sort to make sure we process the most advanced agglomerated (largest) segments first
     __gnu_parallel::sort(remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
-            return a.agg_size > b.agg_size;
+            return (a.agg_size > b.agg_size) || ((a.agg_size == b.agg_size) && (a.nid < b.nid));
     });
     auto last_remap = std::unique(remap_vector.begin(), remap_vector.end(), [](const auto & a, const auto & b) {
         return ((a.oid == b.oid) /* && (a.boundary_size == b.boundary_size) */ && (a.nid == b.nid) && (a.agg_size == b.agg_size));
