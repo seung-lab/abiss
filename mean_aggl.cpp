@@ -443,8 +443,14 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         {
 
             auto s = v0;
-
+#ifdef EXTRA
+            if ((is_frozen(supervoxel_counts[v0]) && is_frozen(supervoxel_counts[v1]))
+                || (is_frozen(supervoxel_counts[v0]) && (frozen_neighbors(incident[v1], supervoxel_counts, v1) || (comp(e.edge->w, h_threshold) && supervoxel_counts[v1] > small_threshold)))
+                || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (comp(e.edge->w, h_threshold) && supervoxel_counts[v0] > small_threshold)))) {
+#else
             if ((is_frozen(supervoxel_counts[v0]) || is_frozen(supervoxel_counts[v1]))) {
+#endif
+
                 supervoxel_counts[v0] |= frozen;
                 supervoxel_counts[v1] |= frozen;
                 of_res.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
@@ -464,16 +470,20 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                     continue;
                 }
             }
-
+#ifdef FINAL
+            if (incident[v0].size() < incident[v1].size()) {
+                s = v1;
+            }
+#else
             if (supervoxel_counts[v0] < supervoxel_counts[v1]) {
                 s = v1;
             }
-
-            //if (is_frozen(supervoxel_counts[v0])) {
-            //    s = v0;
-            //} else if (is_frozen(supervoxel_counts[v1])) {
-            //    s = v1;
-            //}
+#endif
+            if (is_frozen(supervoxel_counts[v0])) {
+                s = v0;
+            } else if (is_frozen(supervoxel_counts[v1])) {
+                s = v1;
+            }
 
             //std::cout << "Join " << v0 << " and " << v1 << std::endl;
             //supervoxel_counts[v0] += (supervoxel_counts[v1] & (~frozen));
