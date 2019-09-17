@@ -298,7 +298,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
             if (boundary & count) {
                 supervoxel_counts.back() |= boundary;
             }
-#ifdef OVERLAP
+#ifdef OVERLAPPED
             else {
                 supervoxel_counts.back() += count;
             }
@@ -635,7 +635,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             }
             continue;
         }
-#ifndef OVERLAP
+#ifndef OVERLAPPED
         if (supervoxel_counts[i] == (boundary)) {
             supervoxel_counts[i] = 1|boundary;
         }
