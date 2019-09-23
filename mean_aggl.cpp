@@ -693,8 +693,13 @@ int main(int argc, char *argv[])
     aff_t th = atof(argv[1]);
 
     std::cout << "agglomerate" << std::endl;
+#ifdef MST_EDGE
+    agglomerate<mst_edge, mst_edge_greater, mst_edge_plus,
+                           mst_edge_limits>(argv[2], argv[3], argv[4], mst_edge(th, 1));
+#else
     agglomerate<mean_edge, mean_edge_greater, mean_edge_plus,
                            mean_edge_limits>(argv[2], argv[3], argv[4], mean_edge(th, 1));
+#endif
 
     //for (auto& e : res)
     //{
