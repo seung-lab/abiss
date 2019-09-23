@@ -79,6 +79,9 @@ public:
         for (size_t i = 0; i != complete_segpairs.size(); i++) {
             const auto & p = complete_segpairs[i];
             writeEdge(complete, p, me_complete[i]);
+#ifdef MST_EDGE
+            writeEdge(complete, p, me_complete[i]);
+#endif
         }
         for (size_t i = 0; i != incomplete_segpairs.size(); i++) {
             const auto & p = incomplete_segpairs[i];
@@ -154,6 +157,9 @@ void writeRegionGraph(const std::unordered_set<Ts> & incompleteSegments, const s
             incomplete.write(reinterpret_cast<const char *>(&(e)), sizeof(e));
         } else {
             complete.write(reinterpret_cast<const char *>(&(e)), sizeof(e));
+#ifdef MST_EDGE
+            complete.write(reinterpret_cast<const char *>(&(e)), sizeof(e));
+#endif
         }
     }
     assert(!incomplete.bad());
