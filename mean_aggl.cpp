@@ -31,7 +31,12 @@
 #include <parallel/algorithm>
 
 using seg_t = uint64_t;
+#ifdef DOUBLE
+using aff_t = double;
+#else
 using aff_t = float;
+#endif
+
 static const size_t frozen = (1ul<<(std::numeric_limits<std::size_t>::digits-2));
 static const size_t boundary = (1ul<<(std::numeric_limits<std::size_t>::digits-1))|frozen;
 
