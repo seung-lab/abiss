@@ -15,6 +15,7 @@ struct remap_t{
     std::vector<T> remaps;
     std::vector<T> segids;
     std::vector<SegType> segtype;
+    std::vector<size_t> segsize;
 };
 
 size_t filesize(std::string filename)
@@ -99,6 +100,7 @@ remap_t<T> load_remap(const char * filename)
 
     remap_t<T> remap_data;
     remap_data.segtype.resize(segids.size(), remap_t<T>::undef);
+    remap_data.segsize.resize(segids.size(), 0);
     remap_data.remaps.swap(remaps);
     remap_data.segids.swap(segids);
 
@@ -121,26 +123,29 @@ void classify_segments(remap_t<T> & remap_data, const char * ongoing_fn, const c
     std::cout << "seg ongoing:" << ongoing.size() << std::endl;
     auto & segids = remap_data.segids;
     auto & segtype = remap_data.segtype;
-    __gnu_parallel::for_each(done.begin(), done.end(), [&segids, &segtype](auto & p) {
+    auto & segsize = remap_data.segsize;
+    __gnu_parallel::for_each(done.begin(), done.end(), [&segids, &segtype, &segsize](auto & p) {
             auto s = p.first;
             auto it = std::lower_bound(segids.begin(), segids.end(), s);
             if (it != segids.end() && *it == s) {
                 auto ind = std::distance(segids.begin(), it);
                 if (segtype[ind] == remap_t<T>::undef || segtype[ind] == remap_t<T>::done) {
                     segtype[ind] = remap_t<T>::done;
+                    segsize[ind] = p.second;
                 } else {
                     std::cerr << "segment " << segids[ind] << " should be done, but marked as " << segtype[ind] << std::endl;
                     std::abort();
                 }
             }
     });
-    __gnu_parallel::for_each(ongoing.begin(), ongoing.end(), [&segids, &segtype](auto & p) {
+    __gnu_parallel::for_each(ongoing.begin(), ongoing.end(), [&segids, &segtype, &segsize](auto & p) {
             auto s = p.first;
             auto it = std::lower_bound(segids.begin(), segids.end(), s);
             if (it != segids.end() &&  *it == s) {
                 auto ind = std::distance(segids.begin(), it);
                 if (segtype[ind] == remap_t<T>::undef || segtype[ind] == remap_t<T>::ongoing) {
                     segtype[ind] = remap_t<T>::ongoing;
+                    segsize[ind] = p.second;
                 } else {
                     std::cerr << "segment " << segids[ind] << " should be ongoing, but marked as " << segtype[ind] << std::endl;
                     std::abort();
@@ -154,6 +159,7 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
 {
     size_t current_ac = std::numeric_limits<std::size_t>::max();
     std::ofstream of_done;
+    std::ofstream of_size;
     std::ofstream of_ongoing;
     of_ongoing.open(str(boost::format("ongoing_%1%.data") % tag));
     if (!of_ongoing.is_open()) {
@@ -163,13 +169,11 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
     auto & segids = remap_data.segids;
     auto & remaps = remap_data.remaps;
     auto & segtype = remap_data.segtype;
+    auto & segsize = remap_data.segsize;
 
     std::unordered_map<T, T> reps;
 
     for (size_t i = 0; i != remaps.size(); i++) {
-        if (remaps[i] == i) {
-            continue;
-        }
         auto s = segids[i];
         auto seg = segids[remaps[i]];
         if (current_ac != (s - (s % ac_offset))) {
@@ -187,22 +191,46 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
                 std::cerr << "Failed to open done remap file for " << tag << " " << current_ac << std::endl;
                 std::abort();
             }
-        }
-        if (segtype[remaps[i]] == remap_t<T>::ongoing) {
-            if (reps.count(seg) == 0) {
-                of_ongoing.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
-                of_ongoing.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
-                reps[seg] = s;
-            } else {
-                of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
-                of_done.write(reinterpret_cast<const char *>(&(reps.at(seg))), sizeof(T));
+            if (of_size.is_open()) {
+                of_size.close();
+                if (of_size.is_open()) {
+                    std::cerr << "Failed to close done remap file for " << tag << " " << current_ac << std::endl;
+                    std::abort();
+                }
+                reps.clear();
             }
-        } else if (segtype[remaps[i]] == remap_t<T>::done){
-            of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
-            of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
+            current_ac = s - (s % ac_offset);
+            of_size.open(str(boost::format("remap/size_%1%_%2%.data") % tag % current_ac));
+            if (!of_size.is_open()) {
+                std::cerr << "Failed to open done remap file for " << tag << " " << current_ac << std::endl;
+                std::abort();
+            }
+        }
+        if (remaps[i] == i) {
+            if (segtype[remaps[i]] == remap_t<T>::done){
+                of_size.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
+                of_size.write(reinterpret_cast<const char *>(&(segsize[remaps[i]])), sizeof(size_t));
+            }
         } else {
-            std::cerr << "segment "<< seg << " (" << s << ") is neither done or onoging, ignoring it!" << std::endl;
-            //std::abort();
+            if (segtype[remaps[i]] == remap_t<T>::ongoing) {
+                if (reps.count(seg) == 0) {
+                    of_ongoing.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
+                    of_ongoing.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
+                    reps[seg] = s;
+                } else {
+                    of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
+                    of_done.write(reinterpret_cast<const char *>(&(reps.at(seg))), sizeof(T));
+                }
+            } else if (segtype[remaps[i]] == remap_t<T>::done){
+                of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
+                of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
+                of_size.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
+                of_size.write(reinterpret_cast<const char *>(&(segsize[remaps[i]])), sizeof(size_t));
+            } else {
+                std::cerr << "segment "<< seg << " (" << s << ") is neither done or onoging, ignoring it!" << std::endl;
+                //std::abort();
+            }
+
         }
         if (of_done.bad()) {
             std::cerr << "Error occurred when writing done remap file for " << tag << " " << current_ac << std::endl;
