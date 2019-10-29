@@ -21,12 +21,14 @@ int main(int argc, char * argv[])
     std::unordered_map<uint64_t, uint64_t> size_dict(size_array.begin(), size_array.end());
     std::vector<uint8_t> size_map;
     std::transform(seg.begin(), seg.end(), std::back_inserter(size_map), [&size_dict](uint64_t segid) -> uint8_t {
-        auto size = size_dict[segid];
-        if (segid == 0) {
+        if (segid == 0){
             return 0;
         }
+        auto size = size_dict[segid];
         if (size < 10) {
             return 255;
+        } else if (size < 100) {
+            return 127;
         } else {
             return 0;
         }

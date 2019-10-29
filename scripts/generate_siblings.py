@@ -24,6 +24,8 @@ param = cu.read_inputs(sys.argv[1])
 offset = param["offset"]
 fn = "remap/done_{}_{}.data".format(tag, offset)
 open(fn,"w").close()
+fn = "remap/size_{}_{}.data".format(tag, offset)
+open(fn,"w").close()
 
 #print(volume)
 #print(faces)

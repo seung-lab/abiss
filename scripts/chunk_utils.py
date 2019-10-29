@@ -155,6 +155,9 @@ def touch_done_files(f, tag):
             fn_done = "remap/done_{}_{}.data".format(tag, cp["offset"])
             open(fn_done,'a').close()
             f.write("{}\n".format(fn_done))
+            fn_small = "remap/size_{}_{}.data".format(tag, cp["offset"])
+            open(fn_small,'a').close()
+            f.write("{}\n".format(fn_small))
 
 
 def generate_descedants(f, target=None):
