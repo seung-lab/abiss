@@ -1,5 +1,7 @@
 import sys
 import numpy as np
+from cut_chunk_common import load_data
+import os
 import logging
 
 def consolidate_remaps(remaps):
@@ -56,7 +58,8 @@ def reduce_boundaries(tag, remaps, counts):
     return reduced_map, boundary_sv
 
 def reduce_edges(tag, remaps):
-    d_ie = [("s1", np.uint64), ("s2", np.uint64), ("aff", np.float32), ("area", np.uint64)]
+    aff = load_data(os.environ['AFF_PATH'],mip=int(os.environ['AFF_MIP']))
+    d_ie = [("s1", np.uint64), ("s2", np.uint64), ("aff", aff.dtype), ("area", np.uint64)]
     rg_array = np.fromfile("residual_rg_{}.data".format(tag), dtype=d_ie)
     edge_array = np.fromfile("incomplete_edges_{}.data".format(tag), dtype=d_ie)
     logger.info("Total number of edges: {}".format(len(rg_array)+len(edge_array)))
