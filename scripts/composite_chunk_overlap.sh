@@ -35,7 +35,7 @@ do
     cat boundary_"$i"_"$output".data >> frozen.data
 done
 
-try $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
+try $BIN_PATH/agg_extra $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
 
 try rm boundary_*.data
 try rm meta_*.data
