@@ -22,7 +22,12 @@ using ContactRegion = std::unordered_set<Coord, boost::hash<Coord> >;
 template <class Ta>
 using Edge = std::array<std::unordered_map<Coord, Ta, boost::hash<Coord> >, 3>;
 
+#ifdef DOUBLE
+using aff_t = double;
+#else
 using aff_t = float;
+#endif
+
 using seg_t = uint64_t;
 
 #endif

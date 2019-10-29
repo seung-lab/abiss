@@ -28,7 +28,11 @@ template <> struct watershed_traits<uint64_t>
     static const size_t on_border = (1ul<<(std::numeric_limits<std::size_t>::digits-1));
 };
 
+#ifdef DOUBLE
+using aff_t = double;
+#else
 using aff_t = float;
+#endif
 using seg_t = uint64_t;
 
 template < typename T >
