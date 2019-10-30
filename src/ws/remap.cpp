@@ -42,6 +42,9 @@ public:
             if (v != 0 && m_globalMap.count(v) == 0) {
                 if (m_chunkMap.count(v) == 0) {
                     m_chunkMap[v] = k;
+                    if (k == 0 || v == 0) {
+                        std::cout << "!!!!!!!!!!!!!!!this should not happened: " << k << " " << v << std::endl;
+                    }
                 }
             }
         }
