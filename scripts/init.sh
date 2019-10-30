@@ -48,7 +48,7 @@ if [ ! -f "$SCRIPT_PATH"/config.sh ]; then
 fi
 
 try source $SCRIPT_PATH/config.sh
-try . /root/google-cloud-sdk/path.bash.inc
+#try . /root/google-cloud-sdk/path.bash.inc
 
 export SEG_MIP=0
 export WS_MIP=0
