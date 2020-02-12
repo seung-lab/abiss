@@ -16,7 +16,7 @@ for d in $META; do
 done
 
 try python3 $SCRIPT_PATH/generate_siblings.py $1|tee filelist.txt
-try cat filelist.txt|$PARALLEL_CMD "$DOWNLOAD_CMD $CHUNKMAP_PATH/chunkmap_{}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o chunkmap_{}.data"
+try cat filelist.txt|$PARALLEL_CMD "$DOWNLOAD_ST_CMD $CHUNKMAP_PATH/chunkmap_{}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o chunkmap_{}.data"
 try cp chunkmap_${output}.data localmap.data
 
 try python3 $SCRIPT_PATH/merge_chunkmap.py $1

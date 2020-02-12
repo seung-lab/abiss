@@ -21,9 +21,9 @@ do
 done
 
 if [ "$OVERLAP" = "1" ]; then
-    try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/scratch2/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
+    try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_ST_CMD $FILE_PATH/scratch2/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
 else
-    try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/scratch/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
+    try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_ST_CMD $FILE_PATH/scratch/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
 fi
 
 try python3 $SCRIPT_PATH/merge_chunks_me.py $1 $META

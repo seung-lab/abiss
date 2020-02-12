@@ -20,7 +20,7 @@ do
     just_in_case rm -rf $fn
 done
 
-try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/scratch/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
+try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_ST_CMD $FILE_PATH/scratch/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
 
 try python3 $SCRIPT_PATH/merge_chunks_overlap.py $1 $META
 try mv ongoing.data localmap.data

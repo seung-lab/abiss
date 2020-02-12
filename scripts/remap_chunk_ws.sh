@@ -7,7 +7,7 @@ output=`basename $1 .json`
 try acquire_cpu_slot
 try touch chunkmap.data
 try python3 $SCRIPT_PATH/generate_filelist.py $1 0|tee filelist.txt
-try cat filelist.txt|$PARALLEL_CMD "$DOWNLOAD_CMD $FILE_PATH/{}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o {/}.data"
+try cat filelist.txt|$PARALLEL_CMD "$DOWNLOAD_ST_CMD $FILE_PATH/{}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o {/}.data"
 try $DOWNLOAD_CMD $FILE_PATH/seg/seg_"${output}".data."${COMPRESSED_EXT}" seg_"${output}".data."${COMPRESSED_EXT}"
 try python3 $SCRIPT_PATH/merge_remaps_ws.py $1 1
 try $COMPRESS_CMD -d seg_"${output}".data."${COMPRESSED_EXT}"
