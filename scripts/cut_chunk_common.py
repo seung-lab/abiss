@@ -57,6 +57,19 @@ def cut_data(data, start_coord, end_coord, boundary_flags):
         return pad_data(data[bb], boundary_flags)
     elif data.shape[3] == 3:
         return pad_data(data[bb+(slice(0,3),)], boundary_flags)
+    elif data.shape[3] == 4: #0-2 affinity, 3 myelin
+        th = float(os.getenv('MYELIN_THRESHOLD','0.3'))
+        print("threshold myelin mask at {}".format(th))
+        cutout = data[bb+(slice(0,4),)]
+        affinity = cutout[:,:,:,0:3]
+        myelin = cutout[:,:,:,3]
+        mask = myelin > th
+        for i in range(3):
+            tmp = affinity[:,:,:,i]
+            tmp[mask] = 0
+            #affinity[:,:,:,i] = numpy.multiply(affinity[:,:,:,i]*(1-myelin))
+        return pad_data(affinity, boundary_flags)
+
     else:
         raise RuntimeError("encountered array of dimension " + str(len(data.shape)))
 
