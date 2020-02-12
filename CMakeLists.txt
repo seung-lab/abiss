@@ -48,6 +48,8 @@ if(Boost_FOUND)
         src/seg/match_chunks.cpp)
     add_executable(size_map
         src/seg/size_map.cpp)
+    add_executable(evaluate
+        src/seg/eval.cpp)
     add_executable(ws
         src/ws/atomic_chunk.cpp)
     add_executable(ws2

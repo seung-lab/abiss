@@ -13,6 +13,10 @@ try python3 $SCRIPT_PATH/merge_size.py $1
 try mv seg.raw seg_"${output}".data
 try taskset -c $cpuid $BIN_PATH/ws3 param.txt seg_"${output}".data
 try taskset -c $cpuid $BIN_PATH/size_map seg_"${output}".data size.data
+if [ ! -z ${GT_PATH:-} ]; then
+    try taskset -c $cpuid $BIN_PATH/evaluate seg_"${output}".data gt.raw
+    try $UPLOAD_CMD evaluation.data $FILE_PATH/evaluation/evaluation_"${output}".data
+fi
 #try python3 $SCRIPT_PATH/ssim.py $1
 try taskset -c $cpuid python3 $SCRIPT_PATH/upload_chunk.py $1 $SEG_PATH $SEG_MIP
 try taskset -c $cpuid python3 $SCRIPT_PATH/upload_size.py $1 "$SEG_PATH"/size_map $SEG_MIP

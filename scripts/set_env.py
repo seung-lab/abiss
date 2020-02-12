@@ -1,7 +1,7 @@
 import sys
 import json
 
-env = ["SCRATCH_PATH", "CHUNKMAP_PATH", "AFF_PATH", "AFF_MIP", "WS_PATH", "SEG_PATH", "WS_HIGH_THRESHOLD", "WS_LOW_THRESHOLD", "WS_SIZE_THRESHOLD", "AGG_THRESHOLD"]
+env = ["SCRATCH_PATH", "CHUNKMAP_PATH", "AFF_PATH", "AFF_MIP", "WS_PATH", "SEG_PATH", "WS_HIGH_THRESHOLD", "WS_LOW_THRESHOLD", "WS_SIZE_THRESHOLD", "AGG_THRESHOLD", "GT_PATH"]
 
 with open(sys.argv[1]) as f:
     data = json.load(f)

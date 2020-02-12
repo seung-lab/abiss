@@ -13,14 +13,20 @@ def warp_z(z):
 
 def fold_aff(a):
     #b = numpy.multiply(numpy.heaviside(0.9-a, 0),a)+numpy.multiply(numpy.heaviside(a-0.9, 1), 1.8-a)
-    #return b
     return a
 
 def load_data(url, mip=0):
     print("cloud volume url: ", url)
     print("mip level: ", mip)
+
     return CloudVolume(url, fill_missing=False, mip=mip)
     #return CloudVolumeGSUtil(url, fill_missing=True)
+
+def load_gt_data(url, mip=0):
+    print("cloud volume url: ", url)
+    print("mip level: ", mip)
+
+    return CloudVolume(url, fill_missing=True, bounded=False, mip=mip)
 
 def save_raw_data(fn,data, data_type):
     f = numpy.memmap(fn, dtype=data_type, mode='w+', order='F', shape=data.shape)
