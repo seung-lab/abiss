@@ -7,7 +7,6 @@ ENV SEG_HOME ${SEG_HOME}
 USER root
 
 COPY src ${SEG_HOME}/src
-COPY scripts ${SEG_HOME}/scripts
 COPY CMakeLists.txt ${SEG_HOME}
 
 RUN savedAptMark="$(apt-mark showmanual)" \
@@ -58,6 +57,8 @@ RUN savedAptMark="$(apt-mark showmanual)" \
         /usr/share/man \
         /usr/share/doc \
         /usr/share/doc-base
+
+COPY scripts ${SEG_HOME}/scripts
 
 
 WORKDIR /root
