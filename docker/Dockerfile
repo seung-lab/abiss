@@ -8,6 +8,7 @@ USER root
 
 COPY src ${SEG_HOME}/src
 COPY CMakeLists.txt ${SEG_HOME}
+COPY LICENSE ${SEG_HOME}
 
 RUN savedAptMark="$(apt-mark showmanual)" \
     && apt-get update -y \
