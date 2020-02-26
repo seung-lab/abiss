@@ -11,6 +11,8 @@ try_to_skip $DOWNLOAD_ST_CMD $FILE_PATH/done/"$OP"/"$CHUNK".txt .
 
 set -euo pipefail
 
+just_in_case cat /root/.cloudvolume/secrets/sysinfo.txt
+
 echo $WORK_PATH
 
 try pushd $WORK_PATH
