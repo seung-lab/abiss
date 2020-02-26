@@ -29,9 +29,10 @@ RUN savedAptMark="$(apt-mark showmanual)" \
         libboost-system-dev \
         libboost-iostreams-dev \
         zlib1g-dev libjpeg62-turbo-dev \
-    && pip install -U pip \
+    && pip install -U pip pybind11\
     #&& pip install -U pip Pillow brotlipy\
     && CFLAGS="-Os -g0 -Wl,--strip-all" pip install -U --compile --global-option=build_ext numpy \
+    && CFLAGS="-Os -g0 -Wl,--strip-all" pip install -U --compile --global-option=build_ext scipy \
     && CFLAGS="-Os -g0 -Wl,--strip-all" pip install -U --compile --global-option=build crcmod gsutil joblib cloud-volume \
     && cd /usr/local/lib/python3.6/site-packages \
     && echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \

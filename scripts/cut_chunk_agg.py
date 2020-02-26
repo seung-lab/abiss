@@ -1,6 +1,6 @@
 import sys
 from chunk_utils import read_inputs
-from cut_chunk_common import load_data, cut_data, save_raw_data, warp_z, fold_aff
+from cut_chunk_common import load_data, cut_data, save_raw_data, warp_z, fold_aff, adjust_affinitymap
 import os
 
 def chunk_origin(bbox):
@@ -29,11 +29,8 @@ ac_offset = param["ac_offset"]
 boundary_flags = param["boundary_flags"]
 
 aff = load_data(os.environ['AFF_PATH'],mip=int(os.environ['AFF_MIP']))
-#aff = numpy.memmap("../aff64.raw", dtype='float64', mode='r', order='F', shape=(2048,2048,256,3))
-start_coord = aff_bbox[0:3]
-end_coord = [aff_bbox[i+3]+1-boundary_flags[i+3] for i in range(3)]
+aff_cutout = adjust_affinitymap(aff, aff_bbox, boundary_flags, 0, 1)
 
-aff_cutout = fold_aff(cut_data(aff, start_coord, end_coord, boundary_flags))
 save_raw_data("aff.raw", aff_cutout, aff.dtype)
 del aff_cutout
 
