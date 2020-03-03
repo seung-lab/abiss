@@ -62,6 +62,7 @@ def merge_chunks(p):
     merge_neighbour_outputs(p, "residual_rg")
     merge_neighbour_outputs(p, "ongoing")
     merge_neighbour_outputs(p, "ongoing_supervoxel_counts")
+    merge_neighbour_outputs(p, "ongoing_semantic_labels")
     for meta in sys.argv[2:]:
         merge_neighbour_outputs(p, "ongoing_{}".format(meta))
     d = p["neighbours"]

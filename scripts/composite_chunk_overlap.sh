@@ -58,6 +58,7 @@ try rm residual_rg*.data
 #try mv meta.data meta_"$output".data
 #try mv mst.data mst_"$output".data
 try mv remap.data remap_"$output".data
+try mv sem_cuts.data vetoed_edges_"$output".data
 try cat extra_remaps.data >> ongoing_"$output".data
 
 for i in {0..5}
@@ -67,10 +68,12 @@ done
 
 try mv reduced_edges_"$output".data incomplete_edges_"$output".data
 try mv reduced_ongoing_supervoxel_counts_"$output".data ongoing_supervoxel_counts_"$output".data
+try mv reduced_ongoing_semantic_labels_"$output".data ongoing_semantic_labels_"$output".data
 
 #try mv residual_rg.data residual_rg_"$output".data
 #try mv final_rg.data final_rg_"$output".data
 try mv done_segments.data info_"$output"_extra.data
+try mv done_sem.data semantic_labels_"$output".data
 #try mv ongoing_segments.data ongoing_supervoxel_counts_"$output".data
 #try mv rejected_edges.log rejected_edges_"$output".log
 #
@@ -85,6 +88,7 @@ try $COMPRESS_CMD remap_"${output}".data
 #fi
 #
 try $UPLOAD_CMD info_"${output}"_extra.data $FILE_PATH/info/info_"${output}"_extra.data
+try $UPLOAD_CMD semantic_labels_"${output}".data $FILE_PATH/info/semantic_labels_"${output}"_extra.data
 #try $UPLOAD_CMD rejected_edges_"${output}".log $FILE_PATH/info/rejected_edges_"${output}".log
 #try $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 #try $UPLOAD_CMD mst_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/chunked_mst/mst_"${output}".data."${COMPRESSED_EXT}"

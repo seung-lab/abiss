@@ -30,4 +30,6 @@ using aff_t = float;
 
 using seg_t = uint64_t;
 
+using sem_t = uint8_t;
+
 #endif

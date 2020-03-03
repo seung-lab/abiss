@@ -8,6 +8,7 @@
 #include <boost/format.hpp>
 #include <parallel/algorithm>
 #include <boost/pending/disjoint_sets.hpp>
+#include "SemExtractor.hpp"
 
 template <class T>
 struct __attribute__((packed)) matching_entry_t
@@ -203,11 +204,57 @@ void process_edges(std::string & tag, remap_data<T_seg> & rep)
             e.s2 = tmp;
         }
     });
+
+    auto vetoed_edges = read_array<std::pair<T_seg, T_seg> >("vetoed_edges.data");
+
+    __gnu_parallel::for_each(vetoed_edges.begin(), vetoed_edges.end(), [&rep](auto & e){
+        auto it = std::lower_bound(rep.segids.begin(), rep.segids.end(), e.first);
+        if (it != rep.segids.end() && e.first == *it) {
+            auto idx = std::distance(rep.segids.begin(), it);
+            if (rep.remaps[idx].sid != idx) {
+                e.first = rep.segids[rep.remaps[idx].sid];
+            }
+        }
+        it = std::lower_bound(rep.segids.begin(), rep.segids.end(), e.second);
+        if (it != rep.segids.end() && e.second == *it) {
+            auto idx = std::distance(rep.segids.begin(), it);
+            if (rep.remaps[idx].sid != idx) {
+                e.second = rep.segids[rep.remaps[idx].sid];
+            }
+        }
+        if (e.first > e.second) {
+            std::swap(e.first, e.second);
+        }
+    });
+
+    __gnu_parallel::sort(vetoed_edges.begin(), vetoed_edges.end(), [](auto & a, auto & b) { return (a.first < b.first) || (a.first == b.first && a.second < b.second); });
+    auto last_veto_edge = std::unique(vetoed_edges.begin(), vetoed_edges.end(), [](auto & a, auto & b) { return (a.first == b.first) && (a.second == b.second); });
+    vetoed_edges.erase(last_veto_edge, vetoed_edges.end());
+
+    __gnu_parallel::for_each(rg_vector.begin(), rg_vector.end(), [&vetoed_edges](auto & e){
+        T_seg u1 = e.s1;
+        T_seg u2 = e.s2;
+        auto it = std::lower_bound(vetoed_edges.begin(), vetoed_edges.end(), std::make_pair(u1, u2),  [](const auto & a, const auto & b) {
+            return (a.first < b.first) || (a.first == b.first && a.second < b.second);
+        });
+        if (it != vetoed_edges.end() && u1 == (*it).first && u2 == (*it).second) {
+            e.s1 = 0;
+            e.s2 = 0;
+        }
+    });
+
     std::ofstream ofs(str(boost::format("incomplete_edges_%1%.tmp") % tag), std::ios_base::binary);
     for(const auto & e: rg_vector) {
         if (e.s1 != e.s2) {
             ofs.write(reinterpret_cast<const char *>(&(e)), sizeof(e));
         }
+    }
+    assert(!ofs.bad());
+    ofs.close();
+
+    ofs = std::ofstream(str(boost::format("vetoed_edges_%1%.data") % tag), std::ios_base::binary);
+    for(const auto & e: vetoed_edges) {
+        ofs.write(reinterpret_cast<const char *>(&(e)), sizeof(e));
     }
     assert(!ofs.bad());
     ofs.close();
@@ -329,6 +376,27 @@ void process_sizes(remap_data<T> rep)
 }
 
 template <class T>
+void process_sems(remap_data<T> rep)
+{
+    auto sems = read_array<std::pair<T,sem_array_t> >("o_ongoing_semantic_labels.data");
+    __gnu_parallel::for_each(sems.begin(), sems.end(), [&rep](auto & p) {
+        auto it = std::lower_bound(rep.segids.begin(), rep.segids.end(), p.first);
+        if (it != rep.segids.end() && p.first == *it) {
+            auto idx = std::distance(rep.segids.begin(), it);
+            if (rep.remaps[idx].sid != 0) {
+                p.first = rep.segids[rep.remaps[idx].sid];
+            }
+        }
+    });
+    std::ofstream ofs("ongoing_semantic_labels.data", std::ios_base::binary);
+    for (const auto & p : sems) {
+        ofs.write(reinterpret_cast<const char *>(&(p)), sizeof(p));
+    }
+    assert(!ofs.bad());
+    ofs.close();
+}
+
+template <class T>
 void write_extra_remaps(remap_data<T> & rep)
 {
     std::ofstream ofs("extra_remaps.data", std::ios_base::binary);
@@ -356,5 +424,7 @@ int main(int argc, char * argv[])
     std::cout << "generate extra sizes" << std::endl;
     process_sizes(rep);
     std::cout << "reduce segment sizes" << std::endl;
+    process_sems(rep);
+    std::cout << "reduce semantic labels" << std::endl;
     write_extra_remaps<seg_t>(rep);
 }

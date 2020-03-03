@@ -45,6 +45,8 @@ try mv mst.data mst_"$output".data
 try mv remap.data remap_"$output".data
 try mv done_segments.data info_"$output".data
 try mv ongoing_segments.data ongoing_supervoxel_counts_"$output".data
+try mv done_sem.data semantic_labels_"$output".data
+try mv ongoing_sem.data ongoing_semantic_labels_"$output".data
 try mv rejected_edges.log rejected_edges_"$output".log
 
 try $COMPRESS_CMD mst_"${output}".data
@@ -60,6 +62,7 @@ for d in $META; do
 done
 
 try $UPLOAD_CMD info_"${output}".data $FILE_PATH/info/info_"${output}".data
+try $UPLOAD_CMD semantic_labels_"${output}".data $FILE_PATH/info/semantic_labels_"${output}".data
 try $UPLOAD_CMD rejected_edges_"${output}".log $FILE_PATH/info/rejected_edges_"${output}".log
 try $UPLOAD_CMD -r remap $FILE_PATH/
 try $UPLOAD_CMD -r chunked_rg $FILE_PATH/

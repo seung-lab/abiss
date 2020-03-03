@@ -105,6 +105,16 @@ def reduce_sizes(tag, remaps, bs):
     return reduced_map
 
 
+def reduce_sem(tag, remaps):
+    nlabels = 5
+    dt = [('sid', np.uint64), ('sem_labels', np.uint64, (nlabels,))]
+    sems = np.fromfile("ongoing_semantic_labels_{}.data".format(tag), dtype=dt)
+    for e in sems:
+        e[0] = remaps.get(e[0], e[0])
+
+    sems.tofile("reduced_ongoing_semantic_labels_{}.data".format(tag))
+
+
 def write_reduced_map(remaps):
     np.array([(k,v) for k, v in remaps.items()], dtype=[('os', np.uint64), ('ns', np.uint64)]).tofile("extra_remaps.data")
 
@@ -120,6 +130,7 @@ counts = {**ongoing_counts, **done_counts}
 reduced_map1, bs = reduce_boundaries(tag, remaps, counts)
 reduced_map2 = reduce_sizes(tag, remaps, bs)
 reduce_edges(tag, remaps)
+reduce_sem(tag,remaps)
 write_reduced_map({**reduced_map1, **reduced_map2})
 #print(load_segids("0_0_0_0"))
 #bs_fname = sys.argv[1]

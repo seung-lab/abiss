@@ -30,6 +30,8 @@
 #include <sys/stat.h>
 #include <parallel/algorithm>
 
+#include "../seg/SemExtractor.hpp"
+
 using seg_t = uint64_t;
 #ifdef DOUBLE
 using aff_t = double;
@@ -235,6 +237,7 @@ struct agglomeration_data_t
     heap_type<T, Compare> heap;
     std::vector<size_t> supervoxel_counts;
     std::vector<seg_t> seg_indices;
+    std::vector<sem_array_t> sem_counts;
 };
 
 template <class T>
@@ -266,6 +269,39 @@ std::vector<T> read_array(const char * filename)
     std::fclose(f);
 
     return array;
+}
+
+std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<seg_t> & seg_indices)
+{
+    std::vector<std::pair<seg_t, sem_array_t> > sem_array = read_array<std::pair<seg_t, sem_array_t> >(sem_filename);
+    if (sem_array.size() == 0) {
+        std::cout << "No semantic labels" << std::endl;
+        std::abort();
+        //return std::vector<sem_array_t>();
+    }
+
+    std::vector<sem_array_t> sem_counts(seg_indices.size());
+
+    __gnu_parallel::for_each(sem_array.begin(), sem_array.end(), [&seg_indices](auto & a) {
+        auto it = std::lower_bound(seg_indices.begin(), seg_indices.end(), a.first);
+        if (it == seg_indices.end()) {
+            std::cerr << "Should not happen, sem element does not exist: " << a.first << std::endl;
+            std::abort();
+        }
+        if (a.first == *it) {
+            a.first = std::distance(seg_indices.begin(), it);
+        } else {
+            std::cerr << "Should not happen, cannot find sem entry: " << a.first  << "," << *it << std::endl;
+            std::abort();
+        }
+    });
+
+    __gnu_parallel::sort(std::begin(sem_array), std::end(sem_array), [](auto & a, auto & b) { return a.first < b.first; });
+
+    for (auto & [k, v] : sem_array) {
+        std::transform(sem_counts[k].begin(), sem_counts[k].end(), v.begin(), sem_counts[k].begin(), std::plus<size_t>());
+    }
+    return sem_counts;
 }
 
 template <class T, class Compare = std::greater<T> >
@@ -313,6 +349,8 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
             //}
         }
     }
+
+    agg_data.sem_counts = load_sem("ongoing_semantic_labels.data", seg_indices);
 
     auto & rg_vector = agg_data.rg_vector;
 
@@ -385,6 +423,12 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     return agg_data;
 }
 
+std::pair<size_t, size_t> sem_label(const sem_array_t & labels)
+{
+    auto label = std::max_element(labels.begin(), labels.end());
+    return std::make_pair(std::distance(labels.begin(), label), (*label));
+}
+
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
           class Limits = std::numeric_limits<T>>
 inline void agglomerate(const char * rg_filename, const char * fs_filename, const char * ns_filename, T const& threshold)
@@ -407,6 +451,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     auto & heap = agg_data.heap;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
+    auto & sem_counts = agg_data.sem_counts;
 
     size_t rg_size = heap.size();
 
@@ -422,6 +467,9 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
     std::ofstream of_reject;
     of_reject.open("rejected_edges.log", std::ofstream::out | std::ofstream::trunc);
+
+    std::ofstream of_sem_cuts;
+    of_sem_cuts.open("sem_cuts.data", std::ofstream::out | std::ofstream::trunc);
 
     std::cout << "looping through the heap" << std::endl;
 
@@ -450,8 +498,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             auto s = v0;
 #ifdef EXTRA
             if ((is_frozen(supervoxel_counts[v0]) && is_frozen(supervoxel_counts[v1]))
-                || (is_frozen(supervoxel_counts[v0]) && (frozen_neighbors(incident[v1], supervoxel_counts, v1) || (!comp(e.edge->w, h_threshold) && (supervoxel_counts[v1] > small_threshold))))
-                || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (!comp(e.edge->w, h_threshold) && (supervoxel_counts[v0] > small_threshold))))) {
+                || (is_frozen(supervoxel_counts[v0]) && (frozen_neighbors(incident[v1], supervoxel_counts, v1) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || supervoxel_counts[v1] > small_threshold))))
+                || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || supervoxel_counts[v0] > small_threshold))))) {
 #else
             if ((is_frozen(supervoxel_counts[v0]) || is_frozen(supervoxel_counts[v1]))) {
 #endif
@@ -466,6 +514,18 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             }
 
             if (!comp(e.edge->w, h_threshold)) {
+                if (!sem_counts.empty()){
+                    auto sem0 = sem_label(sem_counts[v0]);
+                    auto sem1 = sem_label(sem_counts[v1]);
+                    if (sem0.first != sem1.first && sem0.second > 10000 && sem1.second > 10000) {
+                        std::cout << seg_indices[v0] << ", " << seg_indices[v1] << ", " << supervoxel_counts[v0] << ", " << supervoxel_counts[v1] << std::endl;
+                        std::cout << "reject merge between " << seg_indices[v0] << "(" << sem_counts[v0][1] << "," << sem_counts[v0][2] << ")"<< " and " << seg_indices[v1] << "(" << sem_counts[v1][1] << "," << sem_counts[v1][2] << ")"<< std::endl;
+                        of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
+                        of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
+                        continue;
+                    }
+                }
+
                 size_t size0 = (supervoxel_counts[v0] & (~frozen));
                 size_t size1 = (supervoxel_counts[v1] & (~frozen));
                 auto p = std::minmax({size0, size1});
@@ -500,6 +560,13 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             supervoxel_counts[v0] += supervoxel_counts[v1];
             supervoxel_counts[v1] = 0;
             std::swap(supervoxel_counts[v0], supervoxel_counts[s]);
+
+            if (!sem_counts.empty()) {
+                std::transform(sem_counts[v0].begin(), sem_counts[v0].end(), sem_counts[v1].begin(), sem_counts[v0].begin(), std::plus<size_t>());
+                sem_counts[v1] = sem_array_t();
+                std::swap(sem_counts[v0], sem_counts[s]);
+            }
+
             of_mst.write(reinterpret_cast<const char *>(&(seg_indices[s])), sizeof(seg_t));
             of_mst.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
             of_mst.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
@@ -626,9 +693,11 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     assert(!of_res.bad());
     assert(!of_frg.bad());
     assert(!of_reject.bad());
+    assert(!of_sem_cuts.bad());
     of_res.close();
     of_frg.close();
     of_reject.close();
+    of_sem_cuts.close();
 
     std::ofstream of_meta;
     of_meta.open("meta.data", std::ofstream::out | std::ofstream::trunc);
@@ -642,9 +711,12 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     assert(!of_meta.bad());
     of_meta.close();
 
-    std::ofstream of_fs_ongoing, of_fs_done;
+    std::ofstream of_fs_ongoing, of_fs_done, of_sem_ongoing, of_sem_done;
     of_fs_ongoing.open("ongoing_segments.data", std::ofstream::out | std::ofstream::trunc);
     of_fs_done.open("done_segments.data", std::ofstream::out | std::ofstream::trunc);
+
+    of_sem_ongoing.open("ongoing_sem.data", std::ofstream::out | std::ofstream::trunc);
+    of_sem_done.open("done_sem.data", std::ofstream::out | std::ofstream::trunc);
 
     for (size_t i = 0; i < supervoxel_counts.size(); i++) {
         if (!(supervoxel_counts[i] & (~frozen))) {
@@ -663,14 +735,25 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             auto size = supervoxel_counts[i] & (~boundary);
             of_fs_ongoing.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
             of_fs_ongoing.write(reinterpret_cast<const char *>(&(size)), sizeof(size_t));
+            if (!sem_counts.empty()) {
+                of_sem_ongoing.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
+                of_sem_ongoing.write(reinterpret_cast<const char *>(&(sem_counts[i])), sizeof(sem_array_t));
+            }
         } else {
             of_fs_done.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
             of_fs_done.write(reinterpret_cast<const char *>(&(supervoxel_counts[i])), sizeof(size_t));
+            if (!sem_counts.empty()) {
+                of_sem_done.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
+                of_sem_done.write(reinterpret_cast<const char *>(&(sem_counts[i])), sizeof(sem_array_t));
+            }
         }
     }
 
     of_fs_ongoing.close();
     of_fs_done.close();
+
+    of_sem_ongoing.close();
+    of_sem_done.close();
 
     return;
 }

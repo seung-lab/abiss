@@ -120,6 +120,19 @@ def process_sizes(tag, remaps):
     np.array(sizes).tofile("ongoing_supervoxel_counts.data")
 
 
+def process_sems(tag, remaps):
+    nlabels = 5
+    dt = [('sid', np.uint64), ('sem_labels', np.uint64, (nlabels,))]
+    sems = np.fromfile("o_ongoing_semantic_labels.data", dtype=dt)
+    for i in range(len(sems)):
+        nid = remaps.get(sems[i]['sid'], list(sems[i]))
+        if nid[0] != sems[i]['sid']:
+            logger.debug("replace size: {} {}".format(nid, sems[i]))
+        sems[i]['sid'] = nid[0]
+
+    np.array(sems).tofile("ongoing_semantic_labels.data")
+
+
 def write_extra_remaps(remaps):
     np.array([(k,v[0]) for k, v in remaps.items()], dtype=[('os', np.uint64), ('ns', np.uint64)]).tofile("extra_remaps.data")
 
@@ -132,4 +145,5 @@ e_remap1 = process_edges(tag, all_remaps)
 bs = process_boundary_supervoxels(tag, all_remaps)
 generate_extra_sizes(all_remaps, bs)
 process_sizes(tag, all_remaps)
+process_sems(tag, all_remaps)
 write_extra_remaps({**extra_remaps, **e_remap1})
