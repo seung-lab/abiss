@@ -251,7 +251,7 @@ std::vector<T> read_array(const char * filename)
 
     FILE* f = std::fopen(filename, "rbXS");
     if ( !f ) {
-        std::cerr << "Cannot open the region graph file" << std::endl;
+        std::cerr << "Cannot open the input file" << std::endl;
         std::abort();
     }
 
