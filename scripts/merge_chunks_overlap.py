@@ -77,7 +77,6 @@ print("mip level:", param["mip_level"])
 merge_chunks(param)
 for i in range(6):
     merge_cut_plane(param, i)
-cu.touch_done_files(sys.argv[1], cu.chunk_tag(param["mip_level"], param["indices"]))
 
 with open("chunk_offset.txt", "w") as f:
     f.write(str(ac_offset))
