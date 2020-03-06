@@ -31,6 +31,7 @@ do
 done
 
 try touch ns.data
+try touch ongoing_semantic_labels.data
 
 try taskset -c $cpuid $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data ns.data
 

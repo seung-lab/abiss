@@ -276,8 +276,7 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
     std::vector<std::pair<seg_t, sem_array_t> > sem_array = read_array<std::pair<seg_t, sem_array_t> >(sem_filename);
     if (sem_array.size() == 0) {
         std::cout << "No semantic labels" << std::endl;
-        std::abort();
-        //return std::vector<sem_array_t>();
+        return std::vector<sem_array_t>();
     }
 
     std::vector<sem_array_t> sem_counts(seg_indices.size());

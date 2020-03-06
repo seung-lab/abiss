@@ -41,9 +41,10 @@ seg = load_data(os.environ['WS_PATH'],mip=int(os.environ['WS_MIP']))
 seg_cutout = cut_data(seg, start_coord, end_coord, boundary_flags)
 save_raw_data("seg.raw", seg_cutout, seg.dtype)
 
-sem = load_data(os.environ['SEM_PATH'],mip=int(os.environ['SEM_MIP']))
-sem_cutout = cut_data(sem, start_coord, end_coord, boundary_flags)
-save_raw_data("sem.raw", sem_cutout, sem.dtype)
+if "SEM_PATH" in os.environ and "SEM_MIP" in os.environ:
+    sem = load_data(os.environ['SEM_PATH'],mip=int(os.environ['SEM_MIP']))
+    sem_cutout = cut_data(sem, start_coord, end_coord, boundary_flags)
+    save_raw_data("sem.raw", sem_cutout, sem.dtype)
 
 #save_data("aff.h5", aff_cutout)
 #save_data("seg.h5", seg_cutout)
