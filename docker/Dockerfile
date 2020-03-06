@@ -6,6 +6,8 @@ ENV SEG_HOME ${SEG_HOME}
 
 USER root
 
+WORKDIR ${SEG_HOME}
+
 COPY src ${SEG_HOME}/src
 COPY CMakeLists.txt ${SEG_HOME}
 COPY LICENSE ${SEG_HOME}
