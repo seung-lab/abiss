@@ -85,7 +85,8 @@ try mv done_segments.data info_"$output".data
 try mv ongoing_segments.data ongoing_supervoxel_counts_"$output".data
 try mv done_sem.data semantic_labels_"$output".data
 try mv ongoing_sem.data ongoing_semantic_labels_"$output".data
-try mv rejected_edges.log rejected_edges_"$output".log
+try mv rejected_edges.log size_rejected_edges_"$output".log
+try mv sem_cuts.data sem_rejected_edges_"$output".log
 
 try $COMPRESS_CMD mst_"${output}".data
 try $COMPRESS_CMD remap_"${output}".data
@@ -99,7 +100,8 @@ fi
 
 try $UPLOAD_CMD info_"${output}".data $FILE_PATH/info/info_"${output}".data
 try $UPLOAD_CMD semantic_labels_"${output}".data $FILE_PATH/info/semantic_labels_"${output}".data
-try $UPLOAD_CMD rejected_edges_"${output}".log $FILE_PATH/info/rejected_edges_"${output}".log
+try $UPLOAD_CMD size_rejected_edges_"${output}".log $FILE_PATH/info/size_rejected_edges_"${output}".log
+try $UPLOAD_CMD sem_rejected_edges_"${output}".log $FILE_PATH/info/sem_rejected_edges_"${output}".log
 try $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 try $UPLOAD_CMD mst_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/chunked_mst/mst_"${output}".data."${COMPRESSED_EXT}"
 try $UPLOAD_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/remap_"${output}".data."${COMPRESSED_EXT}"
