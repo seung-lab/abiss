@@ -106,7 +106,7 @@ def reduce_sizes(tag, remaps, bs):
 
 
 def reduce_sem(tag, remaps):
-    nlabels = 5
+    nlabels = 3
     dt = [('sid', np.uint64), ('sem_labels', np.uint64, (nlabels,))]
     sems = np.fromfile("ongoing_semantic_labels_{}.data".format(tag), dtype=dt)
     for e in sems:

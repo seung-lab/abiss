@@ -7,7 +7,7 @@
 #include <fstream>
 #include <unordered_map>
 
-using sem_array_t = std::array<size_t, 5>;
+using sem_array_t = std::array<size_t, 3>;
 
 template<typename Tseg, typename Tsem, typename Chunk>
 class SemExtractor
@@ -57,8 +57,9 @@ private:
         io.write(reinterpret_cast<const char *>(&v), sizeof(v));
         assert(!io.bad());
     }
-    //dummy, soma, axon, dendrite, glia, bv
-    static constexpr std::array<int, 6> sem_map = {-1,0,1,2,3,4};
+    // dummy, soma, axon, dendrite, glia, bv
+    //static constexpr std::array<int, 6> sem_map = {-1,0,1,2,3,4};
+    static constexpr std::array<int, 6> sem_map = {-1,-1,1,0,2,2};
     const Chunk & m_sem;
     std::unordered_map<Tseg, sem_array_t> m_labels;
 };
