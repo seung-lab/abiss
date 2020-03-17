@@ -38,7 +38,8 @@ COMPRESSST_CMD="zstd -9 --rm"
 PARALLEL_CMD="parallel --halt 2"
 COMPRESSED_EXT="zst"
 META=""
-PARAM_JSON=/root/.cloudvolume/secrets/param
+
+export PARAM_JSON=/root/.cloudvolume/secrets/param
 #PARAM_JSON="$SCRIPT_PATH"/param.json
 
 #export AIRFLOW_TMP_DIR="/tmp/airflow"

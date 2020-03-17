@@ -13,6 +13,7 @@ def write_metadata(fn, size, boundaries, offset):
         f.write(str(offset))
 
 param = cu.read_inputs(sys.argv[1])
+global_param = cu.read_inputs(os.environ['PARAM_JSON'])
 bbox = param["bbox"]
 aff_bbox = bbox[:]
 aff_bbox[2] = warp_z(bbox[2])
@@ -22,11 +23,11 @@ print(aff_bbox)
 boundary_flags = param["boundary_flags"]
 offset = param["offset"]
 
-aff = load_data(os.environ['AFF_PATH'],mip=int(os.environ['AFF_MIP']))
+aff = load_data(global_param['AFF_PATH'],mip=global_param['AFF_RESOLUTION'])
 aff_cutout = adjust_affinitymap(aff, aff_bbox, boundary_flags, 1, 1)
 
-if 'ADJUSTED_AFF_PATH' in os.environ:
-    vol = CloudVolume(os.environ['ADJUSTED_AFF_PATH'], mip=0, cdn_cache=False)
+if 'ADJUSTED_AFF_PATH' in global_param:
+    vol = CloudVolume(global_param['ADJUSTED_AFF_PATH'], mip=0, cdn_cache=False)
     vol[bbox[0]:bbox[3], bbox[1]:bbox[4], bbox[2]:bbox[5], :] = aff_cutout[1:-1, 1:-1, 1:-1, :]
 
 save_raw_data("aff.raw", aff_cutout, aff.dtype)
