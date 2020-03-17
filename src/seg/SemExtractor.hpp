@@ -18,8 +18,8 @@ public:
     void collectVoxel(Coord c, Tseg segid)
     {
         auto sem_label = m_sem[c[0]][c[1]][c[2]];
-        if (sem_label > 0) {
-            m_labels[segid][sem_label - 1] += 1;
+        if (sem_label >= 0 and sem_map[sem_label] >= 0) {
+            m_labels[segid][sem_map[sem_label]] += 1;
         }
     }
 
@@ -57,6 +57,8 @@ private:
         io.write(reinterpret_cast<const char *>(&v), sizeof(v));
         assert(!io.bad());
     }
+    //dummy, soma, axon, dendrite, glia, bv
+    static constexpr std::array<int, 6> sem_map = {-1,0,1,2,3,4};
     const Chunk & m_sem;
     std::unordered_map<Tseg, sem_array_t> m_labels;
 };
