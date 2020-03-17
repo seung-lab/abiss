@@ -428,6 +428,24 @@ std::pair<size_t, size_t> sem_label(const sem_array_t & labels)
     return std::make_pair(std::distance(labels.begin(), label), (*label));
 }
 
+bool sem_can_merge(const sem_array_t & labels1, const sem_array_t & labels2)
+{
+    auto max_label1 = std::distance(labels1.begin(), std::max_element(labels1.begin(), labels1.end()));
+    auto max_label2 = std::distance(labels2.begin(), std::max_element(labels2.begin(), labels2.end()));
+    auto total_label1 = std::accumulate(labels1.begin(), labels1.end(), size_t(0));
+    auto total_label2 = std::accumulate(labels2.begin(), labels2.end(), size_t(0));
+    if (labels1[max_label1] < 0.6 * total_label1 || total_label1 < 100000) { //unsure about the semantic label
+        return true;
+    }
+    if (labels2[max_label2] < 0.6 * total_label2 || total_label2 < 100000) { //unsure about the semantic label
+        return true;
+    }
+    if (max_label1 == max_label2) {
+        return true;
+    }
+    return false;
+}
+
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
           class Limits = std::numeric_limits<T>>
 inline void agglomerate(const char * rg_filename, const char * fs_filename, const char * ns_filename, T const& threshold)
@@ -514,9 +532,14 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
             if (!comp(e.edge->w, h_threshold)) {
                 if (!sem_counts.empty()){
-                    auto sem0 = sem_label(sem_counts[v0]);
-                    auto sem1 = sem_label(sem_counts[v1]);
-                    if (sem0.first != sem1.first && sem0.second > 10000 && sem1.second > 10000) {
+                    //auto sem0 = sem_label(sem_counts[v0]);
+                    //auto sem1 = sem_label(sem_counts[v1]);
+                    //if (sem0.first != sem1.first && sem0.second > 10000 && sem1.second > 10000) {
+                    //    of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
+                    //    of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
+                    //    continue;
+                    //}
+                    if (!sem_can_merge(sem_counts[v0],sem_counts[v1])) {
                         std::cout << seg_indices[v0] << ", " << seg_indices[v1] << ", " << supervoxel_counts[v0] << ", " << supervoxel_counts[v1] << std::endl;
                         std::cout << "reject merge between " << seg_indices[v0] << "(" << sem_counts[v0][1] << "," << sem_counts[v0][2] << ")"<< " and " << seg_indices[v1] << "(" << sem_counts[v1][1] << "," << sem_counts[v1][2] << ")"<< std::endl;
                         of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
