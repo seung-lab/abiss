@@ -1,5 +1,6 @@
 //
-// Copyright (C) 2013-present  Aleksandar Zlateski <zlateski@mit.edu>
+// Copyright (C) 2013-2016  Aleksandar Zlateski <zlateski@mit.edu>
+// Copyright (C) 2016-present  Ran Lu <ranl@princeton.edu>
 // ------------------------------------------------------------------
 //
 // This program is free software: you can redistribute it and/or modify
