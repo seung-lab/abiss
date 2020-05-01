@@ -22,9 +22,13 @@ done
 
 if [ "$OVERLAP" = "1" ]; then
     try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_ST_CMD $FILE_PATH/scratch2/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
+    try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_ST_CMD $FILE_PATH/scratch2/{}.data.md5sum ."
 else
     try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_ST_CMD $FILE_PATH/scratch/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
+    try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_ST_CMD $FILE_PATH/scratch/{}.data.md5sum ."
 fi
+
+try cat filelist.txt | $PARALLEL_CMD --halt 2 "md5sum -c --quiet {}.data.md5sum"
 
 try python3 $SCRIPT_PATH/merge_chunks_me.py $1 $META
 try mv ongoing.data localmap.data
@@ -108,11 +112,14 @@ try $UPLOAD_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/rema
 try $UPLOAD_CMD edges_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/edges_"${output}".data."${COMPRESSED_EXT}"
 try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/final_rg_"${output}".data."${COMPRESSED_EXT}"
 try cat done_remap.txt | $PARALLEL_CMD -X $UPLOAD_ST_CMD {}.$COMPRESSED_EXT $FILE_PATH/remap/
+try md5sum *_"${output}".data > "${output}".data.md5sum
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 if [ "$OVERLAP" = 1  ]; then
     try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch2/"${output}".tar."${COMPRESSED_EXT}"
+    try $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/scratch2/"${output}".data.md5sum
 else
     try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch/"${output}".tar."${COMPRESSED_EXT}"
+    try $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/scratch/"${output}".data.md5sum
 fi
 
 for fn in $(cat filelist.txt)
