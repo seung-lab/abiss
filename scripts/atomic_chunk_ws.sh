@@ -10,17 +10,17 @@ try taskset -c $cpuid $BIN_PATH/ws param.txt aff.raw $WS_HIGH_THRESHOLD $WS_LOW_
 try touch remap_"${output}".data
 try touch ongoing_"${output}".data
 try $COMPRESS_CMD seg_"${output}".data
-try $UPLOAD_ST_CMD seg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/seg/seg_"${output}".data."${COMPRESSED_EXT}"
+retry 10 $UPLOAD_ST_CMD seg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/seg/seg_"${output}".data."${COMPRESSED_EXT}"
 try $COMPRESS_CMD -r remap
-try $UPLOAD_CMD -r remap $FILE_PATH/
+retry 10 $UPLOAD_CMD -r remap $FILE_PATH/
 try $COMPRESS_CMD remap_"${output}".data
-try $UPLOAD_ST_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/remap_"${output}".data."${COMPRESSED_EXT}"
+retry 10 $UPLOAD_ST_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/remap_"${output}".data."${COMPRESSED_EXT}"
 try md5sum *_"${output}".data > "${output}".data.md5sum
 try $COMPRESS_CMD ongoing_"${output}".data
-try $UPLOAD_ST_CMD ongoing_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/ongoing_"${output}".data."${COMPRESSED_EXT}"
-try $UPLOAD_ST_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
+retry 10 $UPLOAD_ST_CMD ongoing_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/ongoing_"${output}".data."${COMPRESSED_EXT}"
+retry 10 $UPLOAD_ST_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 try tar -cvf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
-try $UPLOAD_ST_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/dend/"${output}".tar."${COMPRESSED_EXT}"
-try $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/dend/"${output}".data.md5sum
+retry 10 $UPLOAD_ST_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/dend/"${output}".tar."${COMPRESSED_EXT}"
+retry 10 try $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/dend/"${output}".data.md5sum
 try rm -rf remap
 try release_cpu_slot
