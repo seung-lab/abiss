@@ -57,9 +57,11 @@ private:
         io.write(reinterpret_cast<const char *>(&v), sizeof(v));
         assert(!io.bad());
     }
-    // dummy, soma, axon, dendrite, glia, bv
     //static constexpr std::array<int, 6> sem_map = {-1,0,1,2,3,4};
+    // dummy, soma, axon, dendrite, glia, bv
     static constexpr std::array<int, 6> sem_map = {-1,-1,1,0,2,2};
+    // dummy, axon, bv, dendrite, glia, soma
+    //static constexpr std::array<int, 6> sem_map = {-1,1,2,0,2,-1};
     const Chunk & m_sem;
     std::unordered_map<Tseg, sem_array_t> m_labels;
 };
