@@ -304,15 +304,16 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
     return sem_counts;
 }
 
-template <class T, class Compare = std::greater<T> >
+template <class T, class Compare = std::greater<T>, class Plus = std::plus<T> >
 inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename)
 {
+    Plus plus;
     agglomeration_data_t<T, Compare> agg_data;
     using neighbor_vector = std::vector<handle_wrapper<T, Compare> >;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
 
-    agg_data.rg_vector = read_array<edge_t<T> >(rg_filename);
+    auto rg_vector = read_array<edge_t<T> >(rg_filename);
 
     std::vector<std::pair<seg_t, size_t> > ns_pair_array = read_array<std::pair<seg_t, size_t> >(ns_filename);
     std::vector<seg_t> fs_array = read_array<seg_t>(fs_filename);
@@ -352,8 +353,6 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
 
     agg_data.sem_counts = load_sem("ongoing_semantic_labels.data", seg_indices);
 
-    auto & rg_vector = agg_data.rg_vector;
-
     __gnu_parallel::for_each(rg_vector.begin(), rg_vector.end(), [&seg_indices](auto & a) {
             size_t u0, u1;
             auto it = std::lower_bound(seg_indices.begin(), seg_indices.end(), a.v0);
@@ -388,15 +387,38 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
         });
 
     __gnu_parallel::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
+    std::cout << "rg_vector size:" << rg_vector.size() << std::endl;
+
+    auto & new_rg_vector = agg_data.rg_vector;
+    edge_t<T> current_edge;
+    current_edge.v0 = seg_t(std::numeric_limits<seg_t>::max());
+    current_edge.v1 = seg_t(std::numeric_limits<seg_t>::max());
+    for (const auto & e : rg_vector) {
+        if (current_edge.v0 != e.v0 || current_edge.v1 != e.v1) {
+            if (current_edge.v0 != seg_t(std::numeric_limits<seg_t>::max()) && current_edge.v1 != seg_t(std::numeric_limits<seg_t>::max())) {
+                new_rg_vector.push_back(current_edge);
+            }
+            current_edge = e;
+        } else {
+            std::cout << "combine edges: " << e.v0 << ", " << e.v1 << " and " << current_edge.v0 << ", " << current_edge.v1 << std::endl;
+            std::cout << current_edge.w << std::endl;
+            std::cout << e.w << std::endl;
+            current_edge.w = plus(current_edge.w, e.w);
+        }
+    }
+    if (current_edge.v0 != seg_t(std::numeric_limits<seg_t>::max()) && current_edge.v1 != seg_t(std::numeric_limits<seg_t>::max())) {
+        new_rg_vector.push_back(current_edge);
+    }
+    std::cout << "new_rg_vector size:" << new_rg_vector.size() << std::endl;
 
     return agg_data;
 }
 
-template <class T, class Compare = std::greater<T> >
+template <class T, class Compare = std::greater<T>, class Plus = std::plus<T> >
 inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename, T const & threshold)
 {
     Compare comp;
-    auto agg_data = preprocess_inputs<T, Compare>(rg_filename, fs_filename, ns_filename);
+    auto agg_data = preprocess_inputs<T, Compare, Plus>(rg_filename, fs_filename, ns_filename);
     using neighbor_vector = std::vector<handle_wrapper<T, Compare> >;
     auto & incident = agg_data.incident;
     auto & heap = agg_data.heap;
@@ -464,7 +486,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     float print_th = 1.0 - 0.01;
     size_t num_of_edges = 0;
 
-    auto agg_data = load_inputs<T, Compare>(rg_filename, fs_filename, ns_filename, threshold);
+    auto agg_data = load_inputs<T, Compare, Plus>(rg_filename, fs_filename, ns_filename, threshold);
+
     auto & incident = agg_data.incident;
     auto & heap = agg_data.heap;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
