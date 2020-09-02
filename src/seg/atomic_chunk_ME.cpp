@@ -76,7 +76,7 @@ int main(int argc, char * argv[])
         ConstChunkRef<sem_t, 3> sem_chunk(reinterpret_cast<const sem_t*>(sem_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])], boost::fortran_storage_order());
         std::cout << "mmap sem data" << std::endl;
         SemExtractor<seg_t, sem_t, ConstChunkRef<sem_t, 3> > sem_extractor(sem_chunk);
-        traverseSegments<true>(seg_chunk, boundary_extractor, affinity_extractor, sem_extractor, chunked_rg_extractor, com_extractor
+        traverseSegments<1>(seg_chunk, boundary_extractor, affinity_extractor, sem_extractor, chunked_rg_extractor, com_extractor
 #ifdef EXTRACT_SIZE
                      ,size_extractor
 #endif
@@ -86,7 +86,7 @@ int main(int argc, char * argv[])
                      );
         sem_extractor.output(map, "ongoing_semantic_labels.data");
     } else {
-        traverseSegments<true>(seg_chunk, boundary_extractor, affinity_extractor, chunked_rg_extractor, com_extractor
+        traverseSegments<1>(seg_chunk, boundary_extractor, affinity_extractor, chunked_rg_extractor, com_extractor
 #ifdef EXTRACT_SIZE
                      ,size_extractor
 #endif

@@ -108,17 +108,20 @@ std::vector<ContactRegion> connectComponent(const ContactRegion & cr)
 }
 
 
-template <bool overlappingChunk, typename Ts, typename ... Ta>
+template <int skipType, typename Ts, typename ... Ta>
 void traverseSegments(const Ts& seg, Ta& ... extractors)
 {
     auto base = seg.index_bases();
     auto shape = seg.shape();
     auto c = Coord({0,0,0});
-    for (int z = base[2]; z != base[2]+shape[2]; z++) {
+    int z = skipType == 2 ? base[2]+1: base[2];
+    for (; z != base[2]+shape[2]; z++) {
         c[2] = z;
-        for (int y = base[1]; y != base[1]+shape[1]; y++) {
+        int y = skipType == 2 ? base[1]+1: base[1];
+        for (; y != base[1]+shape[1]; y++) {
             c[1] = y;
-            for (int x = base[0]; x != base[0]+shape[0]; x++) {
+            int x = skipType == 2 ? base[0]+1: base[0];
+            for (; x != base[0]+shape[0]; x++) {
                 if (seg[x][y][z] == 0) {
                     continue;
                 }
@@ -131,7 +134,7 @@ void traverseSegments(const Ts& seg, Ta& ... extractors)
                         (extractors.collectBoundary(i+3, c, seg[x][y][z]), ...);
                     }
                 }
-                if (overlappingChunk) {
+                if (skipType == 1) { //Overlap in forward directions, skip overlapping volume
                     if (x == base[0] || y == base[1] || z == base[2]) {
                         continue;
                     }

@@ -18,6 +18,7 @@ using SegPair = std::pair<Ts, Ts>;
 using Coord = std::array<int64_t, 3>;
 
 using ContactRegion = std::unordered_set<Coord, boost::hash<Coord> >;
+using ContactRegionExt = std::unordered_map<Coord, int, boost::hash<Coord> >;
 
 template <class Ta>
 using Edge = std::array<std::unordered_map<Coord, Ta, boost::hash<Coord> >, 3>;
