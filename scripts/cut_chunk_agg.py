@@ -29,7 +29,7 @@ print(aff_bbox)
 ac_offset = param["ac_offset"]
 boundary_flags = param["boundary_flags"]
 
-aff = load_data(global_param['AFF_PATH'],mip=global_param['AFF_RESOLUTION'])
+aff = load_data(global_param['AFF_PATH'],mip=global_param['AFF_RESOLUTION'],fill_missing=False)
 aff_cutout = adjust_affinitymap(aff, aff_bbox, boundary_flags, 0, 1)
 
 save_raw_data("aff.raw", aff_cutout, aff.dtype)
@@ -38,12 +38,12 @@ del aff_cutout
 start_coord = bbox[0:3]
 end_coord = [bbox[i+3]+1-boundary_flags[i+3] for i in range(3)]
 
-seg = load_data(os.environ['WS_PATH'],mip=global_param['AFF_RESOLUTION'])
+seg = load_data(os.environ['WS_PATH'],mip=global_param['AFF_RESOLUTION'],fill_missing=False)
 seg_cutout = cut_data(seg, start_coord, end_coord, boundary_flags)
 save_raw_data("seg.raw", seg_cutout, seg.dtype)
 
 if "SEM_PATH" in global_param:
-    sem = load_data(global_param['SEM_PATH'],mip=global_param['AFF_RESOLUTION'])
+    sem = load_data(global_param['SEM_PATH'],mip=global_param['AFF_RESOLUTION'],fill_missing=False)
     sem_cutout = cut_data(sem, start_coord, end_coord, boundary_flags)
     save_raw_data("sem.raw", sem_cutout, sem.dtype)
 

@@ -23,7 +23,7 @@ print(aff_bbox)
 boundary_flags = param["boundary_flags"]
 offset = param["offset"]
 
-aff = load_data(global_param['AFF_PATH'],mip=global_param['AFF_RESOLUTION'])
+aff = load_data(global_param['AFF_PATH'],mip=global_param['AFF_RESOLUTION'],fill_missing=False)
 aff_cutout = adjust_affinitymap(aff, aff_bbox, boundary_flags, 1, 1)
 
 if 'ADJUSTED_AFF_PATH' in global_param:

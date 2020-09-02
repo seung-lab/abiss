@@ -93,11 +93,10 @@ def close_affinitymap(data, params, threshold):
     return data
 
 
-def load_data(url, mip=0):
+def load_data(url, **kwargs):
     print("cloud volume url: ", url)
-    print("mip level: ", mip)
 
-    return CloudVolume(url, fill_missing=False, mip=mip)
+    return CloudVolume(url, **kwargs)
     #return CloudVolumeGSUtil(url, fill_missing=True)
 
 def load_gt_data(url, mip=0):
