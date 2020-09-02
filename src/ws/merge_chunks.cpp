@@ -136,6 +136,10 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     auto fo = fo_data.data();
     auto bi = bi_data.data();
     auto bo = bo_data.data();
+    vfi.resize(fi.size(), 0);
+    vfo.resize(fo.size(), 0);
+    vbi.resize(bi.size(), 0);
+    vbo.resize(bo.size(), 0);
 
     __gnu_parallel::transform(fi.begin(), fi.end(), std::back_inserter(vfi), [&segids](ID a){
             auto it = std::lower_bound(segids.begin(), segids.end(), a);
