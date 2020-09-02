@@ -1,4 +1,4 @@
-FROM python:3.6-slim
+FROM python:3.8-slim
 MAINTAINER ranlu
 
 ARG SEG_HOME=/root/seg
@@ -31,6 +31,12 @@ RUN savedAptMark="$(apt-mark showmanual)" \
         libboost-system-dev \
         libboost-iostreams-dev \
         zlib1g-dev libjpeg62-turbo-dev \
+    && echo "deb http://ftp.us.debian.org/debian testing main contrib non-free" >> /etc/apt/sources.list \
+    && apt-get update -y \
+    && apt-get install -y --no-install-recommends \
+        git \
+        g++-9 \
+        libtbb-dev \
     && pip install -U pip pybind11\
     #&& pip install -U pip Pillow brotlipy\
     && CFLAGS="-Os -g0 -Wl,--strip-all" pip install -U --compile --global-option=build_ext numpy \
@@ -43,7 +49,8 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     #&& cmake .. -DEXTRACT_SIZE=ON -DMST_EDGE=ON \
     #&& cmake .. -DEXTRACT_SIZE=ON -DDOUBLE=ON \
     #&& cmake .. -DEXTRACT_SIZE=ON -DEXTRACT_BBOX=ON \
-    && cmake .. -DEXTRACT_SIZE=ON \
+    #&& cmake .. -DEXTRACT_SIZE=ON -DSEM_EDGE=ON\
+    && CC=gcc-9 CXX=g++-9 cmake .. -DEXTRACT_SIZE=ON \
     && make -j4 \
     && apt-mark auto '.*' > /dev/null \
     && apt-mark manual $savedAptMark zstd parallel coreutils libopenblas-base liblapack3 libjpeg62-turbo \
