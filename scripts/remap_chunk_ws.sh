@@ -15,6 +15,6 @@ try taskset -c $cpuid $BIN_PATH/ws3 param.txt seg_"${output}".data
 try taskset -c $cpuid python3 $SCRIPT_PATH/upload_chunk.py $1 $WS_PATH $WS_MIP
 try mv chunkmap.data chunkmap_"${output}".data
 retry 10 $COMPRESS_CMD chunkmap_"${output}".data
-retry 10 $UPLOAD_ST_CMD chunkmap_"${output}".data."${COMPRESSED_EXT}" $CHUNKMAP_PATH/chunkmap_"${output}".data."${COMPRESSED_EXT}"
+retry 10 $UPLOAD_ST_CMD chunkmap_"${output}".data."${COMPRESSED_EXT}" "$CHUNKMAP_OUTPUT"/chunkmap_"${output}".data."${COMPRESSED_EXT}"
 
 try release_cpu_slot
