@@ -1,4 +1,4 @@
-from chunk_iterator import ChunkIterator
+from chunkiterator import ChunkIterator
 import sys
 import json
 
