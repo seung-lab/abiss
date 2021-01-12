@@ -117,7 +117,7 @@ remap_data<T> generate_remaps()
     }
 
     {
-        std::vector<T> idx;
+        std::vector<T> idx(rep.segids.size());
         std::iota(idx.begin(), idx.end(), T(0));
         sets.compress_sets(idx.begin(), idx.end());
     }
