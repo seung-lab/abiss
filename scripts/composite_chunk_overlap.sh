@@ -20,7 +20,10 @@ do
     just_in_case rm -rf $fn
 done
 
-try cat filelist.txt | $PARALLEL_CMD "$DOWNLOAD_ST_CMD $FILE_PATH/scratch/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
+try cat filelist.txt | $PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/scratch/{}.tar.${COMPRESSED_EXT} ."
+try cat filelist.txt | $PARALLEL_CMD --retries 10 "$COMPRESS_CMD -d {}.tar.${COMPRESSED_EXT}"
+try cat filelist.txt | $PARALLEL_CMD --retries 10 "tar xvf {}.tar"
+try cat filelist.txt | $PARALLEL_CMD --retries 10 "rm {}.tar"
 
 try python3 $SCRIPT_PATH/merge_chunks_overlap.py $1 $META
 try mv ongoing.data localmap.data
@@ -43,7 +46,10 @@ try rm incomplete_*.data
 try rm info_*.data
 try rm *.tmp
 
-try $DOWNLOAD_CMD $FILE_PATH/scratch/${output}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -
+retry 10 $DOWNLOAD_CMD $FILE_PATH/scratch/${output}.tar.${COMPRESSED_EXT} .
+try $COMPRESS_CMD -d ${output}.tar.${COMPRESSED_EXT}
+try tar xvf ${output}.tar
+try rm ${output}.tar
 
 try python3 $SCRIPT_PATH/reduce_chunk.py ${output}
 
