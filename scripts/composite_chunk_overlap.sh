@@ -24,6 +24,8 @@ try cat filelist.txt | $PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/s
 try cat filelist.txt | $PARALLEL_CMD --retries 10 "$COMPRESS_CMD -d {}.tar.${COMPRESSED_EXT}"
 try cat filelist.txt | $PARALLEL_CMD --retries 10 "tar xvf {}.tar"
 try cat filelist.txt | $PARALLEL_CMD --retries 10 "rm {}.tar"
+try cat filelist.txt | $PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/scratch/{}.data.md5sum ."
+try cat filelist.txt | $PARALLEL_CMD --halt 2 "md5sum -c --quiet {}.data.md5sum"
 
 try python3 $SCRIPT_PATH/merge_chunks_overlap.py $1 $META
 try mv ongoing.data localmap.data
@@ -50,6 +52,8 @@ retry 10 $DOWNLOAD_CMD $FILE_PATH/scratch/${output}.tar.${COMPRESSED_EXT} .
 try $COMPRESS_CMD -d ${output}.tar.${COMPRESSED_EXT}
 try tar xvf ${output}.tar
 try rm ${output}.tar
+try $DOWNLOAD_ST_CMD $FILE_PATH/scratch/${output}.data.md5sum .
+try md5sum -c --quiet ${output}.data.md5sum
 
 try python3 $SCRIPT_PATH/reduce_chunk.py ${output}
 
@@ -104,7 +108,9 @@ try $UPLOAD_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap2/rem
 #try $UPLOAD_CMD edges_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/edges_"${output}".data."${COMPRESSED_EXT}"
 #try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/final_rg_"${output}".data."${COMPRESSED_EXT}"
 #try cat done_remap.txt | $PARALLEL_CMD -X $UPLOAD_ST_CMD {}.$COMPRESSED_EXT $FILE_PATH/remap/
+try md5sum *_"${output}".data > "${output}".data.md5sum
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
+try $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/scratch2/"${output}".data.md5sum
 try $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch2/"${output}".tar."${COMPRESSED_EXT}"
 #try rm *.data
 #try rm *.zst
