@@ -5,13 +5,13 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 
 include(CheckCXXCompilerFlag)
 
-CHECK_CXX_COMPILER_FLAG("-std=c++1z" COMPILER_SUPPORTS_CXX1Z)
-if(COMPILER_SUPPORTS_CXX1Z)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -pthread -fopenmp -std=c++1z -fconcepts")
-    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og -g -std=c++1z")
-else()
+CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+if(COMPILER_SUPPORTS_CXX17)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -pthread -fopenmp -std=c++17 -fconcepts")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Og -g -std=c++17")
+else(COMPILER_SUPPORTS_CXX17)
     message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++1z support. Please use a different C++ compiler.")
-endif()
+endif(COMPILER_SUPPORTS_CXX17)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
