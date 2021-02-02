@@ -28,8 +28,8 @@
 #include <map>
 #include <vector>
 #include <unordered_set>
+#include <execution>
 #include <sys/stat.h>
-#include <parallel/algorithm>
 
 #include "../seg/SemExtractor.hpp"
 
@@ -282,7 +282,7 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
 
     std::vector<sem_array_t> sem_counts(seg_indices.size());
 
-    __gnu_parallel::for_each(sem_array.begin(), sem_array.end(), [&seg_indices](auto & a) {
+    std::for_each(std::execution::par, sem_array.begin(), sem_array.end(), [&seg_indices](auto & a) {
         auto it = std::lower_bound(seg_indices.begin(), seg_indices.end(), a.first);
         if (it == seg_indices.end()) {
             std::cerr << "Should not happen, sem element does not exist: " << a.first << std::endl;
@@ -296,7 +296,7 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
         }
     });
 
-    __gnu_parallel::sort(std::begin(sem_array), std::end(sem_array), [](auto & a, auto & b) { return a.first < b.first; });
+    std::sort(std::execution::par, std::begin(sem_array), std::end(sem_array), [](auto & a, auto & b) { return a.first < b.first; });
 
     for (auto & [k, v] : sem_array) {
         std::transform(sem_counts[k].begin(), sem_counts[k].end(), v.begin(), sem_counts[k].begin(), std::plus<size_t>());
@@ -318,11 +318,11 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     std::vector<std::pair<seg_t, size_t> > ns_pair_array = read_array<std::pair<seg_t, size_t> >(ns_filename);
     std::vector<seg_t> fs_array = read_array<seg_t>(fs_filename);
 
-    __gnu_parallel::transform(fs_array.begin(), fs_array.end(), std::back_inserter(ns_pair_array), [](seg_t &a){
+    std::transform(fs_array.begin(), fs_array.end(), std::back_inserter(ns_pair_array), [](seg_t &a)->std::pair<seg_t, size_t> {
             return std::make_pair(a, size_t(boundary));
             });
 
-    __gnu_parallel::sort(std::begin(ns_pair_array), std::end(ns_pair_array), [](auto & a, auto & b) { return a.first < b.first || (a.first == b.first && a.second < b.second); });
+    std::sort(std::execution::par, std::begin(ns_pair_array), std::end(ns_pair_array), [](auto & a, auto & b) { return a.first < b.first || (a.first == b.first && a.second < b.second); });
 
     seg_t prev_seg = 0;
     for (auto & kv : ns_pair_array) {
@@ -360,7 +360,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
 
     agg_data.sem_counts = load_sem("ongoing_semantic_labels.data", seg_indices);
 
-    __gnu_parallel::for_each(rg_vector.begin(), rg_vector.end(), [&seg_indices](auto & a) {
+    std::for_each(std::execution::par, rg_vector.begin(), rg_vector.end(), [&seg_indices](auto & a) {
             size_t u0, u1;
             auto it = std::lower_bound(seg_indices.begin(), seg_indices.end(), a.v0);
             if (it == seg_indices.end()) {
@@ -393,7 +393,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
             }
         });
 
-    __gnu_parallel::sort(std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
+    std::sort(std::execution::par, std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
     std::cout << "rg_vector size:" << rg_vector.size() << std::endl;
 
     auto & new_rg_vector = agg_data.rg_vector;

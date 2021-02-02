@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <boost/format.hpp>
-#include <parallel/algorithm>
+#include <execution>
 
 template<typename Ts, typename Ta, typename Chunk>
 class AffinityExtractorME
@@ -114,7 +114,7 @@ std::vector<SimpleEdge<Ts, Ta> > loadRegionGraph(const std::string & fileName)
     std::vector<SimpleEdge<Ts, Ta> > output_rg;
     auto input_rg = read_array<SimpleEdge<Ts, Ta> >(fileName);
     std::cout << "loading: " << fileName << std::endl;
-    __gnu_parallel::for_each(input_rg.begin(), input_rg.end(), [](auto & a) {
+    std::for_each(std::execution::par, input_rg.begin(), input_rg.end(), [](auto & a) {
         if (a.s1 < a.s2) {
             auto tmp = a.s1;
             a.s1 = a.s2;
@@ -122,7 +122,7 @@ std::vector<SimpleEdge<Ts, Ta> > loadRegionGraph(const std::string & fileName)
         }
     });
 
-    __gnu_parallel::sort(input_rg.begin(), input_rg.end(), [](const auto & a, const auto & b) {
+    std::sort(std::execution::par, input_rg.begin(), input_rg.end(), [](const auto & a, const auto & b) {
         return ((a.s1 < b.s1) || (a.s1 == b.s1 && a.s2 < b.s2));
     });
 

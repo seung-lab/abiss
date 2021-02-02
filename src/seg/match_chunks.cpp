@@ -4,9 +4,9 @@
 #include <fstream>
 #include <algorithm>
 #include <cassert>
+#include <execution>
 #include <sys/stat.h>
 #include <boost/format.hpp>
-#include <parallel/algorithm>
 #include <boost/pending/disjoint_sets.hpp>
 #include "SemExtractor.hpp"
 
@@ -50,7 +50,7 @@ remap_data<T> generate_remaps()
 {
     auto remap_vector = read_array<matching_entry_t<T> >("matching_faces.data");
     //sort to make sure we process the most advanced agglomerated (largest) segments first
-    __gnu_parallel::sort(remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
+    std::sort(std::execution::par, remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
             return (a.agg_size > b.agg_size) || ((a.agg_size == b.agg_size) && (a.nid < b.nid));
     });
     auto last_remap = std::unique(remap_vector.begin(), remap_vector.end(), [](const auto & a, const auto & b) {
@@ -64,11 +64,11 @@ remap_data<T> generate_remaps()
         rep.segids.push_back(e.oid);
         rep.segids.push_back(e.nid);
     }
-    __gnu_parallel::sort(rep.segids.begin(), rep.segids.end());
+    std::sort(std::execution::par, rep.segids.begin(), rep.segids.end());
     auto last_segid = std::unique(rep.segids.begin(), rep.segids.end());
     rep.segids.erase(last_segid, rep.segids.end());
 
-    __gnu_parallel::for_each(remap_vector.begin(), remap_vector.end(), [&rep](auto & e) {
+    std::for_each(std::execution::par, remap_vector.begin(), remap_vector.end(), [&rep](auto & e) {
         auto it = std::lower_bound(rep.segids.begin(), rep.segids.end(), e.oid);
         if (it == rep.segids.end()) {
             std::cerr << "Should not happen, element does not exist: " << e.oid << std::endl;
@@ -167,17 +167,17 @@ void process_edges(std::string & tag, remap_data<T_seg> & rep)
         segids.push_back(e.s1);
         segids.push_back(e.s2);
     }
-    __gnu_parallel::sort(segids.begin(),segids.end());
+    std::sort(std::execution::par, segids.begin(),segids.end());
     auto last = std::unique(segids.begin(), segids.end());
     segids.erase(last, segids.end());
-    __gnu_parallel::for_each(segids.begin(), segids.end(), [&rep](const auto & id){
+    std::for_each(std::execution::par, segids.begin(), segids.end(), [&rep](const auto & id){
         auto it = std::lower_bound(rep.segids.begin(), rep.segids.end(), id);
         if (it != rep.segids.end() && id == *it) {
             auto idx = std::distance(rep.segids.begin(), it);
             rep.extra_remaps[idx] = rep.remaps[idx];
         }
     });
-    __gnu_parallel::for_each(rg_vector.begin(), rg_vector.end(), [&rep](auto & e){
+    std::for_each(std::execution::par, rg_vector.begin(), rg_vector.end(), [&rep](auto & e){
         auto it = std::lower_bound(rep.segids.begin(), rep.segids.end(), e.s1);
         if (it != rep.segids.end() && e.s1 == *it) {
             auto idx = std::distance(rep.segids.begin(), it);
@@ -207,7 +207,7 @@ void process_edges(std::string & tag, remap_data<T_seg> & rep)
 
     auto vetoed_edges = read_array<std::pair<T_seg, T_seg> >("vetoed_edges.data");
 
-    __gnu_parallel::for_each(vetoed_edges.begin(), vetoed_edges.end(), [&rep](auto & e){
+    std::for_each(std::execution::par, vetoed_edges.begin(), vetoed_edges.end(), [&rep](auto & e){
         auto it = std::lower_bound(rep.segids.begin(), rep.segids.end(), e.first);
         if (it != rep.segids.end() && e.first == *it) {
             auto idx = std::distance(rep.segids.begin(), it);
@@ -227,11 +227,11 @@ void process_edges(std::string & tag, remap_data<T_seg> & rep)
         }
     });
 
-    __gnu_parallel::sort(vetoed_edges.begin(), vetoed_edges.end(), [](auto & a, auto & b) { return (a.first < b.first) || (a.first == b.first && a.second < b.second); });
+    std::sort(std::execution::par, vetoed_edges.begin(), vetoed_edges.end(), [](auto & a, auto & b) { return (a.first < b.first) || (a.first == b.first && a.second < b.second); });
     auto last_veto_edge = std::unique(vetoed_edges.begin(), vetoed_edges.end(), [](auto & a, auto & b) { return (a.first == b.first) && (a.second == b.second); });
     vetoed_edges.erase(last_veto_edge, vetoed_edges.end());
 
-    __gnu_parallel::for_each(rg_vector.begin(), rg_vector.end(), [&vetoed_edges](auto & e){
+    std::for_each(std::execution::par, rg_vector.begin(), rg_vector.end(), [&vetoed_edges](auto & e){
         T_seg u1 = e.s1;
         T_seg u2 = e.s2;
         auto it = std::lower_bound(vetoed_edges.begin(), vetoed_edges.end(), std::make_pair(u1, u2),  [](const auto & a, const auto & b) {
@@ -266,7 +266,7 @@ std::vector<T> process_boundary_supervoxels(const std::string & tag, const remap
     std::vector<T> boundary_svs;
     for (size_t i = 0; i < 6; i++) {
         auto remap_vector = read_array<matching_entry_t<T> >(str(boost::format("o_boundary_%1%_%2%.tmp")% i % tag));
-        __gnu_parallel::for_each(remap_vector.begin(), remap_vector.end(), [&rep](auto & bs) {
+        std::for_each(std::execution::par, remap_vector.begin(), remap_vector.end(), [&rep](auto & bs) {
             auto it = std::lower_bound(rep.segids.begin(), rep.segids.end(), bs.nid);
             if (it != rep.segids.end() && bs.nid == *it) {
                 auto idx = std::distance(rep.segids.begin(), it);
@@ -278,7 +278,7 @@ std::vector<T> process_boundary_supervoxels(const std::string & tag, const remap
             }
         });
 
-        __gnu_parallel::sort(remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
+        std::sort(std::execution::par, remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
                 return a.agg_size > b.agg_size;
         });
 
@@ -302,7 +302,7 @@ std::vector<T> process_boundary_supervoxels(const std::string & tag, const remap
         ofs1.close();
         ofs2.close();
     }
-    __gnu_parallel::sort(boundary_svs.begin(), boundary_svs.end());
+    std::sort(std::execution::par, boundary_svs.begin(), boundary_svs.end());
     auto last = std::unique(boundary_svs.begin(), boundary_svs.end());
     boundary_svs.erase(last, boundary_svs.end());
     return boundary_svs;
@@ -312,15 +312,15 @@ template <class T>
 void generate_extra_sizes(const remap_data<T> & rep, const std::vector<T> & bs)
 {
     auto remap_vector = read_array<matching_entry_t<T> >("matching_faces.data");
-    __gnu_parallel::sort(remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
+    std::sort(std::execution::par, remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
             return a.agg_size > b.agg_size;
     });
     auto last_remap = std::unique(remap_vector.begin(), remap_vector.end(), [](const auto & a, const auto & b) {
         return ((a.oid == b.oid) && (a.boundary_size == b.boundary_size) && (a.nid == b.nid) && (a.agg_size == b.agg_size));
     });
     remap_vector.erase(last_remap, remap_vector.end());
-    std::vector<std::pair<T, T> > processed_sv;
-    __gnu_parallel::transform(remap_vector.begin(), remap_vector.end(), std::back_inserter(processed_sv), [&rep, &bs](const auto & e) {
+    std::vector<std::pair<T, T> > processed_sv(remap_vector.size());
+    std::transform(std::execution::par, remap_vector.begin(), remap_vector.end(), processed_sv.begin(), [&rep, &bs](const auto & e) {
         if (e.boundary_size == 0) {
             return std::make_pair<T,T>(0,0);
         }
@@ -337,7 +337,7 @@ void generate_extra_sizes(const remap_data<T> & rep, const std::vector<T> & bs)
             return std::make_pair<T, T>(0,0);
         }
     });
-    __gnu_parallel::sort(processed_sv.begin(), processed_sv.end(), [](const auto & a, const auto & b) {
+    std::sort(std::execution::par, processed_sv.begin(), processed_sv.end(), [](const auto & a, const auto & b) {
         return (a.first < b.first);
     });
     auto last = std::unique(processed_sv.begin(), processed_sv.end(), [](const auto & a, const auto & b) {
@@ -358,7 +358,7 @@ template <class T>
 void process_sizes(remap_data<T> rep)
 {
     auto sizes = read_array<std::pair<T,size_t> >("o_ongoing_supervoxel_counts.data");
-    __gnu_parallel::for_each(sizes.begin(), sizes.end(), [&rep](auto & p) {
+    std::for_each(std::execution::par, sizes.begin(), sizes.end(), [&rep](auto & p) {
         auto it = std::lower_bound(rep.segids.begin(), rep.segids.end(), p.first);
         if (it != rep.segids.end() && p.first == *it) {
             auto idx = std::distance(rep.segids.begin(), it);
@@ -379,7 +379,7 @@ template <class T>
 void process_sems(remap_data<T> rep)
 {
     auto sems = read_array<std::pair<T,sem_array_t> >("o_ongoing_semantic_labels.data");
-    __gnu_parallel::for_each(sems.begin(), sems.end(), [&rep](auto & p) {
+    std::for_each(std::execution::par, sems.begin(), sems.end(), [&rep](auto & p) {
         auto it = std::lower_bound(rep.segids.begin(), rep.segids.end(), p.first);
         if (it != rep.segids.end() && p.first == *it) {
             auto idx = std::distance(rep.segids.begin(), it);

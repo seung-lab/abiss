@@ -11,7 +11,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <boost/format.hpp>
-#include <parallel/algorithm>
+#include <execution>
 
 template<typename T>
 std::vector<std::pair<T, T> > load_remaps(size_t data_size)
@@ -22,7 +22,7 @@ std::vector<std::pair<T, T> > load_remaps(size_t data_size)
         auto data = remap_data.data();
         std::copy(std::begin(data), std::end(data), std::back_inserter(remap_vector));
 
-        __gnu_parallel::stable_sort(std::begin(remap_vector), std::end(remap_vector), [](auto & a, auto & b) { return std::get<0>(a) < std::get<0>(b); });
+        std::stable_sort(std::execution::par, std::begin(remap_vector), std::end(remap_vector), [](auto & a, auto & b) { return std::get<0>(a) < std::get<0>(b); });
     }
     return remap_vector;
 }
@@ -63,7 +63,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     segids.reserve(size_pairs.size());
     segids.push_back(0);
     sizes.push_back(0);
-    __gnu_parallel::stable_sort(std::begin(size_pairs), std::end(size_pairs), [](auto & a, auto & b) { return a.first < b.first; });
+    std::stable_sort(std::execution::par, std::begin(size_pairs), std::end(size_pairs), [](auto & a, auto & b) { return a.first < b.first; });
     clock_t begin = clock();
     std::cout << size_pairs.size() << " supervoxels to populate" << std::endl;
     for (auto & kv : size_pairs) {
@@ -93,7 +93,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
         sets.make_set(i);
     }
 
-    __gnu_parallel::for_each(std::begin(rg), std::end(rg), [&segids](auto & a) {
+    std::for_each(std::execution::par, std::begin(rg), std::end(rg), [&segids](auto & a) {
             auto it = std::lower_bound(segids.begin(), segids.end(), std::get<1>(a));
             if (it == segids.end()) {
                 std::cerr << "Should not happen, rg element does not exist: " << std::get<1>(a) << std::endl;
@@ -141,7 +141,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     vbi.resize(bi.size(), 0);
     vbo.resize(bo.size(), 0);
 
-    __gnu_parallel::transform(fi.begin(), fi.end(), std::back_inserter(vfi), [&segids](ID a){
+    std::transform(std::execution::par, fi.begin(), fi.end(), vfi.begin(), [&segids](ID a){
             auto it = std::lower_bound(segids.begin(), segids.end(), a);
             if (it == segids.end()) {
                 std::cerr << "Should not happen, face element does not exist: " << a << std::endl;
@@ -155,7 +155,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
             }
             });
 
-    __gnu_parallel::transform(fo.begin(), fo.end(), std::back_inserter(vfo), [&segids](ID a){
+    std::transform(std::execution::par, fo.begin(), fo.end(), vfo.begin(), [&segids](ID a){
             auto it = std::lower_bound(segids.begin(), segids.end(), a);
             if (it == segids.end()) {
                 std::cerr << "Should not happen, face element does not exist: " << a << std::endl;
@@ -169,7 +169,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
             }
             });
 
-    __gnu_parallel::transform(bi.begin(), bi.end(), std::back_inserter(vbi), [&segids](ID a){
+    std::transform(std::execution::par, bi.begin(), bi.end(), vbi.begin(), [&segids](ID a){
             auto it = std::lower_bound(segids.begin(), segids.end(), a);
             if (it == segids.end()) {
                 std::cerr << "Should not happen, face element does not exist: " << a << std::endl;
@@ -183,7 +183,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
             }
             });
 
-    __gnu_parallel::transform(bo.begin(), bo.end(), std::back_inserter(vbo), [&segids](ID a){
+    std::transform(std::execution::par, bo.begin(), bo.end(), vbo.begin(), [&segids](ID a){
             auto it = std::lower_bound(segids.begin(), segids.end(), a);
             if (it == segids.end()) {
                 std::cerr << "Should not happen, face element does not exist: " << a << std::endl;
@@ -283,7 +283,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     std::cout << "populate region graph in " << elapsed_secs << " seconds" << std::endl;
 
     begin = clock();
-    __gnu_parallel::stable_sort(std::begin(rg), std::end(rg), [](auto & a, auto & b) { return std::get<0>(a) > std::get<0>(b); });
+    std::stable_sort(std::execution::par, std::begin(rg), std::end(rg), [](auto & a, auto & b) { return std::get<0>(a) > std::get<0>(b); });
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "sort region graph in " << elapsed_secs << " seconds" << std::endl;
@@ -404,20 +404,20 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
 
     begin = clock();
 
-    __gnu_parallel::for_each(std::begin(res_rg), std::end(res_rg), [&remaps](auto & a) {
+    std::for_each(std::execution::par, std::begin(res_rg), std::end(res_rg), [&remaps](auto & a) {
             auto mm = std::minmax(remaps[std::get<1>(a)], remaps[std::get<2>(a)]);
             std::get<1>(a) = mm.first;
             std::get<2>(a) = mm.second;
             });
 
-    __gnu_parallel::stable_sort(std::begin(res_rg), std::end(res_rg), [](auto & a, auto & b) {
+    std::stable_sort(std::execution::par, std::begin(res_rg), std::end(res_rg), [](auto & a, auto & b) {
             return (std::get<1>(a) < std::get<1>(b)) \
             || ((std::get<1>(a) == std::get<1>(b)) && (std::get<2>(a) < std::get<2>(b))) \
             || ((std::get<1>(a) == std::get<1>(b)) && (std::get<2>(a) == std::get<2>(b)) && (std::get<0>(a) > std::get<0>(b))); });
 
-    __gnu_parallel::unique_copy(std::begin(res_rg), std::end(res_rg), std::back_inserter(unique_rg), [](auto & a, auto & b) {return (std::get<1>(a) == std::get<1>(b) && std::get<2>(a) == std::get<2>(b));});
+    std::unique_copy(std::execution::par, std::begin(res_rg), std::end(res_rg), std::back_inserter(unique_rg), [](auto & a, auto & b) {return (std::get<1>(a) == std::get<1>(b) && std::get<2>(a) == std::get<2>(b));});
 
-    __gnu_parallel::stable_sort(std::begin(unique_rg), std::end(unique_rg), [](auto & a, auto & b) {return std::get<0>(a) > std::get<0>(b);});
+    std::stable_sort(std::execution::par, std::begin(unique_rg), std::end(unique_rg), [](auto & a, auto & b) {return std::get<0>(a) > std::get<0>(b);});
     //rank_t rank_mst_map;
     //parent_t parent_mst_map;
 
@@ -478,7 +478,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     }
 
     auto remap_vector = load_remaps<ID>(remap_size);
-    __gnu_parallel::for_each(std::begin(remap_vector), std::end(remap_vector), [&segids](auto & a) {
+    std::for_each(std::execution::par, std::begin(remap_vector), std::end(remap_vector), [&segids](auto & a) {
             auto it = std::lower_bound(segids.begin(), segids.end(), a.second);
             if (a.second == *it) {
                 a.second = std::distance(segids.begin(), it);
@@ -620,8 +620,8 @@ void mark_border_supervoxels(std::vector<std::pair<T, size_t> > & sizes, const s
                 std::cerr << "Failed to close the file" << std::endl;
                 std::abort();
             }
-            __gnu_parallel::sort(boundary_segs.begin(), boundary_segs.end());
-            __gnu_parallel::for_each(sizes.begin(), sizes.end(), [&boundary_segs](auto & p) {
+            std::sort(std::execution::par, boundary_segs.begin(), boundary_segs.end());
+            std::for_each(std::execution::par, sizes.begin(), sizes.end(), [&boundary_segs](auto & p) {
                     if (p.first != 0) {
                         auto newid = std::lower_bound(boundary_segs.begin(), boundary_segs.end(), p.first);
                         if (*newid == p.first) {
@@ -659,7 +659,7 @@ void update_border_supervoxels(const std::vector<std::pair<T, T> > & remaps, con
                 std::cerr << "Failed to close the file" << std::endl;
                 std::abort();
             }
-            __gnu_parallel::for_each(face_i_vector.begin(), face_i_vector.end(), [&remaps](size_t & a) {
+            std::for_each(std::execution::par, face_i_vector.begin(), face_i_vector.end(), [&remaps](size_t & a) {
                     auto newid = std::lower_bound(remaps.begin(), remaps.end(), a, [](auto & x, auto & y){
                             return x.first < y;
                             });
@@ -678,7 +678,7 @@ void update_border_supervoxels(const std::vector<std::pair<T, T> > & remaps, con
                 std::cerr << "Failed to close the file" << std::endl;
                 std::abort();
             }
-            __gnu_parallel::for_each(face_o_vector.begin(), face_o_vector.end(), [&remaps](size_t & a) {
+            std::for_each(std::execution::par, face_o_vector.begin(), face_o_vector.end(), [&remaps](size_t & a) {
                     auto newid = std::lower_bound(remaps.begin(), remaps.end(), a, [](auto & x, auto & y){
                             return x.first < y;
                             });

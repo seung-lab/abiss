@@ -4,10 +4,10 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
+#include <execution>
 #include <sys/stat.h>
 #include <boost/pending/disjoint_sets.hpp>
 #include <boost/format.hpp>
-#include <parallel/algorithm>
 
 template <typename T>
 struct remap_t{
@@ -62,13 +62,13 @@ remap_t<T> load_remap(const char * filename)
     std::vector<std::pair<T, T> > remap_vector = read_array<std::pair<T, T> >(filename);
     std::vector<T> segids;
     std::cout << "load remaps" << std::endl;
-    __gnu_parallel::transform(remap_vector.begin(), remap_vector.end(), std::back_inserter(segids), [](auto & p){
+    std::transform(remap_vector.begin(), remap_vector.end(), std::back_inserter(segids), [](auto & p) -> T{
             return p.first;
     });
-    __gnu_parallel::transform(remap_vector.begin(), remap_vector.end(), std::back_inserter(segids), [](auto & p){
+    std::transform(remap_vector.begin(), remap_vector.end(), std::back_inserter(segids), [](auto & p) -> T{
             return p.second;
     });
-    __gnu_parallel::sort(segids.begin(), segids.end());
+    std::sort(std::execution::par, segids.begin(), segids.end());
 
     std::cout << "create segids" << std::endl;
     auto last = std::unique(segids.begin(), segids.end());
@@ -78,7 +78,7 @@ remap_t<T> load_remap(const char * filename)
     std::vector<T> remaps(segids.size());
     std::iota(remaps.begin(), remaps.end(), size_t(0));
 
-    __gnu_parallel::for_each(remap_vector.begin(), remap_vector.end(), [&segids](auto & p) {
+    std::for_each(std::execution::par, remap_vector.begin(), remap_vector.end(), [&segids](auto & p) {
             auto it = std::lower_bound(segids.begin(), segids.end(), p.first);
             if (it == segids.end() || *it != p.first) {
                 std::cerr << "Should not happen, cannot find first segid: " << p.first << std::endl;
@@ -124,7 +124,7 @@ void classify_segments(remap_t<T> & remap_data, const char * ongoing_fn, const c
     auto & segids = remap_data.segids;
     auto & segtype = remap_data.segtype;
     auto & segsize = remap_data.segsize;
-    __gnu_parallel::for_each(done.begin(), done.end(), [&segids, &segtype, &segsize](auto & p) {
+    std::for_each(std::execution::par, done.begin(), done.end(), [&segids, &segtype, &segsize](auto & p) {
             auto s = p.first;
             auto it = std::lower_bound(segids.begin(), segids.end(), s);
             if (it != segids.end() && *it == s) {
@@ -138,7 +138,7 @@ void classify_segments(remap_t<T> & remap_data, const char * ongoing_fn, const c
                 }
             }
     });
-    __gnu_parallel::for_each(ongoing.begin(), ongoing.end(), [&segids, &segtype, &segsize](auto & p) {
+    std::for_each(std::execution::par, ongoing.begin(), ongoing.end(), [&segids, &segtype, &segsize](auto & p) {
             auto s = p.first;
             auto it = std::lower_bound(segids.begin(), segids.end(), s);
             if (it != segids.end() &&  *it == s) {
