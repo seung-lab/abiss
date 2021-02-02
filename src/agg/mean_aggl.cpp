@@ -337,12 +337,19 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
             supervoxel_counts.push_back(count);
             prev_seg = seg;
         } else {
+#if defined(OVERLAPPED)
             if (boundary & count) {
                 supervoxel_counts.back() |= boundary;
             }
-#ifdef OVERLAPPED
             else {
                 supervoxel_counts.back() += count;
+            }
+#else
+            if (count == boundary) {
+                supervoxel_counts.back() |= boundary;
+            } else {
+                supervoxel_counts.back() += (count & (~boundary)) - 1;
+                supervoxel_counts.back() |= count & boundary;
             }
 #endif
             //if ((boundary & count) && (supervoxel_counts.back() & (~boundary)) > 1) {
