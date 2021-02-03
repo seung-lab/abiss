@@ -472,7 +472,9 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 if (p.first > small_threshold and p.second > large_threshold) {
                     std::cout << "reject edge between " << seg_indices[v0] << "(" << size0 << ")"<< " and " << seg_indices[v1] << "(" << size1 << ")"<< std::endl;
                     of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
+                    of_reject.write(reinterpret_cast<const char *>(&(size0)), sizeof(size0));
                     of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
+                    of_reject.write(reinterpret_cast<const char *>(&(size1)), sizeof(size1));
                     write_edge(of_reject, e.edge->w);
                     continue;
                 }
