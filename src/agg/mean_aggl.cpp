@@ -466,9 +466,11 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             }
 
             if (!comp(e.edge->w, h_threshold)) {
-                auto p = std::minmax({(supervoxel_counts[v0] & (~frozen)), (supervoxel_counts[v1] & (~frozen))});
+                size_t size0 = (supervoxel_counts[v0] & (~frozen));
+                size_t size1 = (supervoxel_counts[v1] & (~frozen));
+                auto p = std::minmax({size0, size1});
                 if (p.first > small_threshold and p.second > large_threshold) {
-                    std::cout << "reject edge between " << seg_indices[v0] << "(" << (supervoxel_counts[v0] & (~frozen)) << ")"<< " and " << seg_indices[v1] << "(" << (supervoxel_counts[v1] & (~frozen)) << ")"<< std::endl;
+                    std::cout << "reject edge between " << seg_indices[v0] << "(" << size0 << ")"<< " and " << seg_indices[v1] << "(" << size1 << ")"<< std::endl;
                     of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
                     of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
                     write_edge(of_reject, e.edge->w);
