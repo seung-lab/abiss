@@ -35,7 +35,7 @@ function acquire_cpu_slot() {
             return
         fi
     done
-    die "All cpus are busy"
+    die "All ${ncpu} cpus are busy"
 }
 
 function release_cpu_slot() {
