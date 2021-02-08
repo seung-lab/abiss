@@ -45,6 +45,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     #&& pip install -U pip Pillow brotlipy\
     && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build_ext numpy \
     && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build_ext scipy \
+    && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build git+https://github.com/seung-lab/chunk_iterator#egg=chunk-iterator \
     && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build crcmod gsutil joblib cloud-volume\
     && cd /usr/local/lib/python3.8/dist-packages \
     && echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \
