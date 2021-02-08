@@ -1,4 +1,4 @@
-FROM python:3.8-slim
+FROM ubuntu:focal
 MAINTAINER ranlu
 
 ARG SEG_HOME=/root/seg
@@ -18,31 +18,35 @@ RUN savedAptMark="$(apt-mark showmanual)" \
         curl \
         apt-transport-https \
         software-properties-common \
+    && add-apt-repository ppa:ubuntu-toolchain-r/test \
+    && apt-get update -y \
+    && apt-get install -y --no-install-recommends \
         build-essential \
-        gfortran python-dev libopenblas-dev liblapack-dev cython libffi-dev libssl-dev\
+        python3-dev \
+        python3-pip \
+        libopenblas-dev liblapack-dev cython libffi-dev libssl-dev \
         ca-certificates \
         gnupg-agent \
         gnupg \
         dirmngr \
         cmake \
+        pkg-config \
         zstd \
         parallel \
         coreutils \
         libboost-system-dev \
         libboost-iostreams-dev \
-        zlib1g-dev libjpeg62-turbo-dev \
-    && echo "deb http://ftp.us.debian.org/debian testing main contrib non-free" >> /etc/apt/sources.list \
-    && apt-get update -y \
-    && apt-get install -y --no-install-recommends \
+        libjemalloc-dev \
+        libjpeg-dev \
         git \
-        g++-9 \
+        gfortran \
         libtbb-dev \
-    && pip install -U pip pybind11\
+    && pip3 install --no-cache-dir -U pybind11 DracoPy pillow brotlipy orjson \
     #&& pip install -U pip Pillow brotlipy\
-    && CFLAGS="-Os -g0 -Wl,--strip-all" pip install -U --compile --global-option=build_ext numpy \
-    && CFLAGS="-Os -g0 -Wl,--strip-all" pip install -U --compile --global-option=build_ext scipy \
-    && CFLAGS="-Os -g0 -Wl,--strip-all" pip install -U --compile --global-option=build crcmod gsutil joblib cloud-volume \
-    && cd /usr/local/lib/python3.6/site-packages \
+    && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build_ext numpy \
+    && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build_ext scipy \
+    && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build crcmod gsutil joblib cloud-volume\
+    && cd /usr/local/lib/python3.8/dist-packages \
     && echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \
     && mkdir -p ${SEG_HOME}/build \
     && cd ${SEG_HOME}/build \
@@ -50,12 +54,13 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     #&& cmake .. -DEXTRACT_SIZE=ON -DDOUBLE=ON \
     #&& cmake .. -DEXTRACT_SIZE=ON -DEXTRACT_BBOX=ON \
     #&& cmake .. -DEXTRACT_SIZE=ON -DSEM_EDGE=ON\
-    && CC=gcc-9 CXX=g++-9 cmake .. -DEXTRACT_SIZE=ON \
+    && cmake .. -DEXTRACT_SIZE=ON \
     && make -j4 \
     && apt-mark auto '.*' > /dev/null \
-    && apt-mark manual $savedAptMark zstd parallel coreutils libopenblas-base liblapack3 libjpeg62-turbo \
+    && apt-mark manual $savedAptMark python3-pip python3-six python3-requests zstd parallel coreutils libopenblas0 liblapack3 libjpeg8 libtbb2 libjemalloc2 \
     && find ${SEG_HOME}/build -type f -executable -exec ldd '{}' ';' \
         | awk '/=>/ { print $(NF-1) }' \
+        | sed 's/^\///g' \
         | sort -u \
         | xargs -r dpkg-query --search \
         | cut -d: -f1 \
