@@ -16,7 +16,7 @@ endif(COMPILER_SUPPORTS_CXX17)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(Boost COMPONENTS iostreams system REQUIRED)
-find_package(Threads)
+find_package(Threads REQUIRED)
 
 if(EXTRACT_SIZE)
     add_definitions(-DEXTRACT_SIZE)
