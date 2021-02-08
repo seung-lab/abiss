@@ -140,3 +140,7 @@ try rm -rf remap
 for d in $META; do
     try rm -rf $d
 done
+
+rm *.data
+rm *.tmp
+rm *.zst
