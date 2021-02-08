@@ -37,25 +37,30 @@ public:
         return mergedSize;
     }
 
-    void output(const std::unordered_set<T> & incompleteSegments, const std::string & completeFileName, const std::string & incompleteFileName)
+    void output(const std::unordered_map<T, T> & chunkMap, const std::string & outputFileName)
     {
-        std::ofstream complete(completeFileName, std::ios_base::binary);
-        std::ofstream incomplete(incompleteFileName, std::ios_base::binary);
-        assert(complete.is_open());
-        assert(incomplete.is_open());
-        for (const auto & [k,v] : m_sizes) {
-            if (incompleteSegments.count(k) > 0) {
-                write_size(incomplete, k ,v);
+        std::unordered_map<T, size_t> remapped_sizes;
+        std::ofstream of(outputFileName, std::ios_base::binary);
+        assert(of.is_open());
+        for (const auto & [k, v]: m_sizes) {
+            auto svid = k;
+            if (chunkMap.count(k) > 0) {
+                svid = chunkMap.at(k);
+            }
+            if (remapped_sizes.count(svid) == 0) {
+                remapped_sizes[svid] = v;
             } else {
-                write_size(complete, k ,v);
+                remapped_sizes[svid] += v;
             }
         }
-        complete.close();
-        incomplete.close();
+        for (const auto & [k,v] : remapped_sizes) {
+            write_size(of, k ,v);
+        }
+        of.close();
     }
+
 private:
     void write_size(auto & io, const auto & k, const auto & v) {
-        io.write(reinterpret_cast<const char *>(&k), sizeof(k));
         io.write(reinterpret_cast<const char *>(&k), sizeof(k));
         io.write(reinterpret_cast<const char *>(&v), sizeof(v));
         assert(!io.bad());

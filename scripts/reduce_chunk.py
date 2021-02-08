@@ -84,7 +84,7 @@ def reduce_edges(tag, remaps):
 
     np.array(reduced_edges, dtype=d_ie).tofile("reduced_edges_{}.data".format(tag))
 
-def reduce_sizes(tag, remaps, bs):
+def reduce_counts(tag, remaps, bs):
     dt = [('sid', np.uint64), ('s', np  .uint64)]
     sizes = np.fromfile("ongoing_supervoxel_counts_{}.data".format(tag), dtype=dt)
     reduced_sizes = dict()
@@ -115,6 +115,16 @@ def reduce_sem(tag, remaps):
     sems.tofile("reduced_ongoing_semantic_labels_{}.data".format(tag))
 
 
+def reduce_size(tag, remaps):
+    nlabels = 3
+    dt = [('sid', np.uint64), ('size', np.uint64)]
+    sizes = np.fromfile("ongoing_seg_size_{}.data".format(tag), dtype=dt)
+    for e in sizes:
+        e[0] = remaps.get(e[0], e[0])
+
+    sizes.tofile("reduced_ongoing_seg_size_{}.data".format(tag))
+
+
 def write_reduced_map(remaps):
     np.array([(k,v) for k, v in remaps.items()], dtype=[('os', np.uint64), ('ns', np.uint64)]).tofile("extra_remaps.data")
 
@@ -128,9 +138,10 @@ tag = sys.argv[1]
 ongoing_counts, done_counts = load_sizes("ongoing_segments.data", "done_segments.data")
 counts = {**ongoing_counts, **done_counts}
 reduced_map1, bs = reduce_boundaries(tag, remaps, counts)
-reduced_map2 = reduce_sizes(tag, remaps, bs)
+reduced_map2 = reduce_counts(tag, remaps, bs)
 reduce_edges(tag, remaps)
-reduce_sem(tag,remaps)
+reduce_sem(tag, remaps)
+reduce_size(tag, remaps)
 write_reduced_map({**reduced_map1, **reduced_map2})
 #print(load_segids("0_0_0_0"))
 #bs_fname = sys.argv[1]

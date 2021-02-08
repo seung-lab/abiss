@@ -309,7 +309,7 @@ std::vector<T> process_boundary_supervoxels(const std::string & tag, const remap
 }
 
 template <class T>
-void generate_extra_sizes(const remap_data<T> & rep, const std::vector<T> & bs)
+void generate_extra_counts(const remap_data<T> & rep, const std::vector<T> & bs)
 {
     auto remap_vector = read_array<matching_entry_t<T> >("matching_faces.data");
     std::sort(std::execution::par, remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
@@ -355,7 +355,7 @@ void generate_extra_sizes(const remap_data<T> & rep, const std::vector<T> & bs)
 }
 
 template <class T>
-void process_sizes(remap_data<T> rep)
+void process_counts(remap_data<T> rep)
 {
     auto sizes = read_array<std::pair<T,size_t> >("o_ongoing_supervoxel_counts.data");
     std::for_each(std::execution::par, sizes.begin(), sizes.end(), [&rep](auto & p) {
@@ -368,6 +368,27 @@ void process_sizes(remap_data<T> rep)
         }
     });
     std::ofstream ofs("ongoing_supervoxel_counts.data", std::ios_base::binary);
+    for (const auto & p : sizes) {
+        ofs.write(reinterpret_cast<const char *>(&(p)), sizeof(p));
+    }
+    assert(!ofs.bad());
+    ofs.close();
+}
+
+template <class T>
+void process_size(remap_data<T> rep)
+{
+    auto sizes = read_array<std::pair<T, size_t> >("o_ongoing_seg_size.data");
+    std::for_each(std::execution::par, sizes.begin(), sizes.end(), [&rep](auto & p) {
+        auto it = std::lower_bound(rep.segids.begin(), rep.segids.end(), p.first);
+        if (it != rep.segids.end() && p.first == *it) {
+            auto idx = std::distance(rep.segids.begin(), it);
+            if (rep.remaps[idx].sid != 0) {
+                p.first = rep.segids[rep.remaps[idx].sid];
+            }
+        }
+    });
+    std::ofstream ofs("ongoing_seg_size.data", std::ios_base::binary);
     for (const auto & p : sizes) {
         ofs.write(reinterpret_cast<const char *>(&(p)), sizeof(p));
     }
@@ -420,11 +441,13 @@ int main(int argc, char * argv[])
     std::cout << "remap edges" << std::endl;
     auto bs = process_boundary_supervoxels<seg_t>(tag, rep);
     std::cout << "reduce boundary supervoxels" << std::endl;
-    generate_extra_sizes(rep, bs);
-    std::cout << "generate extra sizes" << std::endl;
-    process_sizes(rep);
+    generate_extra_counts(rep, bs);
+    std::cout << "generate extra supervoxel counts" << std::endl;
+    process_counts(rep);
     std::cout << "reduce segment sizes" << std::endl;
     process_sems(rep);
     std::cout << "reduce semantic labels" << std::endl;
+    process_size(rep);
+    std::cout << "reduce sizes" << std::endl;
     write_extra_remaps<seg_t>(rep);
 }

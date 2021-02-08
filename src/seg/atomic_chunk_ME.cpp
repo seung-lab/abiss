@@ -106,7 +106,7 @@ int main(int argc, char * argv[])
     chunkedOutput(com_extractor.com(), "chunked_rg/com", chunk_tag, ac_offset);
 
 #ifdef EXTRACT_SIZE
-    size_extractor.output(incomplete_segments, "sizes.data", "incomplete_sizes_"+chunk_tag+".data");
+    size_extractor.output(map, "ongoing_seg_size.data");
     auto sv_sizes = size_extractor.svSizes(map);
     std::ofstream nsfile("ns.data", std::ios_base::binary);
     assert(nsfile.is_open());

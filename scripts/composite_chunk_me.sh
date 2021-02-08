@@ -38,11 +38,11 @@ try cat filelist.txt | $PARALLEL_CMD --halt 2 "md5sum -c --quiet {}.data.md5sum"
 
 try python3 $SCRIPT_PATH/merge_chunks_me.py $1 $META
 try mv ongoing.data localmap.data
-
 if [ "$OVERLAP" = "1"  ]; then
     try mv residual_rg.data o_residual_rg.data
     try mv ongoing_supervoxel_counts.data o_ongoing_supervoxel_counts.data
     try mv ongoing_semantic_labels.data o_ongoing_semantic_labels.data
+    try mv ongoing_seg_size.data o_ongoing_seg_size.data
     try $BIN_PATH/match_chunks $output
     try cat extra_remaps.data >> localmap.data
     try cat extra_sv_counts.data >> ongoing_supervoxel_counts.data
@@ -95,6 +95,8 @@ try mv done_segments.data info_"$output".data
 try mv ongoing_segments.data ongoing_supervoxel_counts_"$output".data
 try mv done_sem.data semantic_labels_"$output".data
 try mv ongoing_sem.data ongoing_semantic_labels_"$output".data
+try mv done_size.data seg_size_"$output".data
+try mv ongoing_size.data ongoing_seg_size_"$output".data
 try mv rejected_edges.log size_rejected_edges_"$output".log
 try mv sem_cuts.data sem_rejected_edges_"$output".log
 
@@ -110,6 +112,7 @@ fi
 
 retry 10 $UPLOAD_CMD info_"${output}".data $FILE_PATH/info/info_"${output}".data
 retry 10 $UPLOAD_CMD semantic_labels_"${output}".data $FILE_PATH/info/semantic_labels_"${output}".data
+retry 10 $UPLOAD_CMD seg_size_"${output}".data $FILE_PATH/info/seg_size_"${output}".data
 retry 10 $UPLOAD_CMD size_rejected_edges_"${output}".log $FILE_PATH/info/size_rejected_edges_"${output}".log
 retry 10 $UPLOAD_CMD sem_rejected_edges_"${output}".log $FILE_PATH/info/sem_rejected_edges_"${output}".log
 retry 10 $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data

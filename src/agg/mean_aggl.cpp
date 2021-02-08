@@ -239,6 +239,7 @@ struct agglomeration_data_t
     std::vector<size_t> supervoxel_counts;
     std::vector<seg_t> seg_indices;
     std::vector<sem_array_t> sem_counts;
+    std::vector<size_t> seg_size;
 };
 
 template <class T>
@@ -271,6 +272,41 @@ std::vector<T> read_array(const char * filename)
 
     return array;
 }
+
+std::vector<size_t >
+load_size(const char * size_filename, const std::vector<seg_t> & seg_indices)
+{
+    std::vector<std::pair<seg_t, size_t> > size_array = read_array<std::pair<seg_t, size_t> >(size_filename);
+    if (size_array.size() == 0) {
+        std::cout << "Error: No seg size data" << std::endl;
+        std::abort();
+    }
+
+    std::vector<size_t > size_counts(seg_indices.size());
+
+    std::for_each(std::execution::par, size_array.begin(), size_array.end(), [&seg_indices](auto & a) {
+        auto it = std::lower_bound(seg_indices.begin(), seg_indices.end(), a.first);
+        if (it == seg_indices.end()) {
+            std::cerr << "Should not happen, size element does not exist: " << a.first << std::endl;
+            std::abort();
+        }
+        if (a.first == *it) {
+            a.first = std::distance(seg_indices.begin(), it);
+        } else {
+            std::cerr << "Should not happen, cannot find size entry: " << a.first  << "," << *it << std::endl;
+            std::abort();
+        }
+    });
+
+    std::sort(std::execution::par, std::begin(size_array), std::end(size_array), [](auto & a, auto & b) { return a.first < b.first; });
+
+    for (auto & [k, v] : size_array) {
+        size_counts[k] += v;
+    }
+    return size_counts;
+
+}
+
 
 std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<seg_t> & seg_indices)
 {
@@ -359,6 +395,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     }
 
     agg_data.sem_counts = load_sem("ongoing_semantic_labels.data", seg_indices);
+    agg_data.seg_size = load_size("ongoing_seg_size.data", seg_indices);
 
     std::for_each(std::execution::par, rg_vector.begin(), rg_vector.end(), [&seg_indices](auto & a) {
             size_t u0, u1;
@@ -500,6 +537,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
     auto & sem_counts = agg_data.sem_counts;
+    auto & seg_size = agg_data.seg_size;
 
     size_t rg_size = heap.size();
 
@@ -613,6 +651,10 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             supervoxel_counts[v0] += supervoxel_counts[v1];
             supervoxel_counts[v1] = 0;
             std::swap(supervoxel_counts[v0], supervoxel_counts[s]);
+
+            seg_size[v0] += seg_size[v1];
+            seg_size[v1] = 0;
+            std::swap(seg_size[v0], seg_size[s]);
 
             if (!sem_counts.empty()) {
                 std::transform(sem_counts[v0].begin(), sem_counts[v0].end(), sem_counts[v1].begin(), sem_counts[v0].begin(), std::plus<size_t>());
@@ -764,12 +806,16 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     assert(!of_meta.bad());
     of_meta.close();
 
-    std::ofstream of_fs_ongoing, of_fs_done, of_sem_ongoing, of_sem_done;
+    std::ofstream of_fs_ongoing, of_fs_done, of_sem_ongoing, of_sem_done, of_size_ongoing, of_size_done;
+
     of_fs_ongoing.open("ongoing_segments.data", std::ofstream::out | std::ofstream::trunc);
     of_fs_done.open("done_segments.data", std::ofstream::out | std::ofstream::trunc);
 
     of_sem_ongoing.open("ongoing_sem.data", std::ofstream::out | std::ofstream::trunc);
     of_sem_done.open("done_sem.data", std::ofstream::out | std::ofstream::trunc);
+
+    of_size_ongoing.open("ongoing_size.data", std::ofstream::out | std::ofstream::trunc);
+    of_size_done.open("done_size.data", std::ofstream::out | std::ofstream::trunc);
 
     for (size_t i = 0; i < supervoxel_counts.size(); i++) {
         if (!(supervoxel_counts[i] & (~frozen))) {
@@ -792,6 +838,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 of_sem_ongoing.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
                 of_sem_ongoing.write(reinterpret_cast<const char *>(&(sem_counts[i])), sizeof(sem_array_t));
             }
+            of_size_ongoing.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
+            of_size_ongoing.write(reinterpret_cast<const char *>(&(seg_size[i])), sizeof(size_t));
         } else {
             of_fs_done.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
             of_fs_done.write(reinterpret_cast<const char *>(&(supervoxel_counts[i])), sizeof(size_t));
@@ -799,6 +847,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 of_sem_done.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
                 of_sem_done.write(reinterpret_cast<const char *>(&(sem_counts[i])), sizeof(sem_array_t));
             }
+            of_size_done.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
+            of_size_done.write(reinterpret_cast<const char *>(&(seg_size[i])), sizeof(size_t));
         }
     }
 
@@ -807,6 +857,9 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
     of_sem_ongoing.close();
     of_sem_done.close();
+
+    of_size_ongoing.close();
+    of_size_done.close();
 
     return;
 }
