@@ -55,7 +55,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     #&& cmake .. -DEXTRACT_SIZE=ON -DDOUBLE=ON \
     #&& cmake .. -DEXTRACT_SIZE=ON -DEXTRACT_BBOX=ON \
     #&& cmake .. -DEXTRACT_SIZE=ON -DSEM_EDGE=ON\
-    && cmake .. -DEXTRACT_SIZE=ON \
+    && cmake .. -DCMAKE_BUILD_TYPE=Release -DEXTRACT_SIZE=ON \
     && make -j4 \
     && apt-mark auto '.*' > /dev/null \
     && apt-mark manual $savedAptMark python3-pip python3-six python3-requests zstd parallel coreutils libopenblas0 liblapack3 libjpeg8 libtbb2 libjemalloc2 \
