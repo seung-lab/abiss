@@ -852,6 +852,15 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         }
     }
 
+    assert(!of_fs_ongoing.bad());
+    assert(!of_fs_done.bad());
+
+    assert(!of_sem_ongoing.bad());
+    assert(!of_sem_done.bad());
+
+    assert(!of_size_ongoing.bad());
+    assert(!of_size_done.bad());
+
     of_fs_ongoing.close();
     of_fs_done.close();
 
