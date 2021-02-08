@@ -14,6 +14,8 @@ def merge_remaps(ancestor_tags, offset):
     return filesize
 
 param = cu.read_inputs(sys.argv[1])
+global_param = cu.read_inputs(os.environ['PARAM_JSON'])
+
 ancestors = cu.generate_ancestors(sys.argv[1])
 
 offset = param["offset"]
@@ -31,6 +33,11 @@ if param["mip_level"] == 0:
         f.write("\n")
         f.write(str(actual_size))
         f.write("\n")
-        f.write(sys.argv[2])
+        if os.environ["STAGE"] == "ws" and global_param.get("CHUNK_OUTPUT", True):
+            f.write("1")
+        elif os.environ["STAGE"] == "agg" and global_param.get("CHUNK_OUTPUT", False):
+            f.write("1")
+        else:
+            f.write("0")
 else:
     print("only atomic chunks need remapping")

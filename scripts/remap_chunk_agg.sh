@@ -5,6 +5,7 @@ INIT_PATH="$(dirname "$0")"
 output=`basename $1 .json`
 
 try acquire_cpu_slot
+try touch chunkmap.data
 try python3 $SCRIPT_PATH/generate_filelist.py $1 1|tee filelist.txt
 try cat filelist.txt|$PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/{}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o {/}.data"
 try taskset -c $cpuid python3 $SCRIPT_PATH/cut_chunk_remap.py $1 $WS_PATH
@@ -20,5 +21,9 @@ fi
 #try python3 $SCRIPT_PATH/ssim.py $1
 try taskset -c $cpuid python3 $SCRIPT_PATH/upload_chunk.py $1 $SEG_PATH $SEG_MIP
 try taskset -c $cpuid python3 $SCRIPT_PATH/upload_size.py $1 "$SEG_PATH"/size_map $SEG_MIP
+
+try mv chunkmap.data chunkmap_"${output}".data
+retry 10 $COMPRESS_CMD chunkmap_"${output}".data
+retry 10 $UPLOAD_ST_CMD chunkmap_"${output}".data."${COMPRESSED_EXT}" "$CHUNKMAP_OUTPUT"/chunkmap_"${output}".data."${COMPRESSED_EXT}"
 
 try release_cpu_slot
