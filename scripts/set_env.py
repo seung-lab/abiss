@@ -13,7 +13,7 @@ for s in ["SCRATCH", "WS", "SEG"]:
          data[path] = data[prefix]+data["NAME"]
 
 if "CHUNKMAP_INPUT" not in data:
-    data["CHUNKMAP_INPUT"] = data["SCRATCH_PATH"]+"/ws/chunkmap"
+    data["CHUNKMAP_INPUT"] = os.path.join(data["SCRATCH_PATH"], "ws", "chunkmap")
 
 for e in env:
     if e in data:
