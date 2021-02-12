@@ -43,6 +43,7 @@ function release_cpu_slot() {
     try rm -rf $fn
 }
 
+export AIRFLOW_TMP_DIR=${AIRFLOW_TMP_DIR:-"/tmp/airflow"}
 export WORKER_HOME=${WORKER_HOME:-"/workspace/seg"}
 
 SCRIPT_PATH="${WORKER_HOME}/scripts"
@@ -60,8 +61,6 @@ META=""
 
 export PARAM_JSON=$SECRETS/param
 #PARAM_JSON="$SCRIPT_PATH"/param.json
-
-#export AIRFLOW_TMP_DIR="/tmp/airflow"
 
 if [ ! -f "$SCRIPT_PATH"/config.sh ]; then
     try python3 $SCRIPT_PATH/set_env.py $PARAM_JSON > $SCRIPT_PATH/config.sh
