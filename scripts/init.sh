@@ -60,7 +60,7 @@ COMPRESSED_EXT="zst"
 META=""
 
 export PARAM_JSON=$SECRETS/param
-#PARAM_JSON="$SCRIPT_PATH"/param.json
+#export PARAM_JSON="$SCRIPT_PATH"/param.json
 
 if [ ! -f "$SCRIPT_PATH"/config.sh ]; then
     try python3 $SCRIPT_PATH/set_env.py $PARAM_JSON > $SCRIPT_PATH/config.sh
