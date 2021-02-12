@@ -43,8 +43,10 @@ function release_cpu_slot() {
     try rm -rf $fn
 }
 
-SCRIPT_PATH="/root/seg/scripts"
-BIN_PATH="/root/seg/build"
+export WORKER_HOME=${WORKER_HOME:-"/workspace/seg"}
+
+SCRIPT_PATH="${WORKER_HOME}/scripts"
+BIN_PATH="${WORKER_HOME}/build"
 UPLOAD_CMD="gsutil -q -m cp"
 UPLOAD_ST_CMD="gsutil -q cp"
 DOWNLOAD_CMD="gsutil -m cp"

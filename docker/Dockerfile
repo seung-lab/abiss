@@ -1,7 +1,7 @@
 FROM ubuntu:focal
 MAINTAINER ranlu
 
-ARG SEG_HOME=/root/seg
+ARG SEG_HOME=/workspace/seg
 ENV SEG_HOME ${SEG_HOME}
 
 USER root
@@ -85,5 +85,4 @@ RUN savedAptMark="$(apt-mark showmanual)" \
 
 COPY scripts ${SEG_HOME}/scripts
 
-
-WORKDIR /root
+WORKDIR /workspace
