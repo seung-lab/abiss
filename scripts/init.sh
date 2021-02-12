@@ -47,6 +47,7 @@ export WORKER_HOME=${WORKER_HOME:-"/workspace/seg"}
 
 SCRIPT_PATH="${WORKER_HOME}/scripts"
 BIN_PATH="${WORKER_HOME}/build"
+SECRETS=${SECRETS:-"/run/secrets"}
 UPLOAD_CMD="gsutil -q -m cp"
 UPLOAD_ST_CMD="gsutil -q cp"
 DOWNLOAD_CMD="gsutil -m cp"
@@ -57,7 +58,7 @@ PARALLEL_CMD="parallel --halt 2"
 COMPRESSED_EXT="zst"
 META=""
 
-export PARAM_JSON=/root/.cloudvolume/secrets/param
+export PARAM_JSON=$SECRETS/param
 #PARAM_JSON="$SCRIPT_PATH"/param.json
 
 #export AIRFLOW_TMP_DIR="/tmp/airflow"
