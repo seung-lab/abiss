@@ -1,6 +1,7 @@
 import sys
 from chunk_utils import read_inputs
-from cut_chunk_common import load_data, cut_data, save_raw_data, warp_z, fold_aff, adjust_affinitymap
+from cut_chunk_common import load_data, cut_data, save_raw_data
+from augment_affinity import adjust_affinitymap, warp_z
 import os
 
 def chunk_origin(bbox):

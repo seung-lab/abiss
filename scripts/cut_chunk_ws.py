@@ -1,7 +1,8 @@
 import sys
 from cloudvolume import CloudVolume
 import chunk_utils as cu
-from cut_chunk_common import load_data, cut_data, save_raw_data, warp_z, fold_aff, adjust_affinitymap
+from cut_chunk_common import load_data, cut_data, save_raw_data
+from augment_affinity import warp_z, adjust_affinitymap
 import os
 
 def write_metadata(fn, size, boundaries, offset):
