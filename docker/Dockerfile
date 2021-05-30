@@ -3,8 +3,8 @@ MAINTAINER ranlu
 
 ARG SEG_HOME=/workspace/seg
 ENV SEG_HOME ${SEG_HOME}
-
-USER root
+ARG SEG_USER=seg
+ENV SEG_USER ${SEG_USER}
 
 WORKDIR ${SEG_HOME}
 
@@ -85,4 +85,12 @@ RUN savedAptMark="$(apt-mark showmanual)" \
 
 COPY scripts ${SEG_HOME}/scripts
 
-WORKDIR /workspace
+RUN groupadd -r ${SEG_USER} \
+      && useradd -r -d ${SEG_HOME} -g ${SEG_USER} -s /bin/bash ${SEG_USER} \
+      && chown -R ${SEG_USER}: ${SEG_HOME} \
+      && echo "${SEG_USER} ALL=NOPASSWD: ALL" >> /etc/sudoers
+
+LABEL workspace_path=${SEG_HOME} \
+      mount_path="/run/secrets"
+
+USER ${SEG_USER}
