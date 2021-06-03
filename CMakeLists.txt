@@ -68,6 +68,8 @@ if(Boost_FOUND)
         src/ws/remap.cpp)
     add_executable(agg
         src/agg/mean_aggl.cpp)
+    add_executable(agg_nonoverlap
+        src/agg/mean_aggl.cpp)
     add_executable(agg_overlap
         src/agg/mean_aggl.cpp)
     add_executable(agg_extra
@@ -76,7 +78,7 @@ if(Boost_FOUND)
         src/seg/contact_surface.cpp)
     add_executable(mecs
         src/seg/merge_cs.cpp)
-    #target_compile_definitions(agg PRIVATE FINAL PRIVATE EXTRA)
+    target_compile_definitions(agg PRIVATE FINAL PRIVATE EXTRA)
     target_compile_definitions(agg_overlap PRIVATE OVERLAPPED PRIVATE FINAL PRIVATE EXTRA)
     target_compile_definitions(agg_extra PRIVATE EXTRA)
     target_link_libraries(ws ${Boost_LIBRARIES})
@@ -89,6 +91,7 @@ if(Boost_FOUND)
     target_link_libraries(mecs ${Boost_LIBRARIES} pthread tbb)
     target_link_libraries(match_chunks ${Boost_LIBRARIES} pthread tbb)
     target_link_libraries(agg ${Boost_LIBRARIES} pthread tbb ${optionalLibs})
+    target_link_libraries(agg_nonoverlap ${Boost_LIBRARIES} pthread tbb ${optionalLibs})
     target_link_libraries(agg_overlap ${Boost_LIBRARIES} pthread tbb ${optionalLibs})
     target_link_libraries(agg_extra ${Boost_LIBRARIES} pthread tbb ${optionalLibs})
 endif(Boost_FOUND)

@@ -20,7 +20,7 @@ do
     just_in_case rm -rf $fn
 done
 
-if [ "$OVERLAP" = "1" ]; then
+if [ "$OVERLAP" = "2" ]; then
     try cat filelist.txt | $PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/scratch2/{}.tar.${COMPRESSED_EXT} ."
     try cat filelist.txt | $PARALLEL_CMD --retries 10 "$COMPRESS_CMD -d {}.tar.${COMPRESSED_EXT}"
     try cat filelist.txt | $PARALLEL_CMD --retries 10 "tar xvf {}.tar"
@@ -38,7 +38,7 @@ try cat filelist.txt | $PARALLEL_CMD --halt 2 "md5sum -c --quiet {}.data.md5sum"
 
 try python3 $SCRIPT_PATH/merge_chunks_me.py $1 $META
 try mv ongoing.data localmap.data
-if [ "$OVERLAP" = "1"  ]; then
+if [ "$OVERLAP" = "2"  ]; then
     try mv residual_rg.data o_residual_rg.data
     try mv ongoing_supervoxel_counts.data o_ongoing_supervoxel_counts.data
     try mv ongoing_semantic_labels.data o_ongoing_semantic_labels.data
@@ -49,7 +49,7 @@ if [ "$OVERLAP" = "1"  ]; then
 fi
 
 
-if [ "$OVERLAP" = "1" ]; then
+if [ "$OVERLAP" = "2" ]; then
     try touch input_rg.data
 else
     try mv residual_rg.data input_rg.data
@@ -64,8 +64,10 @@ do
     cat boundary_"$i"_"$output".data >> frozen.data
 done
 
-if [ "$OVERLAP" = "1" ]; then
+if [ "$OVERLAP" = "2" ]; then
     try $BIN_PATH/agg_overlap $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
+elif [ "$OVERLAP" = "1" ]; then
+    try $BIN_PATH/agg_nonoverlap $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
 else
     try $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
 fi
@@ -79,7 +81,7 @@ done
 try $BIN_PATH/split_remap chunk_offset.txt $output
 try $BIN_PATH/assort $output $META
 
-if [ "$OVERLAP" = 1 ]; then
+if [ "$OVERLAP" = "2" ]; then
     for i in {0..5}
     do
         mv o_boundary_"$i"_"$output".data boundary_"$i"_"$output".data
@@ -123,7 +125,7 @@ retry 10 $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/re
 try cat done_remap.txt | $PARALLEL_CMD -X --retries 10 $UPLOAD_ST_CMD {}.$COMPRESSED_EXT $FILE_PATH/remap/
 try md5sum *_"${output}".data > "${output}".data.md5sum
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
-if [ "$OVERLAP" = 1  ]; then
+if [ "$OVERLAP" = "2"  ]; then
     retry 10 $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch2/"${output}".tar."${COMPRESSED_EXT}"
     retry 10 $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/scratch2/"${output}".data.md5sum
 else

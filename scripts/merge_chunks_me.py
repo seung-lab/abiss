@@ -7,7 +7,7 @@ def merge_incomplete(p, typ):
     mip_c = p["mip_level"]-1
     prefix= "incomplete_{}_".format(typ)
     fn = [prefix+cu.chunk_tag(mip_c, d[k])+".data" for k in d]
-    prefix = "o_incomplete_{}_".format(typ) if os.environ['OVERLAP'] == '1' else "incomplete_{}_".format(typ)
+    prefix = "o_incomplete_{}_".format(typ) if os.environ['OVERLAP'] == '2' else "incomplete_{}_".format(typ)
     cu.merge_files(prefix+cu.chunk_tag(p["mip_level"],p["indices"])+".tmp", fn)
 
 def merge_face(p,idx,subFaces):
@@ -17,7 +17,7 @@ def merge_face(p,idx,subFaces):
 
     fn = [prefix+str(idx)+"_"+cu.chunk_tag(mip_c,f)+".data" for f in subFaces]
 
-    prefix = "o_boundary_" if os.environ['OVERLAP'] == '1' else "boundary_"
+    prefix = "o_boundary_" if os.environ['OVERLAP'] == '2' else "boundary_"
 
     output = prefix+str(idx)+"_"+cu.chunk_tag(p["mip_level"],p["indices"])+".tmp"
 
@@ -58,7 +58,7 @@ def merge_chunks(p):
     cu.merge_intermediate_outputs(p, "ongoing_supervoxel_counts")
     cu.merge_intermediate_outputs(p, "ongoing_semantic_labels")
     cu.merge_intermediate_outputs(p, "ongoing_seg_size")
-    if os.environ['OVERLAP'] == '1':
+    if os.environ['OVERLAP'] == '2':
         cu.merge_intermediate_outputs(p, "vetoed_edges")
 
     for meta in sys.argv[2:]:

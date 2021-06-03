@@ -33,7 +33,11 @@ done
 try touch ns.data
 try touch ongoing_semantic_labels.data
 
-try taskset -c $cpuid $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data ns.data
+if [ "$OVERLAP" = "1" ]; then
+    try taskset -c $cpuid $BIN_PATH/agg_nonoverlap $AGG_THRESHOLD input_rg.data frozen.data ns.data
+else
+    try taskset -c $cpuid $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data ns.data
+fi
 
 try cat remap.data >> localmap.data
 try taskset -c $cpuid $BIN_PATH/split_remap chunk_offset.txt $output
