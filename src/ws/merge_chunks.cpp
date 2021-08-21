@@ -2,6 +2,7 @@
 #include "utils.hpp"
 #include "agglomeration.hpp"
 #include "mmap_array.hpp"
+#include "../seg/SlicedOutput.hpp"
 #include <vector>
 #include <tuple>
 #include <unordered_map>
@@ -491,8 +492,10 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
 
     begin = clock();
 
-    for (auto & kv : remap_vector) {
-        auto & s = kv.first;
+    SlicedOutput<std::pair<ID, ID> > remap_output(str(boost::format("done_pre_%1%.data") % tag));
+
+    for (size_t i = 0; i != remap_vector.size(); i++) {
+        auto & s = remap_vector[i].first;
         if (current_ac != (s - (s % ac_offset))) {
             if (of_done.is_open()) {
                 of_done.close();
@@ -509,7 +512,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
                 std::abort();
             }
         }
-        const auto seg = remaps[kv.second];
+        const auto seg = remaps[remap_vector[i].second];
         const auto size = sizes[seg];
         if (size & traits::on_border) {
             if (reps.count(seg) == 0) {
@@ -517,12 +520,17 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
                 of_ongoing.write(reinterpret_cast<const char *>(&(segids[seg])), sizeof(ID));
                 reps[seg] = s;
             } else {
+                remap_output.addPayload(std::make_pair(s, reps.at(seg)));
                 of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
                 of_done.write(reinterpret_cast<const char *>(&(reps.at(seg))), sizeof(ID));
             }
         } else {
+            remap_output.addPayload(std::make_pair(s, segids[seg]));
             of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
             of_done.write(reinterpret_cast<const char *>(&(segids[seg])), sizeof(ID));
+        }
+        if ((i == (remap_vector.size() - 1)) or (current_ac != (remap_vector[i+1].first - (remap_vector[i+1].first % ac_offset)))) {
+            remap_output.flushChunk(current_ac);
         }
         if (of_done.bad()) {
             std::cerr << "Error occurred when writing done remap file for " << tag << " " << current_ac << std::endl;
@@ -534,6 +542,8 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
         }
     }
 
+    remap_output.flushIndex();
+
     free_container(remap_vector);
 
     end = clock();
@@ -541,6 +551,8 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     std::cout << "update remaps in " << elapsed_secs << " seconds" << std::endl;
 
     current_ac = std::numeric_limits<std::size_t>::max();
+
+    SlicedOutput<std::pair<ID, ID> > remap2_output(str(boost::format("done_post_%1%.data") % tag));
 
     begin = clock();
     for (size_t i = 1; i != segids.size(); i++) {
@@ -573,10 +585,12 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
                 of_ongoing.write(reinterpret_cast<const char *>(&(segids[seg])), sizeof(ID));
                 reps[seg] = s;
             } else {
+                remap2_output.addPayload(std::make_pair(s, reps.at(seg)));
                 of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
                 of_done.write(reinterpret_cast<const char *>(&(reps.at(seg))), sizeof(ID));
             }
         } else {
+            remap2_output.addPayload(std::make_pair(s, segids[seg]));
             of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
             of_done.write(reinterpret_cast<const char *>(&(segids[seg])), sizeof(ID));
         }
@@ -588,7 +602,12 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
             std::cerr << "Error occurred when writing ongoing remap file for " << tag << " " << current_ac << std::endl;
             std::abort();
         }
+        if ((i == (segids.size() - 1)) or (current_ac != (segids[i+1] - (segids[i+1] % ac_offset)))) {
+            remap2_output.flushChunk(current_ac);
+        }
     }
+
+    remap2_output.flushIndex();
 
     of_done.close();
     of_ongoing.close();

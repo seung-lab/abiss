@@ -2,12 +2,14 @@ import sys
 import chunk_utils as cu
 
 def merge_size(ancestor_tags, offset):
-    fnList = []
+    content = b''
     for a in ancestor_tags:
-        fnList.append("size_{}_{}.data".format(a,offset))
+        payload = cu.download_slice('remap/size', a, offset)
+        if payload:
+            content += payload
 
-    print(fnList)
-    cu.merge_files("size.data", fnList)
+    with open('size.data','wb') as out:
+        out.write(content)
 
 param = cu.read_inputs(sys.argv[1])
 #print(ancestors)

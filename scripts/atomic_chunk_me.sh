@@ -75,6 +75,8 @@ retry 10 $UPLOAD_CMD seg_size_"${output}".data $FILE_PATH/info/seg_size_"${outpu
 retry 10 $UPLOAD_CMD sem_rejected_edges_"${output}".log $FILE_PATH/info/sem_rejected_edges_"${output}".log
 retry 10 $UPLOAD_CMD size_rejected_edges_"${output}".log $FILE_PATH/info/size_rejected_edges_"${output}".log
 retry 10 $UPLOAD_CMD -r remap $FILE_PATH/
+retry 10 $UPLOAD_CMD done_"${output}".data $FILE_PATH/remap/done_"${output}".data
+retry 10 $UPLOAD_CMD size_"${output}".data $FILE_PATH/remap/size_"${output}".data
 retry 10 $UPLOAD_CMD -r chunked_rg $FILE_PATH/
 retry 10 $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 retry 10 $UPLOAD_CMD mst_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/chunked_mst/mst_"${output}".data."${COMPRESSED_EXT}"

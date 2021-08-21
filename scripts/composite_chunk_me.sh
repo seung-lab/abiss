@@ -120,6 +120,8 @@ retry 10 $UPLOAD_CMD sem_rejected_edges_"${output}".log $FILE_PATH/info/sem_reje
 retry 10 $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 retry 10 $UPLOAD_CMD mst_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/chunked_mst/mst_"${output}".data."${COMPRESSED_EXT}"
 retry 10 $UPLOAD_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/remap_"${output}".data."${COMPRESSED_EXT}"
+retry 10 $UPLOAD_CMD done_"${output}".data $FILE_PATH/remap/done_"${output}".data
+retry 10 $UPLOAD_CMD size_"${output}".data $FILE_PATH/remap/size_"${output}".data
 retry 10 $UPLOAD_CMD edges_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/edges_"${output}".data."${COMPRESSED_EXT}"
 retry 10 $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/final_rg_"${output}".data."${COMPRESSED_EXT}"
 try cat done_remap.txt | $PARALLEL_CMD -X --retries 10 $UPLOAD_ST_CMD {}.$COMPRESSED_EXT $FILE_PATH/remap/

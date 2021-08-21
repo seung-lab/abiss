@@ -182,3 +182,34 @@ def generate_descedants(f, target=None):
 
         return descedants
 
+
+def download_slice(prefix, tag, offset):
+    from cloudfiles import CloudFiles
+    import binascii
+    import numpy as np
+    chunkid = np.uint64(offset)
+    print(os.path.join(os.environ['FILE_PATH']), f'{prefix}_{tag}.data')
+    cf = CloudFiles(os.path.join(os.environ['FILE_PATH']))
+    header = cf[f'{prefix}_{tag}.data'][:20]
+    print(header[:4])
+    idx_info = np.frombuffer(header[4:],dtype='uint64')
+    if idx_info[1] == 4:
+        return None
+    idx_content = cf[f'{prefix}_{tag}.data'][idx_info[0]:idx_info[0]+idx_info[1]]
+    assert np.frombuffer(idx_content[-4:], dtype='uint32')[0] == binascii.crc32(idx_content[:-4])
+    idx_dt = np.dtype([('chunkid', np.uint64), ('offset', np.uint64), ('bytesize',np.uint64)])
+    idx_payload = np.frombuffer(idx_content[:-4], dtype=idx_dt)
+    idx = np.searchsorted(idx_payload['chunkid'], chunkid)
+    print("index:", idx)
+    print(offset)
+    print("total len:", len(idx_payload))
+    #print(idx_payload)
+    chunk = idx_payload[idx]
+    print(chunk)
+    if chunkid != chunk['chunkid']:
+        print(f"Cannot find {chunkid}")
+        return None
+    else:
+        payload = cf[f'{prefix}_{tag}.data'][chunk['offset']:chunk['offset']+chunk['bytesize']]
+        assert np.frombuffer(payload[-4:], dtype='uint32')[0] == binascii.crc32(payload[:-4])
+        return payload[:-4]

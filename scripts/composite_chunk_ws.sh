@@ -22,6 +22,8 @@ try python3 $SCRIPT_PATH/merge_chunks_ws.py $1
 try $BIN_PATH/ws2 param.txt $WS_HIGH_THRESHOLD $WS_LOW_THRESHOLD $WS_SIZE_THRESHOLD $output
 try cat done_remap.txt | $PARALLEL_CMD -X $COMPRESSST_CMD
 try cat done_remap.txt | $PARALLEL_CMD --retries 10 -X $UPLOAD_ST_CMD {}.$COMPRESSED_EXT $FILE_PATH/remap/
+retry 10 $UPLOAD_CMD done_pre_"${output}".data $FILE_PATH/remap/done_pre_"${output}".data
+retry 10 $UPLOAD_CMD done_post_"${output}".data $FILE_PATH/remap/done_post_"${output}".data
 try md5sum *_"${output}".data > "${output}".data.md5sum
 retry 10 $COMPRESS_CMD ongoing_"${output}".data
 retry 10 $UPLOAD_CMD ongoing_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/

@@ -1,4 +1,5 @@
 #include "Types.h"
+#include "SlicedOutput.hpp"
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -166,6 +167,10 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
         std::cerr << "Failed to open ongoing remap file for " << tag << std::endl;
         std::abort();
     }
+
+    SlicedOutput<std::pair<T, T> > remap_output(str(boost::format("done_%1%.data") % tag));
+    SlicedOutput<std::pair<T, size_t> > size_output(str(boost::format("size_%1%.data") % tag));
+
     auto & segids = remap_data.segids;
     auto & remaps = remap_data.remaps;
     auto & segtype = remap_data.segtype;
@@ -208,6 +213,7 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
         }
         if (remaps[i] == i) {
             if (segtype[remaps[i]] == remap_t<T>::done){
+                size_output.addPayload(std::make_pair(seg, segsize[remaps[i]]));
                 of_size.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
                 of_size.write(reinterpret_cast<const char *>(&(segsize[remaps[i]])), sizeof(size_t));
             }
@@ -218,10 +224,13 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
                     of_ongoing.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
                     reps[seg] = s;
                 } else {
+                    remap_output.addPayload(std::make_pair(s, reps.at(seg)));
                     of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
                     of_done.write(reinterpret_cast<const char *>(&(reps.at(seg))), sizeof(T));
                 }
             } else if (segtype[remaps[i]] == remap_t<T>::done){
+                remap_output.addPayload(std::make_pair(s, seg));
+                size_output.addPayload(std::make_pair(seg, segsize[remaps[i]]));
                 of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
                 of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
                 of_size.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
@@ -232,6 +241,12 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
             }
 
         }
+
+        if ((i == (remaps.size() - 1)) or (current_ac != (segids[i+1] - (segids[i+1] % ac_offset)))) {
+            remap_output.flushChunk(current_ac);
+            size_output.flushChunk(current_ac);
+        }
+
         if (of_done.bad()) {
             std::cerr << "Error occurred when writing done remap file for " << tag << " " << current_ac << std::endl;
             std::abort();
@@ -241,6 +256,10 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
             std::abort();
         }
     }
+
+    remap_output.flushIndex();
+    size_output.flushIndex();
+
 }
 
 int main(int argc, char *argv[])

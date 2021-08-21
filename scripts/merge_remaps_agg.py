@@ -5,10 +5,7 @@ import chunk_utils as cu
 def merge_remaps(ancestor_tags, offset):
     content = b''
     for a in ancestor_tags:
-        payload = cu.download_slice('remap/done_pre', a, offset)
-        if payload:
-            content += payload
-        payload = cu.download_slice('remap/done_post', a, offset)
+        payload = cu.download_slice('remap/done', a, offset)
         if payload:
             content += payload
 
