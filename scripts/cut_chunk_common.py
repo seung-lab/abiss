@@ -42,7 +42,10 @@ def pad_data(data, boundary_flags):
 def cut_data(data, start_coord, end_coord, boundary_flags):
     bb = tuple(slice(start_coord[i], end_coord[i]) for i in range(3))
     if data.shape[3] == 1:
-        return pad_data(data[bb], boundary_flags)
+        if data.dtype == 'float32':
+            return pad_data(numpy.stack([numpy.squeeze(data[bb])]*3, axis=-1), boundary_flags)
+        else:
+            return pad_data(data[bb], boundary_flags)
     elif data.shape[3] == 3:
         return pad_data(data[bb+(slice(0,3),)], boundary_flags)
     elif data.shape[3] == 4: #0-2 affinity, 3 myelin
