@@ -470,7 +470,6 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     std::cout << "write supervoxel sizes in " << elapsed_secs << " seconds" << std::endl;
 
     size_t current_ac = std::numeric_limits<std::size_t>::max();
-    std::ofstream of_done;
     std::ofstream of_ongoing;
     of_ongoing.open(str(boost::format("ongoing_%1%.data") % tag));
     if (!of_ongoing.is_open()) {
@@ -497,20 +496,8 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     for (size_t i = 0; i != remap_vector.size(); i++) {
         auto & s = remap_vector[i].first;
         if (current_ac != (s - (s % ac_offset))) {
-            if (of_done.is_open()) {
-                of_done.close();
-                if (of_done.is_open()) {
-                    std::cerr << "Failed to close done remap file for " << tag << " " << current_ac << std::endl;
-                    std::abort();
-                }
-                reps.clear();
-            }
+            reps.clear();
             current_ac = s - (s % ac_offset);
-            of_done.open(str(boost::format("remap/done_%1%_%2%.data") % tag % current_ac));
-            if (!of_done.is_open()) {
-                std::cerr << "Failed to open done remap file for " << tag << " " << current_ac << std::endl;
-                std::abort();
-            }
         }
         const auto seg = remaps[remap_vector[i].second];
         const auto size = sizes[seg];
@@ -521,20 +508,12 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
                 reps[seg] = s;
             } else {
                 remap_output.addPayload(std::make_pair(s, reps.at(seg)));
-                of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
-                of_done.write(reinterpret_cast<const char *>(&(reps.at(seg))), sizeof(ID));
             }
         } else {
             remap_output.addPayload(std::make_pair(s, segids[seg]));
-            of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
-            of_done.write(reinterpret_cast<const char *>(&(segids[seg])), sizeof(ID));
         }
         if ((i == (remap_vector.size() - 1)) or (current_ac != (remap_vector[i+1].first - (remap_vector[i+1].first % ac_offset)))) {
             remap_output.flushChunk(current_ac);
-        }
-        if (of_done.bad()) {
-            std::cerr << "Error occurred when writing done remap file for " << tag << " " << current_ac << std::endl;
-            std::abort();
         }
         if (of_ongoing.bad()) {
             std::cerr << "Error occurred when writing ongoing remap file for " << tag << " " << current_ac << std::endl;
@@ -558,20 +537,8 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     for (size_t i = 1; i != segids.size(); i++) {
         auto s = segids[i];
         if (current_ac != (s - (s % ac_offset))) {
-            if (of_done.is_open()) {
-                of_done.close();
-                if (of_done.is_open()) {
-                    std::cerr << "Failed to close done remap file for " << tag << " " << current_ac << std::endl;
-                    std::abort();
-                }
-                reps.clear();
-            }
+            reps.clear();
             current_ac = s - (s % ac_offset);
-            of_done.open(str(boost::format("remap/done_%1%_%2%.data") % tag % current_ac), std::ios_base::app);
-            if (!of_done.is_open()) {
-                std::cerr << "Failed to open done remap file for " << tag << " " << current_ac << std::endl;
-                std::abort();
-            }
         }
         if (s == 0) {
             std::cerr << "svid = 0, should not happen" << std::endl;
@@ -586,17 +553,9 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
                 reps[seg] = s;
             } else {
                 remap2_output.addPayload(std::make_pair(s, reps.at(seg)));
-                of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
-                of_done.write(reinterpret_cast<const char *>(&(reps.at(seg))), sizeof(ID));
             }
         } else {
             remap2_output.addPayload(std::make_pair(s, segids[seg]));
-            of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(ID));
-            of_done.write(reinterpret_cast<const char *>(&(segids[seg])), sizeof(ID));
-        }
-        if (of_done.bad()) {
-            std::cerr << "Error occurred when writing done remap file for " << tag << " " << current_ac << std::endl;
-            std::abort();
         }
         if (of_ongoing.bad()) {
             std::cerr << "Error occurred when writing ongoing remap file for " << tag << " " << current_ac << std::endl;
@@ -609,7 +568,6 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
 
     remap2_output.flushIndex();
 
-    of_done.close();
     of_ongoing.close();
 
     end = clock();

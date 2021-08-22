@@ -61,7 +61,6 @@ try $COMPRESS_CMD mst_"${output}".data
 try $COMPRESS_CMD remap_"${output}".data
 try $COMPRESS_CMD edges_"${output}".data
 try $COMPRESS_CMD final_rg_"${output}".data
-try $COMPRESS_CMD -r remap
 
 for d in $META; do
     if [ "$(ls -A $d)"  ]; then
@@ -74,7 +73,6 @@ retry 10 $UPLOAD_CMD semantic_labels_"${output}".data $FILE_PATH/info/semantic_l
 retry 10 $UPLOAD_CMD seg_size_"${output}".data $FILE_PATH/info/seg_size_"${output}".data
 retry 10 $UPLOAD_CMD sem_rejected_edges_"${output}".log $FILE_PATH/info/sem_rejected_edges_"${output}".log
 retry 10 $UPLOAD_CMD size_rejected_edges_"${output}".log $FILE_PATH/info/size_rejected_edges_"${output}".log
-retry 10 $UPLOAD_CMD -r remap $FILE_PATH/
 retry 10 $UPLOAD_CMD done_"${output}".data $FILE_PATH/remap/done_"${output}".data
 retry 10 $UPLOAD_CMD size_"${output}".data $FILE_PATH/remap/size_"${output}".data
 retry 10 $UPLOAD_CMD -r chunked_rg $FILE_PATH/

@@ -106,7 +106,6 @@ try $COMPRESS_CMD mst_"${output}".data
 try $COMPRESS_CMD remap_"${output}".data
 try $COMPRESS_CMD edges_"${output}".data
 try $COMPRESS_CMD final_rg_"${output}".data
-try cat done_remap.txt | $PARALLEL_CMD --retries 10 -X $COMPRESSST_CMD
 
 if [ -n "$META" ]; then
     retry 10 $PARALLEL_CMD $UPLOAD_CMD -r {} $FILE_PATH/ ::: $META
@@ -124,7 +123,6 @@ retry 10 $UPLOAD_CMD done_"${output}".data $FILE_PATH/remap/done_"${output}".dat
 retry 10 $UPLOAD_CMD size_"${output}".data $FILE_PATH/remap/size_"${output}".data
 retry 10 $UPLOAD_CMD edges_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/edges_"${output}".data."${COMPRESSED_EXT}"
 retry 10 $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/final_rg_"${output}".data."${COMPRESSED_EXT}"
-try cat done_remap.txt | $PARALLEL_CMD -X --retries 10 $UPLOAD_ST_CMD {}.$COMPRESSED_EXT $FILE_PATH/remap/
 try md5sum *_"${output}".data > "${output}".data.md5sum
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 if [ "$OVERLAP" = "2"  ]; then

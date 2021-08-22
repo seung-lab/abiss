@@ -159,8 +159,6 @@ template<typename T>
 void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::string & tag)
 {
     size_t current_ac = std::numeric_limits<std::size_t>::max();
-    std::ofstream of_done;
-    std::ofstream of_size;
     std::ofstream of_ongoing;
     of_ongoing.open(str(boost::format("ongoing_%1%.data") % tag));
     if (!of_ongoing.is_open()) {
@@ -182,40 +180,12 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
         auto s = segids[i];
         auto seg = segids[remaps[i]];
         if (current_ac != (s - (s % ac_offset))) {
-            if (of_done.is_open()) {
-                of_done.close();
-                if (of_done.is_open()) {
-                    std::cerr << "Failed to close done remap file for " << tag << " " << current_ac << std::endl;
-                    std::abort();
-                }
-                reps.clear();
-            }
+            reps.clear();
             current_ac = s - (s % ac_offset);
-            of_done.open(str(boost::format("remap/done_%1%_%2%.data") % tag % current_ac));
-            if (!of_done.is_open()) {
-                std::cerr << "Failed to open done remap file for " << tag << " " << current_ac << std::endl;
-                std::abort();
-            }
-            if (of_size.is_open()) {
-                of_size.close();
-                if (of_size.is_open()) {
-                    std::cerr << "Failed to close done remap file for " << tag << " " << current_ac << std::endl;
-                    std::abort();
-                }
-                reps.clear();
-            }
-            current_ac = s - (s % ac_offset);
-            of_size.open(str(boost::format("remap/size_%1%_%2%.data") % tag % current_ac));
-            if (!of_size.is_open()) {
-                std::cerr << "Failed to open done remap file for " << tag << " " << current_ac << std::endl;
-                std::abort();
-            }
         }
         if (remaps[i] == i) {
             if (segtype[remaps[i]] == remap_t<T>::done){
                 size_output.addPayload(std::make_pair(seg, segsize[remaps[i]]));
-                of_size.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
-                of_size.write(reinterpret_cast<const char *>(&(segsize[remaps[i]])), sizeof(size_t));
             }
         } else {
             if (segtype[remaps[i]] == remap_t<T>::ongoing) {
@@ -225,21 +195,14 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
                     reps[seg] = s;
                 } else {
                     remap_output.addPayload(std::make_pair(s, reps.at(seg)));
-                    of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
-                    of_done.write(reinterpret_cast<const char *>(&(reps.at(seg))), sizeof(T));
                 }
             } else if (segtype[remaps[i]] == remap_t<T>::done){
                 remap_output.addPayload(std::make_pair(s, seg));
                 size_output.addPayload(std::make_pair(seg, segsize[remaps[i]]));
-                of_done.write(reinterpret_cast<const char *>(&(s)), sizeof(T));
-                of_done.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
-                of_size.write(reinterpret_cast<const char *>(&(seg)), sizeof(T));
-                of_size.write(reinterpret_cast<const char *>(&(segsize[remaps[i]])), sizeof(size_t));
             } else {
                 std::cerr << "segment "<< seg << " (" << s << ") is neither done or onoging, ignoring it!" << std::endl;
                 //std::abort();
             }
-
         }
 
         if ((i == (remaps.size() - 1)) or (current_ac != (segids[i+1] - (segids[i+1] % ac_offset)))) {
@@ -247,10 +210,6 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
             size_output.flushChunk(current_ac);
         }
 
-        if (of_done.bad()) {
-            std::cerr << "Error occurred when writing done remap file for " << tag << " " << current_ac << std::endl;
-            std::abort();
-        }
         if (of_ongoing.bad()) {
             std::cerr << "Error occurred when writing ongoing remap file for " << tag << " " << current_ac << std::endl;
             std::abort();

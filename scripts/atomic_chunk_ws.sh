@@ -11,8 +11,6 @@ try touch remap_"${output}".data
 try touch ongoing_"${output}".data
 try $COMPRESS_CMD seg_"${output}".data
 retry 10 $UPLOAD_ST_CMD seg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/seg/seg_"${output}".data."${COMPRESSED_EXT}"
-try $COMPRESS_CMD -r remap
-retry 10 $UPLOAD_CMD -r remap $FILE_PATH/
 try $COMPRESS_CMD remap_"${output}".data
 retry 10 $UPLOAD_ST_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/remap_"${output}".data."${COMPRESSED_EXT}"
 try md5sum *_"${output}".data > "${output}".data.md5sum
