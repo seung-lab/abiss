@@ -180,6 +180,8 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
         auto s = segids[i];
         auto seg = segids[remaps[i]];
         if (current_ac != (s - (s % ac_offset))) {
+            remap_output.flushChunk(current_ac);
+            size_output.flushChunk(current_ac);
             reps.clear();
             current_ac = s - (s % ac_offset);
         }
@@ -205,17 +207,14 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
             }
         }
 
-        if ((i == (remaps.size() - 1)) or (current_ac != (segids[i+1] - (segids[i+1] % ac_offset)))) {
-            remap_output.flushChunk(current_ac);
-            size_output.flushChunk(current_ac);
-        }
-
         if (of_ongoing.bad()) {
             std::cerr << "Error occurred when writing ongoing remap file for " << tag << " " << current_ac << std::endl;
             std::abort();
         }
     }
 
+    remap_output.flushChunk(current_ac);
+    size_output.flushChunk(current_ac);
     remap_output.flushIndex();
     size_output.flushIndex();
 

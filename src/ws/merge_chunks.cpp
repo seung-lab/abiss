@@ -496,6 +496,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     for (size_t i = 0; i != remap_vector.size(); i++) {
         auto & s = remap_vector[i].first;
         if (current_ac != (s - (s % ac_offset))) {
+            remap_output.flushChunk(current_ac);
             reps.clear();
             current_ac = s - (s % ac_offset);
         }
@@ -512,15 +513,13 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
         } else {
             remap_output.addPayload(std::make_pair(s, segids[seg]));
         }
-        if ((i == (remap_vector.size() - 1)) or (current_ac != (remap_vector[i+1].first - (remap_vector[i+1].first % ac_offset)))) {
-            remap_output.flushChunk(current_ac);
-        }
         if (of_ongoing.bad()) {
             std::cerr << "Error occurred when writing ongoing remap file for " << tag << " " << current_ac << std::endl;
             std::abort();
         }
     }
 
+    remap_output.flushChunk(current_ac);
     remap_output.flushIndex();
 
     free_container(remap_vector);
@@ -537,6 +536,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     for (size_t i = 1; i != segids.size(); i++) {
         auto s = segids[i];
         if (current_ac != (s - (s % ac_offset))) {
+            remap2_output.flushChunk(current_ac);
             reps.clear();
             current_ac = s - (s % ac_offset);
         }
@@ -561,11 +561,9 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
             std::cerr << "Error occurred when writing ongoing remap file for " << tag << " " << current_ac << std::endl;
             std::abort();
         }
-        if ((i == (segids.size() - 1)) or (current_ac != (segids[i+1] - (segids[i+1] % ac_offset)))) {
-            remap2_output.flushChunk(current_ac);
-        }
     }
 
+    remap2_output.flushChunk(current_ac);
     remap2_output.flushIndex();
 
     of_ongoing.close();
