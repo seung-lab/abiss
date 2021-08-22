@@ -247,7 +247,7 @@ std::vector<T> read_array(const char * filename)
 {
     std::vector<T> array;
 
-    std::cout << "filesize:" << filesize(filename)/sizeof(T) << std::endl;
+    std::cout << "filename: " << filename << ", " << "filesize:" << filesize(filename)/sizeof(T) << std::endl;
     size_t data_size = filesize(filename);
     if (data_size % sizeof(T) != 0) {
         std::cerr << "File incomplete!: " << filename << std::endl;
