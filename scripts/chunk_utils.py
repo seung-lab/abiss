@@ -204,6 +204,8 @@ def download_slice(prefix, tag, offset):
     print(offset)
     print("total len:", len(idx_payload))
     #print(idx_payload)
+    if idx == len(idx_payload):
+        return None
     chunk = idx_payload[idx]
     print(chunk)
     if chunkid != chunk['chunkid']:
