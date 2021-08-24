@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 
-template <typename TPayload>
+template <typename TPayload, typename TIndex>
 class SlicedOutput
 {
 public:
@@ -40,9 +40,9 @@ public:
     {
         m_payload_buf.push_back(payload);
     }
-    void flushChunk(auto chunkId){
+    void flushChunk(TIndex chunkId){
         if (m_payload_buf.empty()) {
-            std::cout << "Skip " << chunkId << ", " << m_offset << std::endl;
+            std::cout << "Skip empty chunk" << std::endl;
         } else {
             size_t payload_size = m_payload_buf.size() * sizeof(TPayload);
             auto payload_crc32 = calc_checksum(m_payload_buf, payload_size);
@@ -51,7 +51,7 @@ public:
             payload_size += sizeof(payload_crc32);
             index_t idx = {chunkId, m_offset, payload_size};
             m_index_buf.push_back(idx);
-            std::cout << "Write " << chunkId << ", " << m_offset << ", " << payload_size << "," << payload_crc32 << std::endl;
+            std::cout << "Write chunk at:" << m_offset << ", " << payload_size << "," << payload_crc32 << std::endl;
             m_payload_buf.clear();
             m_offset += payload_size;
         }
@@ -77,7 +77,7 @@ public:
     }
 private:
     struct index_t {
-        size_t chunkid;
+        TIndex chunkid;
         size_t offset;
         size_t length;
     };

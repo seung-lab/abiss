@@ -491,7 +491,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
 
     begin = clock();
 
-    SlicedOutput<std::pair<ID, ID> > remap_output(str(boost::format("done_pre_%1%.data") % tag));
+    SlicedOutput<std::pair<ID, ID>, ID> remap_output(str(boost::format("done_pre_%1%.data") % tag));
 
     for (size_t i = 0; i != remap_vector.size(); i++) {
         auto & s = remap_vector[i].first;
@@ -530,7 +530,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
 
     current_ac = std::numeric_limits<std::size_t>::max();
 
-    SlicedOutput<std::pair<ID, ID> > remap2_output(str(boost::format("done_post_%1%.data") % tag));
+    SlicedOutput<std::pair<ID, ID>, ID> remap2_output(str(boost::format("done_post_%1%.data") % tag));
 
     begin = clock();
     for (size_t i = 1; i != segids.size(); i++) {
