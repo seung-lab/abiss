@@ -26,7 +26,7 @@ public:
             std::cerr << "Error occurred when writing sliced file" << std::endl;
             std::abort();
         }
-        m_offset = 4 + sizeof(size_t) + sizeof(size_t);
+        m_offset = m_output.tellp();
     }
     ~SlicedOutput()
     {
@@ -67,7 +67,7 @@ public:
         m_output.write(reinterpret_cast<const char *>(m_index_buf.data()), index_size);
         m_output.write(reinterpret_cast<const char *>(&index_crc32), sizeof(index_crc32));
         index_size += sizeof(index_crc32);
-        m_output.seekp(4);
+        m_output.seekp(-m_offset-index_size+sizeof(version), std::ios_base::end);
         m_output.write(reinterpret_cast<const char *>(&m_offset), sizeof(m_offset));
         m_output.write(reinterpret_cast<const char *>(&index_size), sizeof(index_size));
         if (m_output.bad()) {
