@@ -2,6 +2,7 @@
 #define CHUNKED_RG_EXTRACTOR_HPP
 
 #include "Types.h"
+#include "SlicedOutput.hpp"
 #include <cassert>
 #include <iostream>
 #include <fstream>
@@ -28,20 +29,13 @@ public:
         m_edges[p][nv].second += 1;
     }
 
-    void writeEdge(std::ofstream & out, const std::pair<Ts, Ts> & k, const std::array<std::pair<Ta, size_t>, 3> & v) {
-        out.write(reinterpret_cast<const char *>(&(k.first)), sizeof(Ts));
-        out.write(reinterpret_cast<const char *>(&(k.second)), sizeof(Ts));
-        for (size_t i = 0; i < 3; i++) {
-            out.write(reinterpret_cast<const char *>(&(v[i].first)), sizeof(Ta));
-            out.write(reinterpret_cast<const char *>(&(v[i].second)), sizeof(size_t));
-        }
+    void writeEdge(auto & out, const std::pair<Ts, Ts> & k, const std::array<std::pair<Ta, size_t>, 3> & v) {
+        rg_edge_t payload = {k.first, k.second, v[0].first, v[0].second, v[1].first, v[1].second, v[2].first, v[2].second};
+        out.addPayload(std::move(payload));
     }
 
     void output(const std::unordered_map<Ts, Ts> & chunkMap, const std::string & tag, size_t ac_offset)
     {
-        std::ofstream ofInChunk;
-        std::ofstream ofBetweenChunks;
-        std::ofstream ofFake;
         size_t current_ac1 = std::numeric_limits<std::size_t>::max();
         size_t current_ac2 = std::numeric_limits<std::size_t>::max();
 
@@ -52,70 +46,24 @@ public:
                 return (c1 < c2) || (c1 == c2 && a.first.second < b.first.second);
                 });
 
+        SlicedOutput<rg_edge_t, Ts> inChunkOutput(str(boost::format("chunked_rg/in_chunk_%1%.data") % tag));
+        SlicedOutput<rg_edge_t, std::pair<Ts, Ts> > betweenChunksOutput(str(boost::format("chunked_rg/between_chunks_%1%.data") % tag));
+        SlicedOutput<rg_edge_t, std::pair<Ts, Ts> > fakeOutput(str(boost::format("chunked_rg/fake_%1%.data") % tag));
         for (const auto & [k,v] : sorted_edges) {
             auto s1 = k.first;
             auto s2 = k.second;
             if (current_ac1 != (s1 - (s1 % ac_offset))) {
-                if (ofInChunk.is_open()) {
-                    ofInChunk.close();
-                    if (ofInChunk.is_open()) {
-                        std::abort();
-                    }
-                }
-                if (ofBetweenChunks.is_open()) {
-                    ofBetweenChunks.close();
-                    if (ofBetweenChunks.is_open()) {
-                        std::abort();
-                    }
-                }
-                if (ofFake.is_open()) {
-                    ofFake.close();
-                    if (ofFake.is_open()) {
-                        std::abort();
-                    }
-                }
+                inChunkOutput.flushChunk(current_ac1);
+                betweenChunksOutput.flushChunk(std::make_pair(current_ac1, current_ac2));
+                fakeOutput.flushChunk(std::make_pair(current_ac1, current_ac2));
                 current_ac1 = s1 - (s1 % ac_offset);
                 current_ac2 = s2 - (s2 % ac_offset);
-                ofInChunk.open(str(boost::format("chunked_rg/in_chunk_%1%_%2%.data") % tag % current_ac1));
-                if (!ofInChunk.is_open()) {
-                    std::abort();
-                }
-                if (current_ac1 != current_ac2) {
-                    ofBetweenChunks.open(str(boost::format("chunked_rg/between_chunks_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
-                    if (!ofBetweenChunks.is_open()) {
-                        std::abort();
-                    }
-                    ofFake.open(str(boost::format("chunked_rg/fake_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
-                    if (!ofFake.is_open()) {
-                        std::abort();
-                    }
-                }
             } else if (current_ac2 != (s2 - (s2 % ac_offset))) {
                 if (current_ac1 != current_ac2) {
-                    if (ofBetweenChunks.is_open()) {
-                        ofBetweenChunks.close();
-                        if (ofBetweenChunks.is_open()) {
-                            std::abort();
-                        }
-                    }
-                    if (ofFake.is_open()) {
-                        ofFake.close();
-                        if (ofFake.is_open()) {
-                            std::abort();
-                        }
-                    }
+                    betweenChunksOutput.flushChunk(std::make_pair(current_ac1, current_ac2));
+                    fakeOutput.flushChunk(std::make_pair(current_ac1, current_ac2));
                 }
                 current_ac2 = s2 - (s2 % ac_offset);
-                if (current_ac1 != current_ac2) {
-                    ofBetweenChunks.open(str(boost::format("chunked_rg/between_chunks_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
-                    if (!ofBetweenChunks.is_open()) {
-                        std::abort();
-                    }
-                    ofFake.open(str(boost::format("chunked_rg/fake_%1%_%2%_%3%.data") % tag % current_ac1 % current_ac2));
-                    if (!ofFake.is_open()) {
-                        std::abort();
-                    }
-                }
             }
 
             if (chunkMap.count(s1) > 0) {
@@ -127,37 +75,32 @@ public:
             }
 
             if (s1 == s2) {
-                writeEdge(ofFake, k, v);
+                writeEdge(fakeOutput, k, v);
             } else if (current_ac1 == current_ac2) {
-                writeEdge(ofInChunk, k, v);
+                writeEdge(inChunkOutput, k, v);
             } else {
-                writeEdge(ofBetweenChunks, k, v);
-            }
-            assert(!ofFake.bad());
-            assert(!ofBetweenChunks.bad());
-            assert(!ofInChunk.bad());
-        }
-        if (ofInChunk.is_open()) {
-            ofInChunk.close();
-            if (ofInChunk.is_open()) {
-                std::abort();
+                writeEdge(betweenChunksOutput, k, v);
             }
         }
-        if (ofBetweenChunks.is_open()) {
-            ofBetweenChunks.close();
-            if (ofBetweenChunks.is_open()) {
-                std::abort();
-            }
-        }
-        if (ofFake.is_open()) {
-            ofFake.close();
-            if (ofFake.is_open()) {
-                std::abort();
-            }
-        }
+        inChunkOutput.flushChunk(current_ac1);
+        betweenChunksOutput.flushChunk(std::make_pair(current_ac1, current_ac2));
+        fakeOutput.flushChunk(std::make_pair(current_ac1, current_ac2));
+        inChunkOutput.flushIndex();
+        betweenChunksOutput.flushIndex();
+        fakeOutput.flushIndex();
     }
 
 private:
+    struct __attribute__((packed)) rg_edge_t {
+        Ts s1;
+        Ts s2;
+        Ta aff_x;
+        size_t area_x;
+        Ta aff_y;
+        size_t area_y;
+        Ta aff_z;
+        size_t area_z;
+    };
     const Chunk & m_aff;
     std::unordered_map<SegPair<Ts>, std::array<std::pair<Ta, size_t>, 3>, boost::hash<SegPair<Ts> > > m_edges;
 };
