@@ -694,6 +694,10 @@ int main(int argc, char* argv[])
 
     if (face_size == 0) {
         std::cout << "Nothing to merge, exit!" << std::endl;
+        SlicedOutput<std::pair<seg_t, seg_t>, seg_t> remap_output(str(boost::format("done_pre_%1%.data") % tag));
+        SlicedOutput<std::pair<seg_t, seg_t>, seg_t> remap2_output(str(boost::format("done_post_%1%.data") % tag));
+        remap_output.flushIndex();
+        remap2_output.flushIndex();
         return 0;
     }
 
