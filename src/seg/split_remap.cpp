@@ -166,8 +166,8 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
         std::abort();
     }
 
-    SlicedOutput<std::pair<T, T> > remap_output(str(boost::format("done_%1%.data") % tag));
-    SlicedOutput<std::pair<T, size_t> > size_output(str(boost::format("size_%1%.data") % tag));
+    SlicedOutput<std::pair<T, T> > remap_output(str(boost::format("remap/done_%1%.data") % tag));
+    SlicedOutput<std::pair<T, size_t> > size_output(str(boost::format("remap/size_%1%.data") % tag));
 
     auto & segids = remap_data.segids;
     auto & remaps = remap_data.remaps;
