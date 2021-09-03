@@ -190,12 +190,12 @@ def download_slice(prefix, tag, offset):
     chunkid = np.uint64(offset)
     print(os.path.join(os.environ['FILE_PATH']), f'{prefix}_{tag}.data')
     cf = CloudFiles(os.path.join(os.environ['FILE_PATH']))
-    header = cf[f'{prefix}_{tag}.data'][:20]
+    header = cf[f'{prefix}_{tag}.data', 0:20]
     print(header[:4])
     idx_info = np.frombuffer(header[4:],dtype='uint64')
     if idx_info[1] == 4:
         return None
-    idx_content = cf[f'{prefix}_{tag}.data'][idx_info[0]:idx_info[0]+idx_info[1]]
+    idx_content = cf[f'{prefix}_{tag}.data', idx_info[0]:idx_info[0]+idx_info[1]]
     assert np.frombuffer(idx_content[-4:], dtype='uint32')[0] == binascii.crc32(idx_content[:-4])
     idx_dt = np.dtype([('chunkid', np.uint64), ('offset', np.uint64), ('bytesize',np.uint64)])
     idx_payload = np.frombuffer(idx_content[:-4], dtype=idx_dt)
@@ -212,6 +212,6 @@ def download_slice(prefix, tag, offset):
         print(f"Cannot find {chunkid}")
         return None
     else:
-        payload = cf[f'{prefix}_{tag}.data'][chunk['offset']:chunk['offset']+chunk['bytesize']]
+        payload = cf[f'{prefix}_{tag}.data', chunk['offset']:chunk['offset']+chunk['bytesize']]
         assert np.frombuffer(payload[-4:], dtype='uint32')[0] == binascii.crc32(payload[:-4])
         return payload[:-4]
