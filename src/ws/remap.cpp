@@ -2,65 +2,13 @@
 #include "types.hpp"
 #include "utils.hpp"
 #include "mmap_array.hpp"
+#include "../seg/RemapTable.hpp"
 #include <vector>
 #include <tuple>
 #include <iostream>
 #include <unordered_map>
 #include <unordered_set>
-#include <boost/pending/disjoint_sets.hpp>
 
-template<typename T>
-class ChunkRemap {
-public:
-    ChunkRemap(size_t data_size)
-        : m_globalMap(data_size), m_chunkMap(data_size) {}
-    ~ChunkRemap() {}
-
-    T globalID(const T & id) const {
-        if (m_globalMap.count(id) > 0) {
-            return m_globalMap.at(id);
-        } else {
-            return id;
-        }
-    }
-
-    T chunkID(const T & id) const {
-        auto gid = globalID(id);
-        if (m_chunkMap.count(gid) > 0) {
-            return m_chunkMap.at(gid);
-        } else {
-            return gid;
-        }
-    }
-
-    void updateRemap(const T & s, const T & t) {
-        m_globalMap[s] = globalID(t);
-    }
-
-    void generateChunkMap() {
-        for (auto &[k, v]: m_globalMap) {
-            if (v != 0 && m_globalMap.count(v) == 0) {
-                if (m_chunkMap.count(v) == 0) {
-                    m_chunkMap[v] = k;
-                    if (k == 0 || v == 0) {
-                        std::cout << "!!!!!!!!!!!!!!!this should not happened: " << k << " " << v << std::endl;
-                    }
-                }
-            }
-        }
-    }
-    std::vector<std::pair<T, T> > reversedChunkMapVector() {
-        std::vector<std::pair<T, T> > vect;
-        for (auto [k,v]: m_chunkMap) {
-            vect.push_back(std::make_pair(v,k));
-        }
-        return vect;
-    }
-
-private:
-    std::unordered_map<T,T> m_globalMap;
-    std::unordered_map<T,T> m_chunkMap;
-};
 
 template<typename T>
 ChunkRemap<T> generate_remap(std::string filename, size_t data_size)
