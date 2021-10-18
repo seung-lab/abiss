@@ -521,8 +521,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     Plus    plus;
 
     T const h_threshold = T(0.5,1);
-    const size_t small_threshold = 1000;
-    const size_t large_threshold = 10000;
+    const size_t small_threshold = 1000000;
+    const size_t large_threshold = 10000000;
 
     size_t mst_size = 0;
     size_t residue_size = 0;
@@ -584,8 +584,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             auto s = v0;
 #ifdef EXTRA
             if ((is_frozen(supervoxel_counts[v0]) && is_frozen(supervoxel_counts[v1]))
-                || (is_frozen(supervoxel_counts[v0]) && (frozen_neighbors(incident[v1], supervoxel_counts, v1) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || supervoxel_counts[v1] > small_threshold))))
-                || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || supervoxel_counts[v0] > small_threshold))))) {
+                || (is_frozen(supervoxel_counts[v0]) && (frozen_neighbors(incident[v1], supervoxel_counts, v1) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || seg_size[v1] > small_threshold))))
+                || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || seg_size[v0] > small_threshold))))) {
 #else
             if ((is_frozen(supervoxel_counts[v0]) || is_frozen(supervoxel_counts[v1]))) {
 #endif
@@ -617,8 +617,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                     }
                 }
 
-                size_t size0 = (supervoxel_counts[v0] & (~boundary));
-                size_t size1 = (supervoxel_counts[v1] & (~boundary));
+                size_t size0 = seg_size[v0];
+                size_t size1 = seg_size[v1];
                 auto p = std::minmax({size0, size1});
                 if (p.first > small_threshold and p.second > large_threshold) {
                     std::cout << "reject edge between " << seg_indices[v0] << "(" << size0 << ")"<< " and " << seg_indices[v1] << "(" << size1 << ")"<< std::endl;
