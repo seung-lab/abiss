@@ -277,8 +277,8 @@ std::vector<size_t >
 load_size(const char * size_filename, const std::vector<seg_t> & seg_indices)
 {
     std::vector<std::pair<seg_t, size_t> > size_array = read_array<std::pair<seg_t, size_t> >(size_filename);
-    if (size_array.size() == 0) {
-        if (seg_indices.size() > 0) {
+    if (size_array.empty()) {
+        if (not seg_indices.empty()) {
             std::cout << "Error: No seg size data" << std::endl;
         }
     }
@@ -312,7 +312,7 @@ load_size(const char * size_filename, const std::vector<seg_t> & seg_indices)
 std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<seg_t> & seg_indices)
 {
     std::vector<std::pair<seg_t, sem_array_t> > sem_array = read_array<std::pair<seg_t, sem_array_t> >(sem_filename);
-    if (sem_array.size() == 0) {
+    if (sem_array.empty()) {
         std::cout << "No semantic labels" << std::endl;
         return std::vector<sem_array_t>();
     }
