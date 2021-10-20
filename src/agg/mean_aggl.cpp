@@ -342,6 +342,38 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
 }
 
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T> >
+void merge_edges(agglomeration_data_t<T, Compare> & agg_data)
+{
+    Plus plus;
+    std::vector<edge_t<T> > new_rg_vector;
+    std::vector<edge_t<T> > & rg_vector = agg_data.rg_vector;
+    std::sort(std::execution::par, std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
+    std::cout << "rg_vector size:" << rg_vector.size() << std::endl;
+
+    edge_t<T> current_edge;
+    current_edge.v0 = seg_t(std::numeric_limits<seg_t>::max());
+    current_edge.v1 = seg_t(std::numeric_limits<seg_t>::max());
+    for (const auto & e : rg_vector) {
+        if (e.w.sum == 0 && e.w.num == 0) {
+            continue;
+        }
+        if (current_edge.v0 != e.v0 || current_edge.v1 != e.v1) {
+            if (current_edge.v0 != seg_t(std::numeric_limits<seg_t>::max()) && current_edge.v1 != seg_t(std::numeric_limits<seg_t>::max())) {
+                new_rg_vector.push_back(current_edge);
+            }
+            current_edge = e;
+        } else {
+            current_edge.w = plus(current_edge.w, e.w);
+        }
+    }
+    if (current_edge.v0 != seg_t(std::numeric_limits<seg_t>::max()) && current_edge.v1 != seg_t(std::numeric_limits<seg_t>::max())) {
+        new_rg_vector.push_back(current_edge);
+    }
+    std::cout << "new_rg_vector size:" << new_rg_vector.size() << std::endl;
+    std::swap(rg_vector, new_rg_vector);
+}
+
+template <class T, class Compare = std::greater<T>, class Plus = std::plus<T> >
 inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename)
 {
     Plus plus;
@@ -426,31 +458,9 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
                 a.v1 = u0;
             }
         });
+    std::swap(agg_data.rg_vector, rg_vector);
 
-    std::sort(std::execution::par, std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
-    std::cout << "rg_vector size:" << rg_vector.size() << std::endl;
-
-    auto & new_rg_vector = agg_data.rg_vector;
-    edge_t<T> current_edge;
-    current_edge.v0 = seg_t(std::numeric_limits<seg_t>::max());
-    current_edge.v1 = seg_t(std::numeric_limits<seg_t>::max());
-    for (const auto & e : rg_vector) {
-        if (current_edge.v0 != e.v0 || current_edge.v1 != e.v1) {
-            if (current_edge.v0 != seg_t(std::numeric_limits<seg_t>::max()) && current_edge.v1 != seg_t(std::numeric_limits<seg_t>::max())) {
-                new_rg_vector.push_back(current_edge);
-            }
-            current_edge = e;
-        } else {
-            std::cout << "combine edges: " << e.v0 << ", " << e.v1 << " and " << current_edge.v0 << ", " << current_edge.v1 << std::endl;
-            std::cout << current_edge.w << std::endl;
-            std::cout << e.w << std::endl;
-            current_edge.w = plus(current_edge.w, e.w);
-        }
-    }
-    if (current_edge.v0 != seg_t(std::numeric_limits<seg_t>::max()) && current_edge.v1 != seg_t(std::numeric_limits<seg_t>::max())) {
-        new_rg_vector.push_back(current_edge);
-    }
-    std::cout << "new_rg_vector size:" << new_rg_vector.size() << std::endl;
+    merge_edges<T, Compare, Plus>(agg_data);
 
     return agg_data;
 }
