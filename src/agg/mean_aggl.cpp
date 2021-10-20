@@ -346,7 +346,6 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
 {
     Plus plus;
     agglomeration_data_t<T, Compare> agg_data;
-    using neighbor_vector = std::vector<handle_wrapper<T, Compare> >;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
 
@@ -464,7 +463,6 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
 {
     Compare comp;
     auto agg_data = preprocess_inputs<T, Compare, Plus>(rg_filename, fs_filename, ns_filename);
-    using neighbor_vector = std::vector<handle_wrapper<T, Compare> >;
     auto & incident = agg_data.incident;
     auto & heap = agg_data.heap;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
