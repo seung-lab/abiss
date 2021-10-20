@@ -388,9 +388,6 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
                 supervoxel_counts.back() |= count & boundary;
             }
 #endif
-            //if ((boundary & count) && (supervoxel_counts.back() & (~boundary)) > 1) {
-            //    std::cout << "multi-sv frozen segments: " << seg << " " << (supervoxel_counts.back() & (~boundary)) << std::endl;
-            //}
         }
     }
 
@@ -565,8 +562,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         auto e = heap.top();
         auto v0 = e.edge->v0;
         auto v1 = e.edge->v1;
-        //std::cout << "process edges related to: " << v0 << " and " << v1 << std::endl;
-        //print_neighbors(incident[1262222], 1262222);
+
         incident[v0].erase(v1);
         incident[v1].erase(v0);
         heap.pop();
@@ -645,8 +641,6 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             }
 
             //std::cout << "Join " << v0 << " and " << v1 << std::endl;
-            //supervoxel_counts[v0] += (supervoxel_counts[v1] & (~frozen));
-            //supervoxel_counts[v0] |= (supervoxel_counts[v1] & frozen);
             supervoxel_counts[v0] += supervoxel_counts[v1];
             supervoxel_counts[v1] = 0;
             std::swap(supervoxel_counts[v0], supervoxel_counts[s]);
@@ -719,11 +713,6 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                     e.edge->w=plus(e.edge->w, e0.edge->w);
                     e0.edge->w = Limits::nil();
                     if (e.valid_handle()) {
-                        //if (comp(e.edge->w, threshold)) {
-                        //    heap.update(e.handle);
-                        //} else {
-                        //    heap.erase(e.handle);
-                        //}
                         heap.update(e.handle);
                         if (e0.valid_handle()) {
                             heap.erase(e0.handle);
@@ -749,11 +738,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     assert(!of_remap.bad());
 
     of_mst.close();
-
     of_remap.close();
 
-    //std::cout << "Total of " << next << " segments\n";
-    //
     std::cout << "edges frozen above threshold: " << residue_size << std::endl;
     std::ofstream of_frg;
     of_frg.open("final_rg.data", std::ofstream::out | std::ofstream::trunc);
@@ -907,8 +893,4 @@ int main(int argc, char *argv[])
                            mean_edge_limits>(argv[2], argv[3], argv[4], mean_edge(th, 1));
 #endif
 
-    //for (auto& e : res)
-    //{
-    //    std::cout << e << "\n";
-    //}
 }
