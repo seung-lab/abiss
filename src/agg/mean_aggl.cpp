@@ -278,8 +278,9 @@ load_size(const char * size_filename, const std::vector<seg_t> & seg_indices)
 {
     std::vector<std::pair<seg_t, size_t> > size_array = read_array<std::pair<seg_t, size_t> >(size_filename);
     if (size_array.size() == 0) {
-        std::cout << "Error: No seg size data" << std::endl;
-        std::abort();
+        if (seg_indices.size() > 0) {
+            std::cout << "Error: No seg size data" << std::endl;
+        }
     }
 
     std::vector<size_t > size_counts(seg_indices.size());
