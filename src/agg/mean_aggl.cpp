@@ -810,13 +810,14 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             }
             continue;
         }
+        auto sv_count = supervoxel_counts[i];
 #ifndef OVERLAPPED
-        if (supervoxel_counts[i] == (boundary)) {
-            supervoxel_counts[i] = 1|boundary;
+        if (sv_count == (boundary)) {
+            sv_count = 1|boundary;
         }
 #endif
-        if (is_frozen(supervoxel_counts[i])) {
-            auto size = supervoxel_counts[i] & (~boundary);
+        if (is_frozen(sv_count)) {
+            auto size = sv_count & (~boundary);
             of_fs_ongoing.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
             of_fs_ongoing.write(reinterpret_cast<const char *>(&(size)), sizeof(size_t));
             if (!sem_counts.empty()) {
@@ -827,7 +828,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             of_size_ongoing.write(reinterpret_cast<const char *>(&(seg_size[i])), sizeof(size_t));
         } else {
             of_fs_done.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
-            of_fs_done.write(reinterpret_cast<const char *>(&(supervoxel_counts[i])), sizeof(size_t));
+            of_fs_done.write(reinterpret_cast<const char *>(&(sv_count)), sizeof(size_t));
             if (!sem_counts.empty()) {
                 of_sem_done.write(reinterpret_cast<const char *>(&(seg_indices[i])), sizeof(seg_t));
                 of_sem_done.write(reinterpret_cast<const char *>(&(sem_counts[i])), sizeof(sem_array_t));
