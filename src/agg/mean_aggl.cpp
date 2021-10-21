@@ -18,6 +18,7 @@
 //
 
 #include <boost/heap/fibonacci_heap.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <cstddef>
 #include <cstdlib>
 #include <cstdint>
@@ -32,6 +33,7 @@
 #include <sys/stat.h>
 
 #include "../seg/SemExtractor.hpp"
+#include "../seg/RemapTable.hpp"
 
 using seg_t = uint64_t;
 #ifdef DOUBLE
@@ -371,6 +373,37 @@ void merge_edges(agglomeration_data_t<T, Compare> & agg_data)
     }
     std::cout << "new_rg_vector size:" << new_rg_vector.size() << std::endl;
     std::swap(rg_vector, new_rg_vector);
+}
+
+template <class T, class Compare = std::greater<T>, class Plus = std::plus<T> >
+void remap_edges(agglomeration_data_t<T, Compare> & agg_data, std::vector<std::vector<std::pair<seg_t, seg_t> > > & remaps)
+{
+    RemapTable<seg_t> remapTable;
+    std::cout << "merge " << remaps.size() << " tables!" << std::endl;
+    for (auto & m: remaps) {
+        for (auto & p: boost::adaptors::reverse(m)) {
+            remapTable.updateRemap(p.first, p.second);
+        }
+    }
+    auto remap = remapTable.globalMap();
+    std::cout << remap.size() << " remaps" << std::endl;
+    auto & rg_vector = agg_data.rg_vector;
+    std::for_each(std::execution::par, rg_vector.begin(), rg_vector.end(), [&remap](auto & a) {
+            auto search0 = remap.find(a.v0);
+            auto search1 = remap.find(a.v1);
+            if (search0 != remap.end()) {
+                a.v0 = search0->second;
+            }
+            if (search1 != remap.end()) {
+                a.v1 = search1->second;
+            }
+            if (a.v1 < a.v0) {
+                auto tmp = a.v1;
+                a.v1 = a.v0;
+                a.v0 = tmp;
+            }
+    });
+    merge_edges<T, Compare, Plus>(agg_data);
 }
 
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T> >
