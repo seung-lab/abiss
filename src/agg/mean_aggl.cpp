@@ -130,6 +130,7 @@ struct agglomeration_data_t
     std::vector<seg_t> seg_indices;
     std::vector<sem_array_t> sem_counts;
     std::vector<size_t> seg_size;
+    aff_t backbone_threshold;
 };
 
 template <class T>
@@ -139,6 +140,7 @@ struct agglomeration_output_t
     std::vector<edge_t<T> > rej_rg_vector;
     std::vector<edge_t<T> > sem_rg_vector;
     std::vector<edge_t<T> > merged_rg_vector;
+    std::vector<edge_t<T> > twig_rg_vector;
     std::vector<std::pair<seg_t, seg_t> > remap;
 };
 
@@ -606,6 +608,9 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
     Plus    plus;
 
     T const h_threshold = T(0.5,1);
+    T const backbone_threshold = T(agg_data.backbone_threshold, 1);
+    const size_t twig_threshold = 100000;
+    const size_t twig_contact_threshold = 50;
     const size_t small_threshold = 1000000;
     const size_t large_threshold = 10000000;
 
@@ -666,6 +671,14 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                     output.rej_rg_vector.push_back(*(e.edge));
                     e.edge->w = Limits::nil();
                     continue;
+                }
+                if (!comp(e.edge->w, backbone_threshold)){
+                    if ((p.first > twig_threshold) or (e.edge->w.num > twig_contact_threshold)) {
+                        continue;
+                    } else {
+                        output.twig_rg_vector.push_back(*(e.edge));
+                        e.edge->w = Limits::nil();
+                    }
                 }
             }
 #ifdef FINAL
@@ -867,6 +880,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     size_t max_cc_package = 1000;
 
     auto agg_data = preprocess_inputs<T, Compare, Plus>(rg_filename, fs_filename, ns_filename);
+    agg_data.backbone_threshold = th;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
     auto & sem_counts = agg_data.sem_counts;
@@ -891,6 +905,9 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
     std::ofstream of_sem_cuts;
     of_sem_cuts.open("sem_cuts.data", std::ofstream::out | std::ofstream::trunc);
+
+    std::ofstream of_twig;
+    of_twig.open("twig_edges.log", std::ofstream::out | std::ofstream::trunc);
 
     std::cout << "looping through the heap" << std::endl;
 
@@ -981,6 +998,11 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[e.v1])), sizeof(seg_t));
                 //write_edge(of_reject, e.w);
             }
+            for (auto & e: o.twig_rg_vector) {
+                of_twig.write(reinterpret_cast<const char *>(&(seg_indices[e.v0])), sizeof(seg_t));
+                of_twig.write(reinterpret_cast<const char *>(&(seg_indices[e.v1])), sizeof(seg_t));
+                write_edge(of_twig, e.w);
+            }
             remaps.push_back(o.remap);
             mst_size += o.merged_rg_vector.size();
             residue_size += o.res_rg_vector.size();
@@ -1043,10 +1065,12 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     assert(!of_frg.bad());
     assert(!of_reject.bad());
     assert(!of_sem_cuts.bad());
+    assert(!of_twig.bad());
     of_res.close();
     of_frg.close();
     of_reject.close();
     of_sem_cuts.close();
+    of_twig.close();
 
     std::ofstream of_meta;
     of_meta.open("meta.data", std::ofstream::out | std::ofstream::trunc);

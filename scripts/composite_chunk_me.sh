@@ -101,6 +101,7 @@ try mv done_size.data seg_size_"$output".data
 try mv ongoing_size.data ongoing_seg_size_"$output".data
 try mv rejected_edges.log size_rejected_edges_"$output".log
 try mv sem_cuts.data sem_rejected_edges_"$output".log
+try mv twig_edges.log twig_edges_"$output".log
 
 try $COMPRESS_CMD mst_"${output}".data
 try $COMPRESS_CMD remap_"${output}".data
@@ -116,6 +117,7 @@ retry 10 $UPLOAD_CMD semantic_labels_"${output}".data $FILE_PATH/info/semantic_l
 retry 10 $UPLOAD_CMD seg_size_"${output}".data $FILE_PATH/info/seg_size_"${output}".data
 retry 10 $UPLOAD_CMD size_rejected_edges_"${output}".log $FILE_PATH/info/size_rejected_edges_"${output}".log
 retry 10 $UPLOAD_CMD sem_rejected_edges_"${output}".log $FILE_PATH/info/sem_rejected_edges_"${output}".log
+retry 10 $UPLOAD_CMD twig_edges_"${output}".log $FILE_PATH/info/twig_edges_"${output}".log
 retry 10 $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 retry 10 $UPLOAD_CMD mst_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/chunked_mst/mst_"${output}".data."${COMPRESSED_EXT}"
 retry 10 $UPLOAD_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/remap_"${output}".data."${COMPRESSED_EXT}"
