@@ -601,6 +601,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
 
     agg_data.sem_counts = load_sem("ongoing_semantic_labels.data", seg_indices);
     agg_data.seg_size = load_size("ongoing_seg_size.data", seg_indices);
+    agg_data.incident.resize(seg_indices.size());
 
     std::for_each(std::execution::par, rg_vector.begin(), rg_vector.end(), [&seg_indices](auto & a) {
             size_t u0, u1;
@@ -653,7 +654,6 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
     auto & seg_indices = agg_data.seg_indices;
 
     size_t i = 0;
-    incident.resize(seg_indices.size());
     for (auto & e : rg_vector) {
         heap_handle_type<T, Compare> handle;
         if (comp(e.w, threshold)){
