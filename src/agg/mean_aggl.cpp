@@ -31,6 +31,7 @@
 #include <vector>
 #include <unordered_set>
 #include <execution>
+#include <future>
 #include <sys/stat.h>
 
 #include "../seg/SemExtractor.hpp"
@@ -895,19 +896,23 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     size_t mst_size = 0;
     size_t residue_size = 0;
 
-    float print_th = 1.0 - 0.01;
-    size_t num_of_edges = 0;
+    aff_t target_th = 1.0 - 0.1;
+    aff_t agg_step = 0.1;
+    size_t ncpus = 32;
+    size_t min_cc_threshold = 10000;
+    size_t min_edge_threshold = min_cc_threshold*10;
+    size_t max_cc_package = 1000;
 
     auto agg_data = preprocess_inputs<T, Compare, Plus>(rg_filename, fs_filename, ns_filename);
-
-    auto & incident = agg_data.incident;
-    auto & rg_vector = agg_data.rg_vector;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
     auto & sem_counts = agg_data.sem_counts;
     auto & seg_size = agg_data.seg_size;
+    auto & rg_vector = agg_data.rg_vector;
 
-    size_t rg_size = rg_vector.size();
+    if (rg_vector.size() < min_edge_threshold) {
+        target_th = th;
+    }
 
     std::ofstream of_mst;
     of_mst.open("mst.data", std::ofstream::out | std::ofstream::trunc);
@@ -926,34 +931,113 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
     std::cout << "looping through the heap" << std::endl;
 
-    auto output = agglomerate_cc<T, Compare, Plus, Limits>, std::ref(agg_data), 0, rg_vector.size(), target_threshold));
+    size_t rg_size = rg_vector.size();
 
-    std::vector<std::vector<std::pair<seg_t, seg_t> > > remaps;
+    while (target_th >= th)
+    {
+        std::cout << "current threshold: " << target_th << std::endl;
+        T const target_threshold = T(target_th,1);
+        std::vector<std::future<agglomeration_output_t<T> > > fs;
 
-    for (auto & r: output.remap) {
-        of_remap.write(reinterpret_cast<const char *>(&(seg_indices[r.first])), sizeof(seg_t));
-        of_remap.write(reinterpret_cast<const char *>(&(seg_indices[r.second])), sizeof(seg_t));
-    }
-    for (auto & e: output.res_rg_vector) {
-        of_res.write(reinterpret_cast<const char *>(&(seg_indices[e.v0])), sizeof(seg_t));
-        of_res.write(reinterpret_cast<const char *>(&(seg_indices[e.v1])), sizeof(seg_t));
-        write_edge(of_res, e.w);
-    }
-    for (auto & e: output.rej_rg_vector) {
-        of_reject.write(reinterpret_cast<const char *>(&(seg_indices[e.v0])), sizeof(seg_t));
-        of_reject.write(reinterpret_cast<const char *>(&(seg_indices[e.v1])), sizeof(seg_t));
-        write_edge(of_reject, e.w);
-    }
-    for (auto & e: output.sem_rg_vector) {
-        of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[e.v0])), sizeof(seg_t));
-        of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[e.v1])), sizeof(seg_t));
-        //write_edge(of_reject, e.w);
-    }
+        auto ccids = extract_cc<T, Compare>(agg_data, target_threshold);
+        auto cc_queue = sorted_components(ccids);
 
-    remaps.push_back(outputs.remap);
+        auto m = std::max_element(std::execution::par, cc_queue.begin(), cc_queue.end(), [](const auto & a, const auto & b) {
+                return a.second < b.second;
+        });
 
-    remap_edges<T, Compare, Plus>(agg_data, remaps);
+        if ((cc_queue.empty() or (*m).second < min_cc_threshold) and target_th != th) {
+            std::cout << "No large CC found in " << rg_vector.size() << " edges" << std::endl;
+            target_th -= agg_step;
+            if (target_th < th) {
+                target_th = th;
+            }
+            continue;
+        }
 
+        if (cc_queue.empty()) {
+            std::cout << "no connect component, nothing to agglomerate" << std::endl;
+            break;
+        }
+
+        partition_rg(rg_vector, ccids, cc_queue);
+        auto cc_edges = cc_edge_offsets(rg_vector, ccids);
+        std::cout << "cc_queue: " << cc_queue.size() << std::endl;
+        std::cout << "cc_edges: " << cc_edges.size() << std::endl;
+
+        size_t total_size = cc_edges.back().second;
+        std::cout << "number of active edges: " << total_size << std::endl;
+
+        size_t package_size = total_size/ncpus;
+        if (package_size < min_edge_threshold) {
+            package_size = min_edge_threshold;
+        }
+
+        std::unordered_set<seg_t> processed_cc;
+        std::unordered_set<seg_t> target_cc;
+        auto target_size = 0;
+
+        if (seg_indices.size() < min_edge_threshold or cc_edges[0].second < min_edge_threshold) {
+            fs.push_back(std::async(std::launch::async, agglomerate_cc<T, Compare, Plus, Limits>, std::ref(agg_data), 0, total_size, target_threshold));
+        } else {
+            size_t startpos = 0;
+            size_t offset = 0;
+            for (auto & [k, v]: cc_edges) {
+                offset = v;
+                if ((offset - startpos) >= package_size) {
+                    fs.push_back(std::async(std::launch::async, agglomerate_cc<T, Compare, Plus, Limits>, std::ref(agg_data), startpos, offset, target_threshold));
+                    std::cout << "submiting cc package from " << startpos << " to " << offset << std::endl;
+                    startpos = offset;
+                }
+            }
+            if (startpos != total_size) {
+                std::cout << "submiting remaining cc from " << startpos << " to " << offset << std::endl;
+                fs.push_back(std::async(std::launch::async, agglomerate_cc<T, Compare, Plus, Limits>, std::ref(agg_data), startpos, total_size, target_threshold));
+            }
+        }
+
+        std::vector<std::vector<std::pair<seg_t, seg_t> > >remaps;
+        for (auto & f: fs) {
+            auto o = f.get();
+            for (auto & r: o.remap) {
+                of_remap.write(reinterpret_cast<const char *>(&(seg_indices[r.first])), sizeof(seg_t));
+                of_remap.write(reinterpret_cast<const char *>(&(seg_indices[r.second])), sizeof(seg_t));
+            }
+            for (auto & e: o.res_rg_vector) {
+                of_res.write(reinterpret_cast<const char *>(&(seg_indices[e.v0])), sizeof(seg_t));
+                of_res.write(reinterpret_cast<const char *>(&(seg_indices[e.v1])), sizeof(seg_t));
+                write_edge(of_res, e.w);
+            }
+            for (auto & e: o.rej_rg_vector) {
+                of_reject.write(reinterpret_cast<const char *>(&(seg_indices[e.v0])), sizeof(seg_t));
+                of_reject.write(reinterpret_cast<const char *>(&(seg_indices[e.v1])), sizeof(seg_t));
+                write_edge(of_reject, e.w);
+            }
+            for (auto & e: o.sem_rg_vector) {
+                of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[e.v0])), sizeof(seg_t));
+                of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[e.v1])), sizeof(seg_t));
+                //write_edge(of_reject, e.w);
+            }
+            remaps.push_back(o.remap);
+            mst_size += o.merged_rg_vector.size();
+            residue_size += o.res_rg_vector.size();
+        }
+        std::cout << "finish agglomeration connect components" << std::endl;
+
+        remap_edges<T, Compare, Plus>(agg_data, remaps);
+        std::for_each(std::execution::par, agg_data.incident.begin(), agg_data.incident.end(), [](auto & d) {d.clear();});
+        if (target_th == th) {
+            std::cout << "stop agglomeration" << std::endl;
+            target_th -= agg_step;
+        } else {
+            if ((target_th - th) > (agg_step*1.5)) {
+                target_th -= agg_step;
+            } else {
+                target_th = th;
+            }
+            std::cout << "next agglomeration threshold:" << target_th << std::endl;
+        }
+    }//while
     assert(!of_mst.bad());
     assert(!of_remap.bad());
 
