@@ -425,6 +425,7 @@ std::vector<seg_t> extract_cc(const agglomeration_data_t<T, Compare> & agg_data,
     auto & seg_indices = agg_data.seg_indices;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
 
+#ifdef EXTRA
     std::vector<seg_t> bc_rank(seg_indices.size()+1);
     std::vector<seg_t> bc_parent(seg_indices.size()+1);
     boost::disjoint_sets<seg_t*, seg_t*> bc_sets(&bc_rank[0], &bc_parent[0]);
@@ -442,6 +443,7 @@ std::vector<seg_t> extract_cc(const agglomeration_data_t<T, Compare> & agg_data,
             }
         }
     }
+#endif
 
     std::vector<seg_t> cc_rank(seg_indices.size());
     std::vector<seg_t> cc_parent(seg_indices.size());
@@ -454,9 +456,11 @@ std::vector<seg_t> extract_cc(const agglomeration_data_t<T, Compare> & agg_data,
         if (comp(e.w, threshold)){
             cc_sets.union_set(e.v0, e.v1);
         } else {
+#ifdef EXTRA
             if (bc_sets.find_set(e.v0) == bc_sets.find_set(boundary_cc) or bc_sets.find_set(e.v1) == bc_sets.find_set(boundary_cc)) {
                 cc_sets.union_set(e.v0, e.v1);
             }
+#endif
         }
     }
 
