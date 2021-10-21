@@ -1195,5 +1195,6 @@ int main(int argc, char *argv[])
     agglomerate<mean_edge, mean_edge_greater, mean_edge_plus,
                            mean_edge_limits>(argv[2], argv[3], argv[4], th);
 #endif
+    std::cout << "agglomeration finished" << std::endl;
 
 }
