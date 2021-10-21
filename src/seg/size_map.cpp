@@ -1,5 +1,7 @@
 #include <iostream>
+#include <filesystem>
 #include <fstream>
+#include <unordered_set>
 #include "Utils.hpp"
 
 int main(int argc, char * argv[])
@@ -19,19 +21,35 @@ int main(int argc, char * argv[])
     });
     size_array.erase(last, size_array.end());
     std::unordered_map<uint64_t, uint64_t> size_dict(size_array.begin(), size_array.end());
+    std::unordered_map<uint64_t, size_t> cleft_segs;
+    bool has_cleft = false;
     std::vector<uint8_t> size_map;
-    std::transform(seg.begin(), seg.end(), std::back_inserter(size_map), [&size_dict](uint64_t segid) -> uint8_t {
+    if (std::filesystem::exists("cleft.raw")) {
+        std::cerr << "filter small segments using the cleft map" << std::endl;
+        has_cleft = true;
+        auto cleft = read_array<uint8_t>("cleft.raw");
+        for (size_t i = 0; i != seg.size(); i++) {
+            if (cleft[i] > 0) {
+                cleft_segs[seg[i]] += 1;
+            }
+        }
+    }
+
+    std::cerr << "create size_map" << std::endl;
+    std::transform(seg.begin(), seg.end(), std::back_inserter(size_map), [&size_dict, has_cleft, &cleft_segs](uint64_t segid) -> uint8_t {
         if (segid == 0){
             return 0;
         }
         auto size = size_dict[segid];
-        if (size < 10) {
-            return 255;
-        } else if (size < 100) {
-            return 127;
-        } else {
+        if ((!has_cleft) or (cleft_segs.count(segid) != 0 and cleft_segs.at(segid) > 10)) {
+            if (size < 10) {
+                return 255;
+            } else {
+                return 0;
+            }
+       } else {
             return 0;
-        }
+       }
     });
     std::ofstream fout("size_map.data", fout.out | fout.binary);
     fout.write((char*)&size_map[0], size_map.size() * sizeof(uint8_t));

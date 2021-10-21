@@ -22,6 +22,11 @@ if "GT_PATH" in global_param:
     gt_cutout = cut_data(gt, start_coord, end_coord, boundary_flags)
     save_raw_data("gt.raw", gt_cutout.astype(seg.dtype), seg.dtype)
 
+if "CLEFT_PATH" in global_param:
+    cleft = load_data(os.environ['CLEFT_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=True, bounded=False)
+    cleft_cutout = cut_data(cleft, start_coord, end_coord, boundary_flags)
+    save_raw_data("cleft.raw", cleft_cutout, np.uint8)
+
 #del seg_cutout
 #
 #aff = load_data(os.environ['AFF_PATH'],mip=int(os.environ['AFF_MIP']))
