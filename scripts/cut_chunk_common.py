@@ -7,7 +7,7 @@ import os
 def load_data(url, **kwargs):
     print("cloud volume url: ", url)
 
-    return CloudVolume(url, **kwargs)
+    return CloudVolume(url, cache=False, **kwargs)
     #return CloudVolumeGSUtil(url, fill_missing=True)
 
 def load_gt_data(url, mip=0):

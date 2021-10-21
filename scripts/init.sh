@@ -45,6 +45,7 @@ function release_cpu_slot() {
 
 export AIRFLOW_TMP_DIR=${AIRFLOW_TMP_DIR:-"/tmp/airflow"}
 export WORKER_HOME=${WORKER_HOME:-"/workspace/seg"}
+export CLOUD_VOLUME_CACHE_DIR=${AIRFLOW_TMP_DIR}/cache
 
 SCRIPT_PATH="${WORKER_HOME}/scripts"
 BIN_PATH="${WORKER_HOME}/build"
