@@ -776,6 +776,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 of_res.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
                 write_edge(of_res, e.edge->w);
                 residue_size++;
+                e.edge->w = Limits::nil();
                 continue;
             }
 
@@ -786,6 +787,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                         std::cout << "reject merge between " << seg_indices[v0] << "(" << sem_counts[v0][1] << "," << sem_counts[v0][2] << ")"<< " and " << seg_indices[v1] << "(" << sem_counts[v1][1] << "," << sem_counts[v1][2] << ")"<< std::endl;
                         of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
                         of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
+                        e.edge->w = Limits::nil();
                         continue;
                     }
                 }
@@ -800,6 +802,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                     of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
                     of_reject.write(reinterpret_cast<const char *>(&(size1)), sizeof(size1));
                     write_edge(of_reject, e.edge->w);
+                    e.edge->w = Limits::nil();
                     continue;
                 }
             }
@@ -858,6 +861,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             // v0 is dissapearing from the graph
 
             // loop over other edges e0 = {v0,v}
+            e.edge->w = Limits::nil();
             for (auto p: incident[v0]) {
                 auto v = p.first;
                 auto e0 = p.second;
