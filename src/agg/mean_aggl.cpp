@@ -883,13 +883,11 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
     return output;
 }
 
-
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
           class Limits = std::numeric_limits<T>>
 inline void agglomerate(const char * rg_filename, const char * fs_filename, const char * ns_filename, aff_t th)
 {
     Compare comp;
-    Plus    plus;
 
     T const final_threshold = T(th,1);
 
