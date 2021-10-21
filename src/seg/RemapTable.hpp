@@ -63,7 +63,7 @@ public:
     std::vector<std::pair<T, T> > reversedChunkMapVector() {
         std::vector<std::pair<T, T> > vect;
         for (auto [k,v]: m_chunkMap) {
-            vect.push_back(std::make_pair(v,k));
+            vect.emplace_back(v,k);
         }
         return vect;
     }

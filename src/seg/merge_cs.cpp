@@ -161,7 +161,7 @@ int main(int argc, char * argv[])
 
     std::string tag(argv[2]);
     auto incomplete_cs = read_array<std::pair<seg_t, CRInfo> >("incomplete_cs.data");
-    incomplete_cs.push_back(std::make_pair(0,CRInfo()));
+    incomplete_cs.emplace_back(0,CRInfo());
     std::stable_sort(std::execution::par, std::begin(incomplete_cs), std::end(incomplete_cs), [](auto & a, auto & b) { return a.first < b.first; });
 
     std::cout << "matching the overlapping region!" << std::endl;

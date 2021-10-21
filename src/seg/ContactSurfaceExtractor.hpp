@@ -117,7 +117,7 @@ public:
                     cre[c] = v.at(c);
                 }
                 CRInfo ci(k, cre);
-                crs.push_back(std::make_pair(ci, cre));
+                crs.emplace_back(ci, cre);
             }
         }
         return crs;
@@ -162,7 +162,7 @@ public:
                     cre[c] = v.at(c);
                 }
                 CRInfo ci(k, cre);
-                crs.push_back(std::make_pair(ci, cre));
+                crs.emplace_back(ci, cre);
             }
         }
         return crs;
