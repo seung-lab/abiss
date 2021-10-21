@@ -121,6 +121,38 @@ struct handle_wrapper
     }
 };
 
+struct agglomeration_size_heuristic_t
+{
+    size_t small_voxel_threshold = 1000000;
+    size_t large_voxel_threshold = 10000000;
+};
+
+struct agglomeration_semantic_heuristic_t
+{
+    size_t total_signal_threshold = 100000;
+    double dominant_signal_ratio = 0.6;
+};
+
+struct agglomeration_twig_heuristic_t
+{
+    aff_t aff_threshold_delta = 0;
+    size_t voxel_threshold = 100000;
+    size_t area_threshold = 50;
+};
+
+struct agglomeration_param_t
+{
+    agglomeration_size_heuristic_t size_params;
+    agglomeration_semantic_heuristic_t sem_params;
+    agglomeration_twig_heuristic_t twig_params;
+    aff_t input_aff_threshold;
+    aff_t heuristics_aff_threshold = 0.5;
+    aff_t starting_aff_threshold = 0.9;
+    aff_t agglomeration_step = 0.1;
+    size_t optimal_number_of_partitions = 32;
+    size_t minimal_number_of_edges = 100000;
+};
+
 template <class T, class Compare = std::greater<T> >
 struct agglomeration_data_t
 {
@@ -130,7 +162,7 @@ struct agglomeration_data_t
     std::vector<seg_t> seg_indices;
     std::vector<sem_array_t> sem_counts;
     std::vector<size_t> seg_size;
-    aff_t backbone_threshold;
+    agglomeration_param_t params;
 };
 
 template <class T>
@@ -582,16 +614,16 @@ std::pair<size_t, size_t> sem_label(const sem_array_t & labels)
     return std::make_pair(std::distance(labels.begin(), label), (*label));
 }
 
-bool sem_can_merge(const sem_array_t & labels1, const sem_array_t & labels2)
+bool sem_can_merge(const sem_array_t & labels1, const sem_array_t & labels2, const agglomeration_semantic_heuristic_t & sem_params)
 {
     auto max_label1 = std::distance(labels1.begin(), std::max_element(labels1.begin(), labels1.end()));
     auto max_label2 = std::distance(labels2.begin(), std::max_element(labels2.begin(), labels2.end()));
     auto total_label1 = std::accumulate(labels1.begin(), labels1.end(), size_t(0));
     auto total_label2 = std::accumulate(labels2.begin(), labels2.end(), size_t(0));
-    if (labels1[max_label1] < 0.6 * total_label1 || total_label1 < 100000) { //unsure about the semantic label
+    if (labels1[max_label1] < sem_params.dominant_signal_ratio * total_label1 || total_label1 < sem_params.total_signal_threshold) { //unsure about the semantic label
         return true;
     }
-    if (labels2[max_label2] < 0.6 * total_label2 || total_label2 < 100000) { //unsure about the semantic label
+    if (labels2[max_label2] < sem_params.dominant_signal_ratio * total_label2 || total_label2 < sem_params.total_signal_threshold) { //unsure about the semantic label
         return true;
     }
     if (max_label1 == max_label2) {
@@ -607,12 +639,11 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
     Compare comp;
     Plus    plus;
 
-    T const h_threshold = T(0.5,1);
-    T const backbone_threshold = T(agg_data.backbone_threshold, 1);
-    const size_t twig_threshold = 100000;
-    const size_t twig_contact_threshold = 50;
-    const size_t small_threshold = 1000000;
-    const size_t large_threshold = 10000000;
+    T const h_threshold = T(agg_data.params.heuristics_aff_threshold,1);
+    T const backbone_threshold = T(agg_data.params.input_aff_threshold, 1);
+    const auto twig_params = agg_data.params.twig_params;
+    const auto size_params = agg_data.params.size_params;
+    const auto sem_params = agg_data.params.sem_params;
 
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
@@ -642,8 +673,8 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
             auto s = v0;
 #ifdef EXTRA
             if ((is_frozen(supervoxel_counts[v0]) && is_frozen(supervoxel_counts[v1]))
-                || (is_frozen(supervoxel_counts[v0]) && (frozen_neighbors(incident[v1], supervoxel_counts, v1) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || seg_size[v1] > small_threshold))))
-                || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || seg_size[v0] > small_threshold)))))
+                || (is_frozen(supervoxel_counts[v0]) && (frozen_neighbors(incident[v1], supervoxel_counts, v1) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || seg_size[v1] > size_params.small_voxel_threshold))))
+                || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || seg_size[v0] > size_params.small_voxel_threshold)))))
 #else
             if ((is_frozen(supervoxel_counts[v0]) || is_frozen(supervoxel_counts[v1])))
 #endif
@@ -657,7 +688,7 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
 
             if (!comp(e.edge->w, h_threshold)) {
                 if (!sem_counts.empty()){
-                    if (!sem_can_merge(sem_counts[v0],sem_counts[v1])) {
+                    if (!sem_can_merge(sem_counts[v0],sem_counts[v1],sem_params)) {
                         output.sem_rg_vector.push_back(*(e.edge));
                         e.edge->w = Limits::nil();
                         continue;
@@ -667,13 +698,13 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 size_t size0 = seg_size[v0];
                 size_t size1 = seg_size[v1];
                 auto p = std::minmax({size0, size1});
-                if (p.first > small_threshold and p.second > large_threshold) {
+                if (p.first > size_params.small_voxel_threshold and p.second > size_params.large_voxel_threshold) {
                     output.rej_rg_vector.push_back(*(e.edge));
                     e.edge->w = Limits::nil();
                     continue;
                 }
                 if (!comp(e.edge->w, backbone_threshold)){
-                    if ((p.first > twig_threshold) or (e.edge->w.num > twig_contact_threshold)) {
+                    if ((p.first > twig_params.voxel_threshold) or (e.edge->w.num > twig_params.area_threshold)) {
                         continue;
                     } else {
                         output.twig_rg_vector.push_back(*(e.edge));
@@ -863,24 +894,25 @@ void write_supervoxel_info(const agglomeration_data_t<T, Compare> & agg_data)
 
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
           class Limits = std::numeric_limits<T>>
-inline void agglomerate(const char * rg_filename, const char * fs_filename, const char * ns_filename, aff_t th)
+inline void agglomerate(const char * rg_filename, const char * fs_filename, const char * ns_filename, agglomeration_param_t params)
 {
     Compare comp;
+
+    auto th = params.input_aff_threshold - params.twig_params.aff_threshold_delta;
 
     T const final_threshold = T(th,1);
 
     size_t mst_size = 0;
     size_t residue_size = 0;
 
-    aff_t target_th = 1.0 - 0.1;
-    aff_t agg_step = 0.1;
-    size_t ncpus = 32;
-    size_t min_cc_threshold = 10000;
-    size_t min_edge_threshold = min_cc_threshold*10;
-    size_t max_cc_package = 1000;
+    aff_t target_th = params.starting_aff_threshold;
+    aff_t agg_step = params.agglomeration_step;
+    size_t ncpus = params.optimal_number_of_partitions;
+    size_t min_edge_threshold = params.minimal_number_of_edges;
+    size_t min_cc_threshold = min_edge_threshold/10;
 
     auto agg_data = preprocess_inputs<T, Compare, Plus>(rg_filename, fs_filename, ns_filename);
-    agg_data.backbone_threshold = th;
+    agg_data.params = params;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
     auto & sem_counts = agg_data.sem_counts;
@@ -1091,15 +1123,17 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
 int main(int argc, char *argv[])
 {
+    agglomeration_param_t params;
     aff_t th = atof(argv[1]);
+    params.input_aff_threshold = th;
 
     std::cout << "agglomerate" << std::endl;
 #ifdef MST_EDGE
     agglomerate<mst_edge, mst_edge_greater, mst_edge_plus,
-                           mst_edge_limits>(argv[2], argv[3], argv[4], th);
+                           mst_edge_limits>(argv[2], argv[3], argv[4], params);
 #else
     agglomerate<mean_edge, mean_edge_greater, mean_edge_plus,
-                           mean_edge_limits>(argv[2], argv[3], argv[4], th);
+                           mean_edge_limits>(argv[2], argv[3], argv[4], params);
 #endif
     std::cout << "agglomeration finished" << std::endl;
 
