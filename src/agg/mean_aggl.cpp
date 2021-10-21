@@ -751,11 +751,11 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
 #ifdef EXTRA
             if ((is_frozen(supervoxel_counts[v0]) && is_frozen(supervoxel_counts[v1]))
                 || (is_frozen(supervoxel_counts[v0]) && (frozen_neighbors(incident[v1], supervoxel_counts, v1) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || seg_size[v1] > small_threshold))))
-                || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || seg_size[v0] > small_threshold))))) {
+                || (is_frozen(supervoxel_counts[v1]) && (frozen_neighbors(incident[v0], supervoxel_counts, v0) || (!comp(e.edge->w, h_threshold) && (!sem_counts.empty() || seg_size[v0] > small_threshold)))))
 #else
-            if ((is_frozen(supervoxel_counts[v0]) || is_frozen(supervoxel_counts[v1]))) {
+            if ((is_frozen(supervoxel_counts[v0]) || is_frozen(supervoxel_counts[v1])))
 #endif
-
+            {
                 supervoxel_counts[v0] |= frozen;
                 supervoxel_counts[v1] |= frozen;
                 output.res_rg_vector.push_back(*(e.edge));
