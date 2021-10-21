@@ -245,6 +245,16 @@ struct agglomeration_data_t
 };
 
 template <class T>
+struct agglomeration_output_t
+{
+    std::vector<edge_t<T> > res_rg_vector;
+    std::vector<edge_t<T> > rej_rg_vector;
+    std::vector<edge_t<T> > sem_rg_vector;
+    std::vector<edge_t<T> > merged_rg_vector;
+    std::vector<std::pair<seg_t, seg_t> > remap;
+};
+
+template <class T>
 std::vector<T> read_array(const char * filename)
 {
     std::vector<T> array;
@@ -727,6 +737,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
     size_t rg_size = heap.size();
 
+    agglomeration_output_t<T> output;
 
     std::ofstream of_mst;
     of_mst.open("mst.data", std::ofstream::out | std::ofstream::trunc);
@@ -772,10 +783,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
                 supervoxel_counts[v0] |= frozen;
                 supervoxel_counts[v1] |= frozen;
-                of_res.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
-                of_res.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
-                write_edge(of_res, e.edge->w);
-                residue_size++;
+                output.res_rg_vector.push_back(*(e.edge));
                 e.edge->w = Limits::nil();
                 continue;
             }
@@ -783,10 +791,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             if (!comp(e.edge->w, h_threshold)) {
                 if (!sem_counts.empty()){
                     if (!sem_can_merge(sem_counts[v0],sem_counts[v1])) {
-                        std::cout << seg_indices[v0] << ", " << seg_indices[v1] << ", " << supervoxel_counts[v0] << ", " << supervoxel_counts[v1] << std::endl;
-                        std::cout << "reject merge between " << seg_indices[v0] << "(" << sem_counts[v0][1] << "," << sem_counts[v0][2] << ")"<< " and " << seg_indices[v1] << "(" << sem_counts[v1][1] << "," << sem_counts[v1][2] << ")"<< std::endl;
-                        of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
-                        of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
+                        output.sem_rg_vector.push_back(*(e.edge));
                         e.edge->w = Limits::nil();
                         continue;
                     }
@@ -796,12 +801,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 size_t size1 = seg_size[v1];
                 auto p = std::minmax({size0, size1});
                 if (p.first > small_threshold and p.second > large_threshold) {
-                    std::cout << "reject edge between " << seg_indices[v0] << "(" << size0 << ")"<< " and " << seg_indices[v1] << "(" << size1 << ")"<< std::endl;
-                    of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
-                    of_reject.write(reinterpret_cast<const char *>(&(size0)), sizeof(size0));
-                    of_reject.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
-                    of_reject.write(reinterpret_cast<const char *>(&(size1)), sizeof(size1));
-                    write_edge(of_reject, e.edge->w);
+                    output.rej_rg_vector.push_back(*(e.edge));
                     e.edge->w = Limits::nil();
                     continue;
                 }
@@ -836,17 +836,11 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 std::swap(sem_counts[v0], sem_counts[s]);
             }
 
-            of_mst.write(reinterpret_cast<const char *>(&(seg_indices[s])), sizeof(seg_t));
-            of_mst.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
-            of_mst.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
-            mst_size++;
-            write_edge(of_mst, e.edge->w);
+            output.merged_rg_vector.push_back(*(e.edge));
             if (v0 == s) {
-                of_remap.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
-                of_remap.write(reinterpret_cast<const char *>(&(seg_indices[s])), sizeof(seg_t));
+                output.remap.emplace_back(v1, s);
             } else if (v1 == s) {
-                of_remap.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
-                of_remap.write(reinterpret_cast<const char *>(&(seg_indices[s])), sizeof(seg_t));
+                output.remap.emplace_back(v0, s);
             } else {
                 std::cout << "Something is wrong in the MST" << std::endl;
                 std::cout << "s: " << s << ", v0: " << v0 << ", v1: " << v1 << std::endl;
@@ -915,6 +909,32 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             incident[v0].clear();
         }
     }
+
+    std::vector<std::vector<std::pair<seg_t, seg_t> > > remaps;
+
+    for (auto & r: output.remap) {
+        of_remap.write(reinterpret_cast<const char *>(&(seg_indices[r.first])), sizeof(seg_t));
+        of_remap.write(reinterpret_cast<const char *>(&(seg_indices[r.second])), sizeof(seg_t));
+    }
+    for (auto & e: output.res_rg_vector) {
+        of_res.write(reinterpret_cast<const char *>(&(seg_indices[e.v0])), sizeof(seg_t));
+        of_res.write(reinterpret_cast<const char *>(&(seg_indices[e.v1])), sizeof(seg_t));
+        write_edge(of_res, e.w);
+    }
+    for (auto & e: output.rej_rg_vector) {
+        of_reject.write(reinterpret_cast<const char *>(&(seg_indices[e.v0])), sizeof(seg_t));
+        of_reject.write(reinterpret_cast<const char *>(&(seg_indices[e.v1])), sizeof(seg_t));
+        write_edge(of_reject, e.w);
+    }
+    for (auto & e: output.sem_rg_vector) {
+        of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[e.v0])), sizeof(seg_t));
+        of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[e.v1])), sizeof(seg_t));
+        //write_edge(of_reject, e.w);
+    }
+
+    remaps.push_back(outputs.remap);
+
+    remap_edges<T, Compare, Plus>(agg_data, remaps);
 
     assert(!of_mst.bad());
     assert(!of_remap.bad());
