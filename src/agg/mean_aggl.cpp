@@ -757,11 +757,6 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         incident[v1].erase(v0);
         heap.pop();
 
-        if (e.edge->w.sum/e.edge->w.num < print_th) {
-            std::cout << "Processing threshold: " << print_th << std::endl;
-            std::cout << "Numer of edges: " << num_of_edges << "(" << rg_size << ")"<< std::endl;
-            print_th -= 0.01;
-        }
 
         if (v0 != v1)
         {
