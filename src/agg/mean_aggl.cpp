@@ -238,7 +238,6 @@ struct agglomeration_data_t
 {
     std::vector<std::unordered_map<seg_t, handle_wrapper<T, Compare> > > incident;
     std::vector<edge_t<T> > rg_vector;
-    heap_type<T, Compare> heap;
     std::vector<size_t> supervoxel_counts;
     std::vector<seg_t> seg_indices;
     std::vector<sem_array_t> sem_counts;
@@ -642,19 +641,20 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     return agg_data;
 }
 
-template <class T, class Compare = std::greater<T>, class Plus = std::plus<T> >
-inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename, T const & threshold)
+template <class T, class Compare = std::greater<T> >
+inline heap_type<T, Compare> populate_heap(agglomeration_data_t<T, Compare> & agg_data, size_t startpos, size_t endpos, T const & threshold)
 {
     Compare comp;
-    auto agg_data = preprocess_inputs<T, Compare, Plus>(rg_filename, fs_filename, ns_filename);
+    heap_type<T, Compare> heap;
     auto & incident = agg_data.incident;
-    auto & heap = agg_data.heap;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & rg_vector = agg_data.rg_vector;
     auto & seg_indices = agg_data.seg_indices;
 
     size_t i = 0;
-    for (auto & e : rg_vector) {
+
+    for (size_t j = startpos; j != endpos; j++) {
+        auto & e = rg_vector[j];
         heap_handle_type<T, Compare> handle;
         if (comp(e.w, threshold)){
             handle = heap.emplace(& e);
@@ -668,7 +668,8 @@ inline agglomeration_data_t<T, Compare> load_inputs(const char * rg_filename, co
             std::cout << "reading " << i << "th edge" << std::endl;
         }
     }
-    return agg_data;
+
+    return heap;
 }
 
 std::pair<size_t, size_t> sem_label(const sem_array_t & labels)
@@ -713,14 +714,16 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     float print_th = 1.0 - 0.01;
     size_t num_of_edges = 0;
 
-    auto agg_data = load_inputs<T, Compare, Plus>(rg_filename, fs_filename, ns_filename, final_threshold);
+    auto agg_data = preprocess_inputs<T, Compare, Plus>(rg_filename, fs_filename, ns_filename);
 
     auto & incident = agg_data.incident;
-    auto & heap = agg_data.heap;
+    auto & rg_vector = agg_data.rg_vector;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
     auto & sem_counts = agg_data.sem_counts;
     auto & seg_size = agg_data.seg_size;
+
+    auto heap = populate_heap<T, Compare>(agg_data, 0, rg_vector.size(), final_threshold);
 
     size_t rg_size = heap.size();
 
