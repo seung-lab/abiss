@@ -60,12 +60,15 @@ int main(int argc, char * argv[])
     std::array<int64_t, 3> offset({0,0,0});
     std::array<int64_t, 3> dim({0,0,0});
     size_t ac_offset;
+    aff_t low_th;
+    aff_t high_th;
 
     //FIXME: check the input is valid
     std::ifstream param_file(argv[1]);
     param_file >> offset[0] >> offset[1] >> offset[2];
     param_file >> dim[0] >> dim[1] >> dim[2];
     param_file >> ac_offset;
+    param_file >> low_th >> high_th;
     std::cout << offset[0] << " " << offset[1] << " " << offset[2] << std::endl;
     std::cout << dim[0] << " " << dim[1] << " " << dim[2] << std::endl;
     std::array<bool,6> flags({true,true,true,true,true,true});
@@ -100,11 +103,23 @@ int main(int argc, char * argv[])
     BBox vol_bbox = {offset[0]+1, offset[1]+1, offset[2]+1,
                                     offset[0]+dim[0]-1, offset[1]+dim[1]-1, offset[2]+dim[2]-1};
 
+    std::vector<std::pair<CRInfo, ContactRegionExt> > cs;
+    if (std::filesystem::exists("aff.raw")) {
+        bio::mapped_file_source aff_file;
+        size_t aff_bytes = sizeof(aff_t)*dim[0]*dim[1]*dim[2]*3;
+        aff_file.open("aff.raw", aff_bytes);
+        assert(aff_file.is_open());
+        ConstChunkRef<aff_t, 4> aff_chunk (reinterpret_cast<const aff_t*>(aff_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])][3], boost::fortran_storage_order());
+        std::cout << "mmap aff data" << std::endl;
+        ContactSurfaceWithAffinityExtractor<seg_t, aff_t, ConstChunkRef<aff_t, 4> > cs_extractor(aff_chunk, low_th, high_th);
+        traverseSegments<2>(seg_chunk, cs_extractor);
+        cs = cs_extractor.contactSurfaces();
+    } else {
+        ContactSurfaceExtractor<seg_t> cs_extractor;
+        traverseSegments<2>(seg_chunk, cs_extractor);
+        cs = cs_extractor.contactSurfaces();
+    }
 
-    ContactSurfaceExtractor<seg_t> cs_extractor;
-    traverseSegments<2>(seg_chunk, cs_extractor);
-
-    auto cs = cs_extractor.contactSurfaces();
     std::ofstream incomplete("incomplete_cs_"+chunk_tag+".data", std::ios_base::binary);
     std::ofstream complete("complete_cs_"+chunk_tag+".data", std::ios_base::binary);
     seg_t incomplete_index = ac_offset;

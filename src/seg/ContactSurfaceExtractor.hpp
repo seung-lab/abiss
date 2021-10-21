@@ -128,4 +128,52 @@ private:
 };
 
 
+template<typename Ts, typename Ta, typename Chunk>
+class ContactSurfaceWithAffinityExtractor
+{
+public:
+    ContactSurfaceWithAffinityExtractor(const Chunk & aff, Ta low, Ta high)
+        :m_aff(aff), m_low(low), m_high(high), m_surfaces() {}
+
+    void collectVoxel(Coord & c, Ts segid) {}
+
+    void collectBoundary(int face, Coord & c, Ts segid) {}
+
+    void collectContactingSurface(int nv, Coord & c, Ts segid1, Ts segid2)
+    {
+        auto p = std::minmax(segid1, segid2);
+        auto aff_val = m_aff[c[0]][c[1]][c[2]][nv];
+        if (aff_val < m_high and aff_val > m_low) {
+            m_surfaces[p][c] |= 1<<nv;
+        }
+    }
+
+    std::vector<std::pair<CRInfo, ContactRegionExt> > contactSurfaces() {
+        std::vector<std::pair<CRInfo, ContactRegionExt> > crs;
+        for (const auto & [k, v] : m_surfaces) {
+            ContactRegion cr;
+            for (const auto & [c,n] : v) {
+                cr.insert(c);
+            }
+            auto ccs = connectComponent(cr);
+            for (auto & cc: ccs) {
+                ContactRegionExt cre;
+                for (const auto c: cc) {
+                    cre[c] = v.at(c);
+                }
+                CRInfo ci(k, cre);
+                crs.push_back(std::make_pair(ci, cre));
+            }
+        }
+        return crs;
+    }
+
+private:
+    const Chunk & m_aff;
+    Ta m_low;
+    Ta m_high;
+    std::unordered_map<SegPair<Ts>, ContactRegionExt, boost::hash<SegPair<Ts> > > m_surfaces;
+};
+
+
 #endif

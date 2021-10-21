@@ -10,7 +10,7 @@ def chunk_origin(bbox):
             offset[i] -= 1
     return offset
 
-def write_metadata(fn, offset, size, ac_offset, flags):
+def write_metadata(fn, offset, size, ac_offset, low, high):
     with open(fn, "w") as f:
         f.write(" ".join([str(x) for x in offset]))
         f.write("\n")
@@ -18,7 +18,7 @@ def write_metadata(fn, offset, size, ac_offset, flags):
         f.write("\n")
         f.write(str(ac_offset))
         f.write("\n")
-        f.write(" ".join([str(x) for x in flags]))
+        f.write(" ".join([str(low), str(high)]))
 
 param = read_inputs(sys.argv[1])
 global_param = read_inputs(os.environ['PARAM_JSON'])
@@ -31,9 +31,17 @@ boundary_flags = param["boundary_flags"]
 start_coord = [bbox[i]-1+boundary_flags[i] for i in range(3)]
 end_coord = [bbox[i+3]+1-boundary_flags[i+3] for i in range(3)]
 
+if "AFF_PATH" in global_param:
+    aff = load_data(global_param['AFF_PATH'],mip=global_param['AFF_RESOLUTION'],fill_missing=False)
+    aff_cutout = cut_data(aff, start_coord, end_coord, boundary_flags)
+    save_raw_data("aff.raw", aff_cutout, aff.dtype)
+
 seg = load_data(os.environ['SEG_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=True)
 seg_cutout = cut_data(seg, start_coord, end_coord, boundary_flags)
 save_raw_data("seg.raw", seg_cutout, seg.dtype)
 
+high_th = float(global_param.get('CS_HIGH_THRESHOLD', 1.0))
+low_th = float(global_param.get('CS_LOW_THRESHOLD', 0.0))
 
-write_metadata("param.txt", chunk_origin(bbox), seg_cutout.shape[0:3], offset, boundary_flags)
+
+write_metadata("param.txt", chunk_origin(bbox), seg_cutout.shape[0:3], offset, low_th, high_th)
