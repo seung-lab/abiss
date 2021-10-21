@@ -554,11 +554,12 @@ bool sem_can_merge(const sem_array_t & labels1, const sem_array_t & labels2)
 
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
           class Limits = std::numeric_limits<T>>
-inline void agglomerate(const char * rg_filename, const char * fs_filename, const char * ns_filename, T const& threshold)
+inline void agglomerate(const char * rg_filename, const char * fs_filename, const char * ns_filename, aff_t th)
 {
     Compare comp;
     Plus    plus;
 
+    T const final_threshold = T(th,1);
     T const h_threshold = T(0.5,1);
     const size_t small_threshold = 1000000;
     const size_t large_threshold = 10000000;
@@ -569,7 +570,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     float print_th = 1.0 - 0.01;
     size_t num_of_edges = 0;
 
-    auto agg_data = load_inputs<T, Compare, Plus>(rg_filename, fs_filename, ns_filename, threshold);
+    auto agg_data = load_inputs<T, Compare, Plus>(rg_filename, fs_filename, ns_filename, final_threshold);
 
     auto & incident = agg_data.incident;
     auto & heap = agg_data.heap;
@@ -599,7 +600,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     std::cout << "looping through the heap" << std::endl;
 
 
-    while (!heap.empty() && comp(heap.top().edge->w, threshold))
+    while (!heap.empty() && comp(heap.top().edge->w, final_threshold))
     {
         num_of_edges += 1;
         auto e = heap.top();
@@ -792,7 +793,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         if (e.w.sum == 0 && e.w.num == 0) {
             continue;
         }
-        if (comp(e.w, threshold)) {
+        if (comp(e.w, final_threshold)) {
             continue;
         }
         auto v0 = e.v0;
@@ -931,10 +932,10 @@ int main(int argc, char *argv[])
     std::cout << "agglomerate" << std::endl;
 #ifdef MST_EDGE
     agglomerate<mst_edge, mst_edge_greater, mst_edge_plus,
-                           mst_edge_limits>(argv[2], argv[3], argv[4], mst_edge(th, 1));
+                           mst_edge_limits>(argv[2], argv[3], argv[4], th);
 #else
     agglomerate<mean_edge, mean_edge_greater, mean_edge_plus,
-                           mean_edge_limits>(argv[2], argv[3], argv[4], mean_edge(th, 1));
+                           mean_edge_limits>(argv[2], argv[3], argv[4], th);
 #endif
 
 }
