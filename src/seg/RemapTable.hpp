@@ -9,7 +9,6 @@ public:
         : m_globalMap() {}
     RemapTable(size_t data_size)
         : m_globalMap(data_size) {}
-    ~RemapTable() {}
 
     T globalID(const T & id) const {
         if (m_globalMap.count(id) > 0) {
@@ -37,7 +36,6 @@ class ChunkRemap : public RemapTable<T> {
 public:
     ChunkRemap(size_t data_size)
         : RemapTable<T>(data_size), m_chunkMap(data_size) {}
-    ~ChunkRemap() {}
 
     T chunkID(const T & id) const {
         auto gid = this->globalID(id);
