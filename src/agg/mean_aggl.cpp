@@ -781,13 +781,6 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
             if (!comp(e.edge->w, h_threshold)) {
                 if (!sem_counts.empty()){
-                    //auto sem0 = sem_label(sem_counts[v0]);
-                    //auto sem1 = sem_label(sem_counts[v1]);
-                    //if (sem0.first != sem1.first && sem0.second > 10000 && sem1.second > 10000) {
-                    //    of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[v0])), sizeof(seg_t));
-                    //    of_sem_cuts.write(reinterpret_cast<const char *>(&(seg_indices[v1])), sizeof(seg_t));
-                    //    continue;
-                    //}
                     if (!sem_can_merge(sem_counts[v0],sem_counts[v1])) {
                         std::cout << seg_indices[v0] << ", " << seg_indices[v1] << ", " << supervoxel_counts[v0] << ", " << supervoxel_counts[v1] << std::endl;
                         std::cout << "reject merge between " << seg_indices[v0] << "(" << sem_counts[v0][1] << "," << sem_counts[v0][2] << ")"<< " and " << seg_indices[v1] << "(" << sem_counts[v1][1] << "," << sem_counts[v1][2] << ")"<< std::endl;
