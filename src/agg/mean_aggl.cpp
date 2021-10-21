@@ -18,6 +18,7 @@
 //
 
 #include <boost/heap/fibonacci_heap.hpp>
+#include <boost/pending/disjoint_sets.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <cstddef>
 #include <cstdlib>
@@ -404,6 +405,148 @@ void remap_edges(agglomeration_data_t<T, Compare> & agg_data, std::vector<std::v
             }
     });
     merge_edges<T, Compare, Plus>(agg_data);
+}
+
+template <class T, class Compare = std::greater<T>>
+std::vector<seg_t> extract_cc(const agglomeration_data_t<T, Compare> & agg_data,  T const & threshold)
+{
+    Compare comp;
+    auto & rg_vector = agg_data.rg_vector;
+    auto & seg_indices = agg_data.seg_indices;
+    auto & supervoxel_counts = agg_data.supervoxel_counts;
+
+    std::vector<seg_t> bc_rank(seg_indices.size()+1);
+    std::vector<seg_t> bc_parent(seg_indices.size()+1);
+    boost::disjoint_sets<seg_t*, seg_t*> bc_sets(&bc_rank[0], &bc_parent[0]);
+    for (size_t i = 0; i != seg_indices.size(); i++) {
+        bc_sets.make_set(i);
+    }
+    auto boundary_cc = seg_indices.size();
+    bc_sets.make_set(boundary_cc);
+
+    for (const auto & e : rg_vector) {
+        if (comp(e.w, threshold)){
+            bc_sets.union_set(e.v0, e.v1);
+            if (is_frozen(supervoxel_counts[e.v0]) || is_frozen(supervoxel_counts[e.v1])) {
+                bc_sets.union_set(e.v0, boundary_cc);
+            }
+        }
+    }
+
+    std::vector<seg_t> cc_rank(seg_indices.size());
+    std::vector<seg_t> cc_parent(seg_indices.size());
+    boost::disjoint_sets<seg_t*, seg_t*> cc_sets(&cc_rank[0], &cc_parent[0]);
+    for (size_t i = 0; i != seg_indices.size(); i++) {
+        cc_sets.make_set(i);
+    }
+
+    for (const auto & e : rg_vector) {
+        if (comp(e.w, threshold)){
+            cc_sets.union_set(e.v0, e.v1);
+        } else {
+            if (bc_sets.find_set(e.v0) == bc_sets.find_set(boundary_cc) or bc_sets.find_set(e.v1) == bc_sets.find_set(boundary_cc)) {
+                cc_sets.union_set(e.v0, e.v1);
+            }
+        }
+    }
+
+    std::vector<seg_t> idx(seg_indices.size());
+    std::iota(idx.begin(), idx.end(), seg_t(0));
+    cc_sets.compress_sets(idx.cbegin(), idx.cend());
+    std::cout << "connect components: " << cc_sets.count_sets(idx.cbegin(), idx.cend()) << std::endl;
+    return cc_parent;
+}
+
+template<typename T>
+std::vector<std::pair<seg_t, size_t> > cc_edge_offsets(std::vector<edge_t<T> > rg_vector, std::vector<seg_t> & ccids)
+{
+    seg_t ccid = std::numeric_limits<seg_t>::max();
+    std::vector<std::pair<seg_t, size_t> > cc_edges;
+    for (size_t i = 0; i != rg_vector.size(); i++) {
+        const auto & e = rg_vector[i];
+        if (ccids[e.v0] != ccids[e.v1]) {
+            cc_edges.emplace_back(ccid, i);
+            break;
+        }
+        if (ccid != ccids[e.v0]) {
+            if (ccid != std::numeric_limits<seg_t>::max()) {
+                cc_edges.emplace_back(ccid, i);
+            }
+            ccid = ccids[e.v0];
+        }
+    }
+    if ((cc_edges.empty() or ccid != cc_edges.back().first) and ccid != std::numeric_limits<seg_t>::max()) {
+        cc_edges.emplace_back(ccid, rg_vector.size());
+    }
+    return cc_edges;
+}
+
+template<typename T>
+void partition_rg(std::vector<edge_t<T> > & rg_vector, const std::vector<seg_t> & ccids, const std::vector<std::pair<seg_t, size_t> > & cc_queue)
+{
+    std::sort(std::execution::par, std::begin(rg_vector), std::end(rg_vector), [&](auto & a, auto & b) {
+            seg_t a0 = ccids[a.v0];
+            seg_t a1 = ccids[a.v1];
+            seg_t b0 = ccids[b.v0];
+            seg_t b1 = ccids[b.v1];
+            if (a0 == a1) {
+                if (b0 == b1) {
+                    auto r1 = std::lower_bound(cc_queue.begin(), cc_queue.end(), a0, [](const auto & p, seg_t target) {return p.first < target;});
+                    auto r2 = std::lower_bound(cc_queue.begin(), cc_queue.end(), b0, [](const auto & p, seg_t target) {return p.first < target;});
+                    if (r1 == cc_queue.end() or (*r1).first != a0) {
+                        std::cout << "failed binary search 1" << std::endl;
+                        std::abort();
+                    }
+                    if (r2 == cc_queue.end() or (*r2).first != b0) {
+                        std::cout << "failed binary search 2" << std::endl;
+                        std::abort();
+                    }
+                    return ((*r1).second > (*r2).second) || ((*r1).second == (*r2).second && std::distance(cc_queue.begin(), r1) < std::distance(cc_queue.begin(), r2));
+                } else {
+                    return true;
+                }
+            } else {
+                return false;
+            }
+    });
+    std::cout << "finished partition the edges" << std::endl;
+}
+
+std::vector<std::pair<seg_t, size_t> > sorted_components(std::vector<seg_t> ccids)
+{
+    std::sort(std::execution::par, ccids.begin(), ccids.end());
+    std::vector<std::pair<seg_t, size_t> > cc_comps;
+
+    if (ccids.empty()) {
+        std::cerr << "no segments, empty chunk???" << std::endl;
+        return cc_comps;
+    }
+    seg_t cc = ccids[0];
+    size_t count = 0;
+    for (const auto id: ccids) {
+        if (id != cc) {
+            if (count > 1)
+                cc_comps.emplace_back(cc, count);
+            cc = id;
+            count = 0;
+        }
+        count += 1;
+    }
+
+    if (count > 1) {
+        cc_comps.emplace_back(cc, count);
+    }
+
+    if (cc_comps.empty()) {
+        std::cerr << "no connect components" << std::endl;
+        return cc_comps;
+    }
+
+    std::sort(std::execution::par, cc_comps.begin(), cc_comps.end(), [](auto & a, auto & b) {
+        return a.first < b.first;
+    });
+
+    return cc_comps;
 }
 
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T> >
