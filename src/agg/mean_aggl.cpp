@@ -831,7 +831,7 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 auto v = p.first;
                 auto e0 = p.second;
                 if (v == v0) {
-                    std::cerr << "loop in the incident matrix: " << v << std::endl;
+                    std::cerr << "loop in the incident matrix: " << seg_indices[v] << std::endl;
                     std::abort();
                 }
 
