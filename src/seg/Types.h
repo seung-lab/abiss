@@ -2,10 +2,7 @@
 #define TYPES_H
 
 #include <array>
-#include <unordered_map>
-#include <unordered_set>
 #include <boost/multi_array.hpp>
-#include <boost/functional/hash.hpp>
 
 #include "../global_types.h"
 
@@ -19,11 +16,11 @@ using SegPair = std::pair<Ts, Ts>;
 
 using Coord = std::array<int64_t, 3>;
 
-using ContactRegion = std::unordered_set<Coord, boost::hash<Coord> >;
-using ContactRegionExt = std::unordered_map<Coord, int, boost::hash<Coord> >;
+using ContactRegion = SetContainer<Coord, HashFunction<Coord> >;
+using ContactRegionExt = MapContainer<Coord, int, HashFunction<Coord> >;
 
 template <class Ta>
-using Edge = std::array<std::unordered_map<Coord, Ta, boost::hash<Coord> >, 3>;
+using Edge = std::array<MapContainer<Coord, Ta, HashFunction<Coord> >, 3>;
 
 using sem_t = uint8_t;
 

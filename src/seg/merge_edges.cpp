@@ -33,7 +33,7 @@ int main(int argc, char * argv[])
 
     seg_t seg1, seg2;
     std::vector<SegPair<seg_t> > complete_segpairs;
-    std::unordered_map<SegPair<seg_t>, Edge<aff_t>, boost::hash<SegPair<seg_t> > > edges;
+    MapContainer<SegPair<seg_t>, Edge<aff_t>, HashFunction<SegPair<seg_t> > > edges;
     std::ifstream edge_list(argv[1]);
     std::vector<std::pair<aff_t, seg_t> > me;
     while (edge_list >> seg1 >> seg2){

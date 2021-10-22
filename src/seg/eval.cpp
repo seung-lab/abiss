@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <unordered_map>
 #include <cassert>
 #include "Utils.hpp"
 
@@ -14,8 +13,8 @@ int main(int argc, char * argv[])
     auto gt = read_array<uint64_t>(argv[2]);
     assert("Cannot compare segments with ground truth, the sizes of the two cutouts do not match");
 
-    std::unordered_map<uint64_t, std::unordered_map<uint64_t, uint64_t>> p_ij;
-    std::unordered_map<uint64_t, uint64_t> s_i, t_j;
+    MapContainer<uint64_t, MapContainer<uint64_t, uint64_t>> p_ij;
+    MapContainer<uint64_t, uint64_t> s_i, t_j;
 
     for (size_t i = 0; i != seg.size(); i++) {
         uint64_t segv = seg[i];

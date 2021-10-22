@@ -6,7 +6,6 @@
 #include <cassert>
 #include <fstream>
 #include <type_traits>
-#include <unordered_map>
 #include <boost/format.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 
@@ -145,7 +144,7 @@ size_t write_counts(std::vector<size_t> & counts, T & offset, const char * tag)
 }
 
 template <typename K, typename V>
-size_t write_remap(const std::unordered_map<K, V> & map, const char * tag)
+size_t write_remap(const MapContainer<K, V> & map, const char * tag)
 {
     std::vector<std::pair<K, V> > output;
     for (const auto & kv : map) {

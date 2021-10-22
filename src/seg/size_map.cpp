@@ -1,7 +1,6 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
-#include <unordered_set>
 #include "Utils.hpp"
 
 int main(int argc, char * argv[])
@@ -20,8 +19,8 @@ int main(int argc, char * argv[])
             return a.first == b.first && a.second == b.second;
     });
     size_array.erase(last, size_array.end());
-    std::unordered_map<uint64_t, uint64_t> size_dict(size_array.begin(), size_array.end());
-    std::unordered_map<uint64_t, size_t> cleft_segs;
+    MapContainer<uint64_t, uint64_t> size_dict(size_array.begin(), size_array.end());
+    MapContainer<uint64_t, size_t> cleft_segs;
     bool has_cleft = false;
     std::vector<uint8_t> size_map;
     if (std::filesystem::exists("cleft.raw")) {

@@ -15,7 +15,7 @@ int main(int argc, char * argv[])
 {
     std::string tag(argv[1]);
 
-    std::unordered_set<seg_t> incomplete_segments;
+    SetContainer<seg_t> incomplete_segments;
     for (size_t i = 0; i != 6; i++) {
         incomplete_segments.merge(updateBoundarySegments<seg_t>(i, tag));
     }

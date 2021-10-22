@@ -5,8 +5,6 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
-#include <unordered_set>
-#include <unordered_map>
 #include <algorithm>
 #include <boost/format.hpp>
 
@@ -124,7 +122,7 @@ public:
     }
 
 private:
-    std::unordered_map<SegPair<Ts>, ContactRegionExt, boost::hash<SegPair<Ts> > > m_surfaces;
+    MapContainer<SegPair<Ts>, ContactRegionExt, HashFunction<SegPair<Ts> > > m_surfaces;
 };
 
 
@@ -172,7 +170,7 @@ private:
     const Chunk & m_aff;
     Ta m_low;
     Ta m_high;
-    std::unordered_map<SegPair<Ts>, ContactRegionExt, boost::hash<SegPair<Ts> > > m_surfaces;
+    MapContainer<SegPair<Ts>, ContactRegionExt, HashFunction<SegPair<Ts> > > m_surfaces;
 };
 
 

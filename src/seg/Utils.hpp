@@ -4,7 +4,6 @@
 #include "Types.h"
 #include "SlicedOutput.hpp"
 #include <queue>
-#include <unordered_map>
 #include <fstream>
 #include <iostream>
 #include <boost/format.hpp>
@@ -51,9 +50,9 @@ std::vector<T> read_array(const std::string & filename)
 
 
 template<typename T>
-std::unordered_map<T,T> loadChunkMap(const char * filename)
+MapContainer<T,T> loadChunkMap(const char * filename)
 {
-    std::unordered_map<T, T> map;
+    MapContainer<T, T> map;
     std::ifstream cm_file(filename);
     if (!cm_file.is_open()) {
         std::cout << "Cannot open the supervoxel count file" << std::endl;
@@ -156,7 +155,7 @@ void traverseSegments(const Ts& seg, Ta& ... extractors)
 }
 
 template <typename Ts, typename Tp>
-void chunkedOutput(const std::unordered_map<Ts,Tp> & data, const std::string & prefix, const std::string & tag, size_t ac_offset) {
+void chunkedOutput(const MapContainer<Ts,Tp> & data, const std::string & prefix, const std::string & tag, size_t ac_offset) {
     SlicedOutput<std::pair<Ts, Tp>, Ts> chunked_output(str(boost::format("%1%_%2%.data") % prefix % tag));
     size_t current_ac1 = std::numeric_limits<std::size_t>::max();
 

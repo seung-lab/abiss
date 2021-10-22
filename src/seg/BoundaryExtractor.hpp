@@ -5,7 +5,6 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
-#include <unordered_set>
 #include <boost/format.hpp>
 
 template<typename Ts>
@@ -23,16 +22,16 @@ public:
 
     void collectContactingSurface(int nv, Coord & c, Ts segid1, Ts segid2) {}
 
-    std::unordered_set<Ts> incompleteSupervoxels(const std::unordered_map<Ts, Ts> & map)
+    SetContainer<Ts> incompleteSupervoxels(const MapContainer<Ts, Ts> & map)
     {
-        std::unordered_set<Ts> is;
+        SetContainer<Ts> is;
         for (int i = 0; i != 6; i++) {
             is.merge(boundarySupervoxels(i, map));
         }
         return is;
     }
 
-    void output(const std::string & fnProto, const std::unordered_map<Ts, Ts> & map)
+    void output(const std::string & fnProto, const MapContainer<Ts, Ts> & map)
     {
         for (int i= 0; i != 6; i++) {
             std::ofstream out(str(boost::format(fnProto) % i), std::ios_base::binary);
@@ -44,9 +43,9 @@ public:
         }
     }
 private:
-    std::unordered_set<Ts> boundarySupervoxels(int face, const std::unordered_map<Ts, Ts> & map) const
+    SetContainer<Ts> boundarySupervoxels(int face, const MapContainer<Ts, Ts> & map) const
     {
-        std::unordered_set<Ts> res;
+        SetContainer<Ts> res;
         for (auto & s: m_boundarySupervoxels[face]) {
             if (map.count(s) > 0) {
                 res.insert(map.at(s));
@@ -57,13 +56,13 @@ private:
         return res;
     }
 
-    std::array<std::unordered_set<Ts>, 6> m_boundarySupervoxels;
+    std::array<SetContainer<Ts>, 6> m_boundarySupervoxels;
 };
 
 template<typename Ts>
-std::unordered_set<Ts> updateBoundarySegments(size_t index, const std::string & tag)
+SetContainer<Ts> updateBoundarySegments(size_t index, const std::string & tag)
 {
-    std::unordered_set<Ts> incomplete_segments;
+    SetContainer<Ts> incomplete_segments;
     Ts s;
     std::ifstream in(str(boost::format("boundary_%1%_%2%.tmp") % index % tag));
     std::cout << "update: " << index << std::endl;

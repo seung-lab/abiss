@@ -5,7 +5,6 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
-#include <unordered_map>
 
 using sem_array_t = std::array<size_t, 3>;
 
@@ -25,13 +24,13 @@ public:
 
     void collectBoundary(int face, Coord c, Tseg segid) {}
     void collectContactingSurface(int nv, Coord c, Tseg segid1, Tseg segid2) {}
-    const std::unordered_map<Tseg, sem_array_t> & sem_lables() {
+    const MapContainer<Tseg, sem_array_t> & sem_lables() {
         return m_labels;
     }
 
-    void output(const std::unordered_map<Tseg, Tseg> & chunkMap, const std::string & outputFileName)
+    void output(const MapContainer<Tseg, Tseg> & chunkMap, const std::string & outputFileName)
     {
-        std::unordered_map<Tseg, sem_array_t> remapped_labels;
+        MapContainer<Tseg, sem_array_t> remapped_labels;
         std::ofstream of(outputFileName, std::ios_base::binary);
         assert(of.is_open());
         for (const auto & [k, v]: m_labels) {
@@ -63,7 +62,7 @@ private:
     // dummy, axon, bv, dendrite, glia, soma
     //static constexpr std::array<int, 6> sem_map = {-1,1,2,0,2,-1};
     const Chunk & m_sem;
-    std::unordered_map<Tseg, sem_array_t> m_labels;
+    MapContainer<Tseg, sem_array_t> m_labels;
 };
 
 

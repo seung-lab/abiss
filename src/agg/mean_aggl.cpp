@@ -26,10 +26,7 @@
 #include <iostream>
 #include <fstream>
 #include <limits>
-#include <unordered_map>
-#include <map>
 #include <vector>
-#include <unordered_set>
 #include <execution>
 #include <future>
 #include <sys/stat.h>
@@ -156,7 +153,7 @@ struct agglomeration_param_t
 template <class T, class Compare = std::greater<T> >
 struct agglomeration_data_t
 {
-    std::vector<std::unordered_map<seg_t, handle_wrapper<T, Compare> > > incident;
+    std::vector<MapContainer<seg_t, handle_wrapper<T, Compare> > > incident;
     std::vector<edge_t<T> > rg_vector;
     std::vector<size_t> supervoxel_counts;
     std::vector<seg_t> seg_indices;
@@ -985,8 +982,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             package_size = min_edge_threshold;
         }
 
-        std::unordered_set<seg_t> processed_cc;
-        std::unordered_set<seg_t> target_cc;
+        SetContainer<seg_t> processed_cc;
+        SetContainer<seg_t> target_cc;
         auto target_size = 0;
 
         if (seg_indices.size() < min_edge_threshold or cc_edges[0].second < min_edge_threshold) {

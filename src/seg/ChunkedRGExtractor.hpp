@@ -6,8 +6,6 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
-#include <unordered_set>
-#include <unordered_map>
 #include <algorithm>
 #include <boost/format.hpp>
 
@@ -34,7 +32,7 @@ public:
         out.addPayload(std::move(payload));
     }
 
-    void output(const std::unordered_map<Ts, Ts> & chunkMap, const std::string & tag, size_t ac_offset)
+    void output(const MapContainer<Ts, Ts> & chunkMap, const std::string & tag, size_t ac_offset)
     {
         size_t current_ac1 = std::numeric_limits<std::size_t>::max();
         size_t current_ac2 = std::numeric_limits<std::size_t>::max();
@@ -102,7 +100,7 @@ private:
         size_t area_z;
     };
     const Chunk & m_aff;
-    std::unordered_map<SegPair<Ts>, std::array<std::pair<Ta, size_t>, 3>, boost::hash<SegPair<Ts> > > m_edges;
+    MapContainer<SegPair<Ts>, std::array<std::pair<Ta, size_t>, 3>, HashFunction<SegPair<Ts> > > m_edges;
 };
 
 #endif

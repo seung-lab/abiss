@@ -6,7 +6,6 @@
 #include <iostream>
 #include <fstream>
 #include <limits>
-#include <unordered_map>
 
 template<typename T>
 struct BBox
@@ -37,10 +36,10 @@ public:
     }
     void collectBoundary(int face, Coord c, Ts segid) {}
     void collectContactingSurface(int nv, Coord c, Ts segid1, Ts segid2) {}
-    const std::unordered_map<Ts, BBox<Ti> > & bbox() {
+    const MapContainer<Ts, BBox<Ti> > & bbox() {
         return m_bbox;
     }
-    void output(const std::unordered_set<Ts> & incompleteSegments, const std::string & completeFileName, const std::string & incompleteFileName)
+    void output(const SetContainer<Ts> & incompleteSegments, const std::string & completeFileName, const std::string & incompleteFileName)
     {
         std::ofstream complete(completeFileName, std::ios_base::binary);
         std::ofstream incomplete(incompleteFileName, std::ios_base::binary);
@@ -57,7 +56,7 @@ public:
         incomplete.close();
     }
 private:
-    std::unordered_map<Ts, BBox<Ti> > m_bbox;
+    MapContainer<Ts, BBox<Ti> > m_bbox;
 };
 
 void writeBBox(auto & io, const auto & k, const auto & v) {
@@ -69,9 +68,9 @@ void writeBBox(auto & io, const auto & k, const auto & v) {
 }
 
 template <typename Ts, typename Ti>
-std::unordered_map<Ts, BBox<Ti> > loadBBoxes(const std::string & fileName)
+MapContainer<Ts, BBox<Ti> > loadBBoxes(const std::string & fileName)
 {
-    std::unordered_map<Ts, BBox<Ti> > bboxes;
+    MapContainer<Ts, BBox<Ti> > bboxes;
     std::cout << "loading: " << fileName << std::endl;
     std::ifstream in(fileName);
     assert(in.is_open());
@@ -92,7 +91,7 @@ std::unordered_map<Ts, BBox<Ti> > loadBBoxes(const std::string & fileName)
 }
 
 template <typename Ts, typename Ti>
-void writeBBoxes(const std::unordered_set<Ts> & incompleteSegments, const std::unordered_map<Ts, BBox<Ti> > bboxes, const std::string & incompleteFileName, const std::string & completeFileName)
+void writeBBoxes(const SetContainer<Ts> & incompleteSegments, const MapContainer<Ts, BBox<Ti> > bboxes, const std::string & incompleteFileName, const std::string & completeFileName)
 {
     std::ofstream incomplete(incompleteFileName, std::ios_base::binary);
     std::ofstream complete(completeFileName, std::ios_base::binary);
@@ -108,7 +107,7 @@ void writeBBoxes(const std::unordered_set<Ts> & incompleteSegments, const std::u
 }
 
 template <typename Ts, typename Ti>
-void updateBBoxes(const std::unordered_set<Ts> & incompleteSegments, const std::string & inputFileName, const std::string & incompleteFileName, const std::string & completeFileName)
+void updateBBoxes(const SetContainer<Ts> & incompleteSegments, const std::string & inputFileName, const std::string & incompleteFileName, const std::string & completeFileName)
 {
     writeBBoxes<Ts>(incompleteSegments, loadBBoxes<Ts, Ti>(inputFileName), incompleteFileName, completeFileName);
 }

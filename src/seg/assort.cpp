@@ -2,22 +2,21 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
-#include <unordered_map>
 #include <vector>
 #include <boost/pending/disjoint_sets.hpp>
 #include <boost/format.hpp>
 
-const std::unordered_map<std::string, size_t> metaData =
+const MapContainer<std::string, size_t> metaData =
 {
     {"mst", (sizeof(seg_t)+sizeof(seg_t)+sizeof(aff_t)+sizeof(size_t))+(sizeof(seg_t)+sizeof(seg_t)+sizeof(aff_t)+sizeof(size_t))},
     {"sizes", sizeof(seg_t)+sizeof(size_t)},
     {"bboxes", sizeof(seg_t)+sizeof(int64_t)*6}
 };
 
-std::unordered_map<seg_t, seg_t> load_remap(const char * filename)
+MapContainer<seg_t, seg_t> load_remap(const char * filename)
 {
-    using rank_t = std::unordered_map<seg_t,std::size_t>;
-    using parent_t = std::unordered_map<seg_t, seg_t>;;
+    using rank_t = MapContainer<seg_t,std::size_t>;
+    using parent_t = MapContainer<seg_t, seg_t>;;
     rank_t rank_map;
     parent_t parent_map;
 
@@ -26,7 +25,7 @@ std::unordered_map<seg_t, seg_t> load_remap(const char * filename)
 
     boost::disjoint_sets<boost::associative_property_map<rank_t>, boost::associative_property_map<parent_t> > sets(rank_pmap, parent_pmap);
 
-    std::unordered_set<seg_t> nodes;
+    SetContainer<seg_t> nodes;
 
     seg_t s1, s2;
 
@@ -61,11 +60,11 @@ std::vector<seg_t> load_seg(const char * filename)
     return segs;
 }
 
-std::unordered_map<seg_t, std::vector<std::vector<char> > > load_data(const std::string & filename, size_t payloadSize)
+MapContainer<seg_t, std::vector<std::vector<char> > > load_data(const std::string & filename, size_t payloadSize)
 {
     std::ifstream in(filename);
     seg_t s;
-    std::unordered_map<seg_t, std::vector<std::vector<char> > > data;
+    MapContainer<seg_t, std::vector<std::vector<char> > > data;
     size_t count = 0;
     while (in.read(reinterpret_cast<char *>(&s), sizeof(s))) {
         std::vector<char> payload(payloadSize);
@@ -77,10 +76,10 @@ std::unordered_map<seg_t, std::vector<std::vector<char> > > load_data(const std:
     return data;
 }
 
-std::unordered_map<seg_t, std::vector<seg_t> > generate_bags(auto & pmap, auto & root)
+MapContainer<seg_t, std::vector<seg_t> > generate_bags(auto & pmap, auto & root)
 {
-    std::unordered_map<seg_t, seg_t> rep;
-    std::unordered_map<seg_t, std::vector<seg_t> > bags;
+    MapContainer<seg_t, seg_t> rep;
+    MapContainer<seg_t, std::vector<seg_t> > bags;
     std::cout << root.size() << " roots" << std::endl;
     for (const auto & r : root) {
         if (pmap.count(r) > 0) {

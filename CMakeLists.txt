@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.8)
 project(ABISS)
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
@@ -19,6 +19,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(Boost COMPONENTS iostreams system REQUIRED)
 find_package(Threads REQUIRED)
+find_package(absl)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JEMALLOC jemalloc)
@@ -28,6 +29,14 @@ if(JEMALLOC_FOUND)
     set(optionalLibs ${optionalLibs} ${JEMALLOC_LIBRARIES})
     message(STATUS "Use jemalloc as the default allocator.")
 endif(JEMALLOC_FOUND)
+
+if(absl_FOUND)
+    set(optionalLibs ${optionalLibs}
+        absl::flat_hash_map
+        absl::flat_hash_set
+        )
+    message(STATUS "Use abseil::flat_hash_map and absl::flat_hash_set")
+endif(absl_FOUND)
 
 if(EXTRACT_SIZE)
     add_definitions(-DEXTRACT_SIZE)

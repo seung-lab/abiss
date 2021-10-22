@@ -4,8 +4,6 @@
 
 #include <cstddef>
 #include <iostream>
-#include <unordered_map>
-#include <boost/functional/hash.hpp>
 
 template< typename ID, typename F, typename L>
 inline region_graph<ID,F>
@@ -28,7 +26,7 @@ get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
 
     std::vector<id_pair> pairs;
 
-    std::vector<std::unordered_map<ID, F> > edges(max_segid);
+    std::vector<MapContainer<ID, F> > edges(max_segid);
     //std::vector<emilib::HashMap<ID, F> > edges(max_segid);
     for (auto & h : edges) {
         h.reserve(10);

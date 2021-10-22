@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <unordered_set>
 #include <execution>
 #include <boost/format.hpp>
 #include <boost/pending/disjoint_sets.hpp>
@@ -86,7 +85,7 @@ std::vector<seg_t> generate_remaps(const std::vector<std::pair<seg_t, CRInfo> > 
     return parent;
 }
 
-std::unordered_set<seg_t> update_boundaries(const std::vector<std::pair<seg_t, CRInfo> > & incomplete_cs, std::vector<seg_t> & remaps, const std::array<bool,6> & boundary_flags, const std::string & tag)
+SetContainer<seg_t> update_boundaries(const std::vector<std::pair<seg_t, CRInfo> > & incomplete_cs, std::vector<seg_t> & remaps, const std::array<bool,6> & boundary_flags, const std::string & tag)
 {
     std::vector<seg_t> bc;
     for (size_t i = 0; i != 6; i++) {
@@ -124,7 +123,7 @@ std::unordered_set<seg_t> update_boundaries(const std::vector<std::pair<seg_t, C
             }
         }
     }
-    return std::unordered_set(bc.begin(), bc.end());
+    return SetContainer<seg_t>(bc.begin(), bc.end());
 }
 
 std::vector<std::pair<seg_t, CRInfo> > merge_cs(std::vector<std::pair<seg_t, CRInfo> > & cs, const std::vector<seg_t> & remaps)

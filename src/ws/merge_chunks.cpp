@@ -5,9 +5,6 @@
 #include "../seg/SlicedOutput.hpp"
 #include <vector>
 #include <tuple>
-#include <unordered_map>
-#include <unordered_set>
-#include <boost/functional/hash.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 #include <ctime>
 #include <cstdlib>
@@ -80,8 +77,8 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     std::cout << "populate maps in " << elapsed_secs << " seconds" << std::endl;
 
     using traits = watershed_traits<ID>;
-    using rank_t = std::unordered_map<ID,std::size_t>;
-    using parent_t = std::unordered_map<ID,ID>;
+    using rank_t = MapContainer<ID,std::size_t>;
+    using parent_t = MapContainer<ID,ID>;
     std::vector<ID> rank(sizes.size());
     std::vector<ID> parent(sizes.size());
     boost::disjoint_sets<ID*, ID*> sets(&rank[0], &parent[0]);
@@ -118,7 +115,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
         });
 
     std::vector<id_pair<size_t> > same;
-    std::unordered_map<id_pair<ID>, F, boost::hash<id_pair<ID> > > edges;
+    MapContainer<id_pair<ID>, F, HashFunction<id_pair<ID> > > edges;
 
     begin = clock();
     std::vector<ID> vfi;
@@ -398,7 +395,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "generate remap in " << elapsed_secs << " seconds" << std::endl;
 
-    std::unordered_map<size_t, std::set<size_t> > in_rg;
+    MapContainer<size_t, std::set<size_t> > in_rg;
 
     region_graph<ID,F> unique_rg;
     region_graph<ID,F> new_rg;
@@ -487,7 +484,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
             }
             });
 
-    std::unordered_map<ID, ID> reps;
+    MapContainer<ID, ID> reps;
 
     begin = clock();
 

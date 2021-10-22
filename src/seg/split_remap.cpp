@@ -3,7 +3,6 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
-#include <unordered_map>
 #include <vector>
 #include <execution>
 #include <sys/stat.h>
@@ -174,7 +173,7 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
     auto & segtype = remap_data.segtype;
     auto & segsize = remap_data.segsize;
 
-    std::unordered_map<T, T> reps;
+    MapContainer<T, T> reps;
 
     for (size_t i = 0; i != remaps.size(); i++) {
         auto s = segids[i];

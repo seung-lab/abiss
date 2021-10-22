@@ -5,8 +5,6 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
-#include <unordered_set>
-#include <unordered_map>
 #include <algorithm>
 #include <boost/format.hpp>
 #include <execution>
@@ -36,7 +34,7 @@ public:
         out.write(reinterpret_cast<const char *>(&(v.second)), sizeof(size_t));
     }
 
-    void output(const std::unordered_set<Ts> & incompleteSegments, const std::unordered_map<Ts, Ts> & chunkMap, const std::string & completeFileName, const std::string & incompleteFileName)
+    void output(const SetContainer<Ts> & incompleteSegments, const MapContainer<Ts, Ts> & chunkMap, const std::string & completeFileName, const std::string & incompleteFileName)
     {
         std::vector<SegPair<Ts> > incomplete_segpairs;
         std::vector<SegPair<Ts> > complete_segpairs;
@@ -46,7 +44,7 @@ public:
 
         std::vector<std::pair<Ta, Ts> > me_complete;
         std::vector<std::pair<Ta, Ts> > me_incomplete;
-        std::unordered_map<SegPair<Ts>, std::pair<Ta, size_t>, boost::hash<SegPair<Ts> > > real_edges;
+        MapContainer<SegPair<Ts>, std::pair<Ta, size_t>, HashFunction<SegPair<Ts> > > real_edges;
         for (const auto & kv : m_edges) {
             auto k = kv.first;
             auto v = kv.second;
@@ -95,7 +93,7 @@ public:
 
 private:
     const Chunk & m_aff;
-    std::unordered_map<SegPair<Ts>, std::pair<Ta, size_t>, boost::hash<SegPair<Ts> > > m_edges;
+    MapContainer<SegPair<Ts>, std::pair<Ta, size_t>, HashFunction<SegPair<Ts> > > m_edges;
 };
 
 template<typename Ts, typename Ta>
@@ -147,7 +145,7 @@ std::vector<SimpleEdge<Ts, Ta> > loadRegionGraph(const std::string & fileName)
 }
 
 template <typename Ts, typename Ta>
-void writeRegionGraph(const std::unordered_set<Ts> & incompleteSegments, const std::vector<SimpleEdge<Ts, Ta> >  rg, const std::string & incompleteFileName, const std::string & completeFileName)
+void writeRegionGraph(const SetContainer<Ts> & incompleteSegments, const std::vector<SimpleEdge<Ts, Ta> >  rg, const std::string & incompleteFileName, const std::string & completeFileName)
 {
     std::ofstream incomplete(incompleteFileName, std::ios_base::binary);
     std::ofstream complete(completeFileName, std::ios_base::binary);
@@ -169,7 +167,7 @@ void writeRegionGraph(const std::unordered_set<Ts> & incompleteSegments, const s
 }
 
 template <typename Ts, typename Ta>
-void updateRegionGraph(const std::unordered_set<Ts> & incompleteSegments, const std::string & inputFileName, const std::string & incompleteFileName, const std::string & completeFileName)
+void updateRegionGraph(const SetContainer<Ts> & incompleteSegments, const std::string & inputFileName, const std::string & incompleteFileName, const std::string & completeFileName)
 {
     writeRegionGraph<Ts, Ta>(incompleteSegments, loadRegionGraph<Ts, Ta>(inputFileName), incompleteFileName, completeFileName);
 }

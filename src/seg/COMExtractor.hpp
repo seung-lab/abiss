@@ -5,7 +5,6 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
-#include <unordered_map>
 
 struct com_t
 {
@@ -27,11 +26,11 @@ public:
     }
     void collectBoundary(int face, Coord c, T segid) {}
     void collectContactingSurface(int nv, Coord c, T segid1, T segid2) {}
-    const std::unordered_map<T, com_t> & com() {
+    const MapContainer<T, com_t> & com() {
         return m_com;
     }
 
-    void output(const std::unordered_set<T> & incompleteSegments, const std::string & completeFileName, const std::string & incompleteFileName)
+    void output(const SetContainer<T> & incompleteSegments, const std::string & completeFileName, const std::string & incompleteFileName)
     {
         std::ofstream complete(completeFileName, std::ios_base::binary);
         std::ofstream incomplete(incompleteFileName, std::ios_base::binary);
@@ -55,7 +54,7 @@ private:
         io.write(reinterpret_cast<const char *>(&v), sizeof(v));
         assert(!io.bad());
     }
-    std::unordered_map<T, com_t> m_com;
+    MapContainer<T, com_t> m_com;
 };
 
 #endif //COM_EXTRACTOR_HPP

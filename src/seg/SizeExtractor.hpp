@@ -5,7 +5,6 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
-#include <unordered_map>
 
 template<typename T>
 class SizeExtractor
@@ -17,12 +16,12 @@ public:
     }
     void collectBoundary(int face, Coord c, T segid) {}
     void collectContactingSurface(int nv, Coord c, T segid1, T segid2) {}
-    const std::unordered_map<T, size_t> & sizes() {
+    const MapContainer<T, size_t> & sizes() {
         return m_sizes;
     }
 
-    const std::unordered_map<T, size_t> svSizes(const std::unordered_map<T, T> & chunkMap) {
-        std::unordered_map<T, size_t> mergedSize;
+    const MapContainer<T, size_t> svSizes(const MapContainer<T, T> & chunkMap) {
+        MapContainer<T, size_t> mergedSize;
         for (auto & [ k, v ]: m_sizes) {
             auto sid = k;
             if (chunkMap.count(sid) > 0) {
@@ -37,9 +36,9 @@ public:
         return mergedSize;
     }
 
-    void output(const std::unordered_map<T, T> & chunkMap, const std::string & outputFileName)
+    void output(const MapContainer<T, T> & chunkMap, const std::string & outputFileName)
     {
-        std::unordered_map<T, size_t> remapped_sizes;
+        MapContainer<T, size_t> remapped_sizes;
         std::ofstream of(outputFileName, std::ios_base::binary);
         assert(of.is_open());
         for (const auto & [k, v]: m_sizes) {
@@ -65,13 +64,13 @@ private:
         io.write(reinterpret_cast<const char *>(&v), sizeof(v));
         assert(!io.bad());
     }
-    std::unordered_map<T, size_t> m_sizes;
+    MapContainer<T, size_t> m_sizes;
 };
 
 template <typename Ts>
-std::unordered_map<Ts, size_t> loadSizes(const std::string & fileName)
+MapContainer<Ts, size_t> loadSizes(const std::string & fileName)
 {
-    std::unordered_map<Ts, size_t> sizes;
+    MapContainer<Ts, size_t> sizes;
     std::cout << "loading: " << fileName << std::endl;
     std::ifstream in(fileName);
     Ts s;
@@ -90,7 +89,7 @@ std::unordered_map<Ts, size_t> loadSizes(const std::string & fileName)
 }
 
 template <typename Ts>
-void writeSizes(const std::unordered_set<Ts> & incompleteSegments, const std::unordered_map<Ts, size_t> sizes, const std::string & incompleteFileName, const std::string & completeFileName)
+void writeSizes(const SetContainer<Ts> & incompleteSegments, const MapContainer<Ts, size_t> sizes, const std::string & incompleteFileName, const std::string & completeFileName)
 {
     std::ofstream incomplete(incompleteFileName, std::ios_base::binary);
     std::ofstream complete(completeFileName, std::ios_base::binary);
@@ -112,7 +111,7 @@ void writeSizes(const std::unordered_set<Ts> & incompleteSegments, const std::un
 }
 
 template <typename Ts>
-void updateSizes(const std::unordered_set<Ts> & incompleteSegments, const std::string & inputFileName, const std::string & incompleteFileName, const std::string & completeFileName)
+void updateSizes(const SetContainer<Ts> & incompleteSegments, const std::string & inputFileName, const std::string & incompleteFileName, const std::string & completeFileName)
 {
     writeSizes<Ts>(incompleteSegments, loadSizes<Ts>(inputFileName), incompleteFileName, completeFileName);
 }

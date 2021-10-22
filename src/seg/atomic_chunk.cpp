@@ -17,9 +17,9 @@
 namespace bio = boost::iostreams;
 
 template<typename Ta, typename Ts>
-std::unordered_set<Ts> processMetaData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinityExtractor, const char * tag)
+SetContainer<Ts> processMetaData(const AffinityExtractor<Ts, Ta, ConstChunkRef<Ta,4> > & affinityExtractor, const char * tag)
 {
-    std::unordered_set<Ts> incomplete_segments;
+    SetContainer<Ts> incomplete_segments;
     for (int i= 0; i != 6; i++) {
         std::ofstream out(str(boost::format("boundary_%1%_%2%.data") % i % tag), std::ios_base::binary);
         for (auto x : affinityExtractor.boundarySupervoxels(i)) {
@@ -34,7 +34,7 @@ std::unordered_set<Ts> processMetaData(const AffinityExtractor<Ts, Ta, ConstChun
 }
 
 template<typename Ta, typename Ts>
-void writeEdge(const SegPair<Ts> & p, const std::unordered_map<SegPair<Ts>, Edge<Ta>, boost::hash<SegPair<Ts> > > & edges, const char * path)
+void writeEdge(const SegPair<Ts> & p, const MapContainer<SegPair<Ts>, Edge<Ta>, HashFunction<SegPair<Ts> > > & edges, const char * path)
 {
     std::ofstream out(str(boost::format("%1%/%2%_%3%.data") % path % p.first % p.second), std::ios_base::binary);
     const auto & edge = edges.at(p);

@@ -1,6 +1,6 @@
 #ifndef REMAP_TABLE_H
 #define REMAP_TABLE_H
-#include <unordered_map>
+#include "Types.h"
 
 template<typename T>
 class RemapTable {
@@ -22,12 +22,12 @@ public:
         m_globalMap[s] = globalID(t);
     }
 
-    std::unordered_map<T, T> globalMap() const {
+    MapContainer<T, T> globalMap() const {
         return m_globalMap;
     }
 
 private:
-    std::unordered_map<T,T> m_globalMap;
+    MapContainer<T,T> m_globalMap;
 };
 
 
@@ -69,7 +69,7 @@ public:
     }
 
 private:
-    std::unordered_map<T,T> m_chunkMap;
+    MapContainer<T,T> m_chunkMap;
 };
 
 

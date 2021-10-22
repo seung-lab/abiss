@@ -3,8 +3,6 @@
 
 #include "Types.h"
 #include <fstream>
-#include <unordered_set>
-#include <unordered_map>
 #include <algorithm>
 
 template<typename Ts, typename Ta, typename Chunk>
@@ -27,12 +25,12 @@ public:
         m_edges[p][nv][c] = m_aff[c[0]][c[1]][c[2]][nv];
     }
 
-    const std::unordered_set<Ts> & boundarySupervoxels(int face) const {return m_boundarySupervoxels[face];}
-    const std::unordered_map<SegPair<Ts>, Edge<Ta>, boost::hash<SegPair<Ts> > > & edges() const {return m_edges;}
+    const SetContainer<Ts> & boundarySupervoxels(int face) const {return m_boundarySupervoxels[face];}
+    const MapContainer<SegPair<Ts>, Edge<Ta>, HashFunction<SegPair<Ts> > > & edges() const {return m_edges;}
 private:
     const Chunk & m_aff;
-    std::array<std::unordered_set<Ts>, 6> m_boundarySupervoxels;
-    std::unordered_map<SegPair<Ts>, Edge<Ta>, boost::hash<SegPair<Ts> > > m_edges;
+    std::array<SetContainer<Ts>, 6> m_boundarySupervoxels;
+    MapContainer<SegPair<Ts>, Edge<Ta>, HashFunction<SegPair<Ts> > > m_edges;
 };
 
 
