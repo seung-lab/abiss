@@ -1117,8 +1117,6 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     of_meta.close();
 
     f_write_supervoxel_info.wait();
-
-    return;
 }
 
 int main(int argc, char *argv[])
