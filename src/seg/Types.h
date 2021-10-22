@@ -7,6 +7,8 @@
 #include <boost/multi_array.hpp>
 #include <boost/functional/hash.hpp>
 
+#include "../global_types.h"
+
 typedef boost::multi_array_types::extent_range Range;
 
 template <typename T, int n>
@@ -22,14 +24,6 @@ using ContactRegionExt = std::unordered_map<Coord, int, boost::hash<Coord> >;
 
 template <class Ta>
 using Edge = std::array<std::unordered_map<Coord, Ta, boost::hash<Coord> >, 3>;
-
-#ifdef DOUBLE
-using aff_t = double;
-#else
-using aff_t = float;
-#endif
-
-using seg_t = uint64_t;
 
 using sem_t = uint8_t;
 

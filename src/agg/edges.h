@@ -1,12 +1,7 @@
 #ifndef EDGES_H
 #define EDGES_H
 
-using seg_t = uint64_t;
-#ifdef DOUBLE
-using aff_t = double;
-#else
-using aff_t = float;
-#endif
+#include "../global_types.h"
 
 template <class T>
 struct __attribute__((packed)) edge_t
