@@ -595,8 +595,8 @@ inline heap_type<T, Compare> populate_heap(agglomeration_data_t<T, Compare> & ag
         }
         auto v0 = e.v0;
         auto v1 = e.v1;
-        incident[e.v0].insert({v1,handle_wrapper<T, Compare>(&e, handle)});
-        incident[e.v1].insert({v0,handle_wrapper<T, Compare>(&e, handle)});
+        incident[e.v0].emplace(v1,handle_wrapper<T, Compare>(&e, handle));
+        incident[e.v1].emplace(v0,handle_wrapper<T, Compare>(&e, handle));
         i++;
         if (i % 10000000 == 0) {
             std::cout << "reading " << i << "th edge" << std::endl;
@@ -806,8 +806,8 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                         e->v0 = v1;
                     if (e->v1 == v0)
                         e->v1 = v1;
-                    incident[v].insert({v1,e0});
-                    incident[v1].insert({v,e0});
+                    incident[v].emplace(v1,e0);
+                    incident[v1].emplace(v,e0);
                 }
             }
             incident[v0].clear();
