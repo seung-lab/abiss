@@ -23,10 +23,10 @@ retry() {
 
 
 lock_prefix="${AIRFLOW_TMP_DIR}/.cpulock"
-ncpu=$(nproc)
+ncpus=$(python3 -c "import os; print(len(os.sched_getaffinity(0)))")
 cpuid=""
 function acquire_cpu_slot() {
-    for i in $(seq 0 $((ncpu-1))); do
+    for i in $(python3 -c "exec(\"import os\nfor i in os.sched_getaffinity(0): print(i)\")"); do
         local fn="${lock_prefix}_${i}"
         if [ ! -f $fn ]; then
             cpuid=$i
@@ -35,7 +35,7 @@ function acquire_cpu_slot() {
             return
         fi
     done
-    die "All ${ncpu} cpus are busy"
+    die "All ${ncpus} cpus are busy"
 }
 
 function release_cpu_slot() {
@@ -56,7 +56,7 @@ DOWNLOAD_CMD="gsutil -m cp"
 DOWNLOAD_ST_CMD="gsutil cp"
 COMPRESS_CMD="zstd -9 --rm -T0"
 COMPRESSST_CMD="zstd -9 --rm"
-PARALLEL_CMD="parallel --halt 2"
+PARALLEL_CMD="parallel --halt 2 -j ${ncpus}"
 COMPRESSED_EXT="zst"
 META=""
 
