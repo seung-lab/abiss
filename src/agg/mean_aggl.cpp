@@ -488,8 +488,9 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     agglomeration_data_t<T, Compare> agg_data;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
+    auto & rg_vector = agg_data.rg_vector;
 
-    auto rg_vector = read_array<edge_t<T> >(rg_filename);
+    rg_vector = read_array<edge_t<T> >(rg_filename);
 
     std::vector<std::pair<seg_t, size_t> > ns_pair_array = read_array<std::pair<seg_t, size_t> >(ns_filename);
     std::vector<seg_t> fs_array = read_array<seg_t>(fs_filename);
@@ -567,7 +568,6 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
                 a.v1 = u0;
             }
         });
-    std::swap(agg_data.rg_vector, rg_vector);
 
     merge_edges<T, Compare, Plus>(agg_data);
 
