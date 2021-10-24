@@ -304,7 +304,7 @@ void merge_edges(agglomeration_data_t<T, Compare> & agg_data)
     std::swap(rg_vector, new_rg_vector);
 }
 
-template <class T, class Compare = std::greater<T>, class Plus = std::plus<T> >
+template <class T, class Compare = std::greater<T> >
 void remap_edges(agglomeration_data_t<T, Compare> & agg_data, std::vector<std::vector<std::pair<seg_t, seg_t> > > & remaps)
 {
     RemapTable<seg_t> remapTable;
@@ -332,7 +332,6 @@ void remap_edges(agglomeration_data_t<T, Compare> & agg_data, std::vector<std::v
                 a.v0 = tmp;
             }
     });
-    merge_edges<T, Compare, Plus>(agg_data);
 }
 
 template <class T, class Compare = std::greater<T>>
@@ -1038,7 +1037,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         }
         std::cout << "finish agglomeration connect components" << std::endl;
 
-        remap_edges<T, Compare, Plus>(agg_data, remaps);
+        remap_edges<T, Compare>(agg_data, remaps);
+        merge_edges<T, Compare, Plus>(agg_data);
         std::for_each(std::execution::par, agg_data.incident.begin(), agg_data.incident.end(), [](auto & d) {d.clear();});
         if (target_th == th) {
             std::cout << "stop agglomeration" << std::endl;
