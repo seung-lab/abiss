@@ -274,24 +274,25 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
 }
 
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T> >
-void merge_edges(agglomeration_data_t<T, Compare> & agg_data)
+void merge_edges(agglomeration_data_t<T, Compare> & agg_data, size_t offset)
 {
     Plus plus;
     std::vector<edge_t<T> > new_rg_vector;
     std::vector<edge_t<T> > & rg_vector = agg_data.rg_vector;
-    std::sort(std::execution::par, std::begin(rg_vector), std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
+    std::copy_if(rg_vector.begin(), rg_vector.begin()+offset, std::back_inserter(new_rg_vector), [] (const auto & e) {
+        return (e.w.sum != 0 or e.w.num != 0);
+    });
+    std::sort(std::execution::par, std::begin(rg_vector)+offset, std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
     std::cout << "rg_vector size:" << rg_vector.size() << std::endl;
 
     edge_t<T> current_edge;
     current_edge.v0 = seg_t(std::numeric_limits<seg_t>::max());
     current_edge.v1 = seg_t(std::numeric_limits<seg_t>::max());
-    for (const auto & e : rg_vector) {
-        if (e.w.sum == 0 && e.w.num == 0) {
-            continue;
-        }
+    for (auto it = rg_vector.begin()+offset; it != rg_vector.end(); it++) {
+        const auto & e = *it;
         if (current_edge.v0 != e.v0 || current_edge.v1 != e.v1) {
             if (current_edge.v0 != seg_t(std::numeric_limits<seg_t>::max()) && current_edge.v1 != seg_t(std::numeric_limits<seg_t>::max())) {
-                new_rg_vector.push_back(current_edge);
+                new_rg_vector.push_back(std::move(current_edge));
             }
             current_edge = e;
         } else {
@@ -306,7 +307,7 @@ void merge_edges(agglomeration_data_t<T, Compare> & agg_data)
 }
 
 template <class T, class Compare = std::greater<T> >
-void remap_edges(agglomeration_data_t<T, Compare> & agg_data, std::vector<std::vector<std::pair<seg_t, seg_t> > > & remaps)
+void remap_edges(agglomeration_data_t<T, Compare> & agg_data, std::vector<std::vector<std::pair<seg_t, seg_t> > > & remaps, size_t offset)
 {
     RemapTable<seg_t> remapTable;
     std::cout << "merge " << remaps.size() << " tables!" << std::endl;
@@ -318,7 +319,7 @@ void remap_edges(agglomeration_data_t<T, Compare> & agg_data, std::vector<std::v
     auto remap = remapTable.globalMap();
     std::cout << remap.size() << " remaps" << std::endl;
     auto & rg_vector = agg_data.rg_vector;
-    std::for_each(std::execution::par, rg_vector.begin(), rg_vector.end(), [&remap](auto & a) {
+    std::for_each(std::execution::par, rg_vector.begin()+offset, rg_vector.end(), [&remap](auto & a) {
             auto search0 = remap.find(a.v0);
             auto search1 = remap.find(a.v1);
             if (search0 != remap.end()) {
@@ -569,7 +570,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
             }
         });
 
-    merge_edges<T, Compare, Plus>(agg_data);
+    merge_edges<T, Compare, Plus>(agg_data, 0);
 
     return agg_data;
 }
@@ -1038,8 +1039,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         }
         std::cout << "finish agglomeration connect components" << std::endl;
 
-        remap_edges<T, Compare>(agg_data, remaps);
-        merge_edges<T, Compare, Plus>(agg_data);
+        remap_edges<T, Compare>(agg_data, remaps, total_size);
+        merge_edges<T, Compare, Plus>(agg_data, total_size);
         std::for_each(std::execution::par, agg_data.incident.begin(), agg_data.incident.end(), [](auto & d) {d.clear();});
         if (target_th == th) {
             std::cout << "stop agglomeration" << std::endl;
