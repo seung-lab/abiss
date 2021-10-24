@@ -5,20 +5,17 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 set(optionalLibs)
 
-include(CheckCXXCompilerFlag)
 
-CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
-if(COMPILER_SUPPORTS_CXX17)
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -pthread -fopenmp -std=c++17 -fconcepts")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Og -g -pthread -fopenmp -std=c++17 -fconcepts")
-else(COMPILER_SUPPORTS_CXX17)
-    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++1z support. Please use a different C++ compiler.")
-endif(COMPILER_SUPPORTS_CXX17)
+set(CMAKE_CXX_STANDARD 17)
+
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -pthread -fopenmp")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Og -g -pthread -fopenmp")
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(Boost COMPONENTS iostreams system REQUIRED)
 find_package(Threads REQUIRED)
+find_package(OpenMP REQUIRED)
 find_package(absl)
 
 find_package(PkgConfig REQUIRED)
