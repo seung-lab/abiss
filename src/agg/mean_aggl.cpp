@@ -29,6 +29,7 @@
 #include <vector>
 #include <execution>
 #include <future>
+#include <omp.h>
 #include <sys/stat.h>
 
 #include "../seg/SemExtractor.hpp"
@@ -146,7 +147,7 @@ struct agglomeration_param_t
     aff_t heuristics_aff_threshold = 0.5;
     aff_t starting_aff_threshold = 0.9;
     aff_t agglomeration_step = 0.1;
-    size_t optimal_number_of_partitions = 32;
+    size_t optimal_number_of_partitions = omp_get_num_procs() ;
     size_t minimal_number_of_edges = 100000;
 };
 
