@@ -285,23 +285,23 @@ void merge_edges(agglomeration_data_t<T, Compare> & agg_data, size_t offset)
     std::sort(std::execution::par, std::begin(rg_vector)+offset, std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
     std::cout << "rg_vector size:" << rg_vector.size() << std::endl;
 
-    edge_t<T> current_edge;
-    current_edge.v0 = seg_t(std::numeric_limits<seg_t>::max());
-    current_edge.v1 = seg_t(std::numeric_limits<seg_t>::max());
-    for (auto it = rg_vector.begin()+offset; it != rg_vector.end(); it++) {
-        const auto & e = *it;
-        if (current_edge.v0 != e.v0 || current_edge.v1 != e.v1) {
-            if (current_edge.v0 != seg_t(std::numeric_limits<seg_t>::max()) && current_edge.v1 != seg_t(std::numeric_limits<seg_t>::max())) {
-                new_rg_vector.push_back(std::move(current_edge));
-            }
-            current_edge = e;
+    if (offset == rg_vector.size()) {
+        std::swap(rg_vector, new_rg_vector);
+        return;
+    }
+
+    auto current_edge = rg_vector[offset];
+    for (size_t i = offset+1; i != rg_vector.size(); i++) {
+        const auto & e = rg_vector[i];
+        if (current_edge.v0 == e.v0 && current_edge.v1 == e.v1) {
+            current_edge.w = plus(std::move(current_edge.w), e.w);
         } else {
-            current_edge.w = plus(current_edge.w, e.w);
+            new_rg_vector.push_back(std::move(current_edge));
+            current_edge = e;
         }
     }
-    if (current_edge.v0 != seg_t(std::numeric_limits<seg_t>::max()) && current_edge.v1 != seg_t(std::numeric_limits<seg_t>::max())) {
-        new_rg_vector.push_back(current_edge);
-    }
+    new_rg_vector.push_back(std::move(current_edge));
+
     std::cout << "new_rg_vector size:" << new_rg_vector.size() << std::endl;
     std::swap(rg_vector, new_rg_vector);
 }
@@ -395,20 +395,22 @@ std::vector<std::pair<seg_t, size_t> > cc_edge_offsets(std::vector<edge_t<T> > r
 {
     seg_t ccid = std::numeric_limits<seg_t>::max();
     std::vector<std::pair<seg_t, size_t> > cc_edges;
-    for (size_t i = 0; i != rg_vector.size(); i++) {
+    if (rg_vector.empty()) {
+        return cc_edges;
+    }
+    size_t i = 1;
+    for (; i != rg_vector.size(); i++) {
+        const auto & e_prev = rg_vector[i-1];
         const auto & e = rg_vector[i];
         if (ccids[e.v0] != ccids[e.v1]) {
             cc_edges.emplace_back(ccid, i);
             break;
         }
-        if (ccid != ccids[e.v0]) {
-            if (ccid != std::numeric_limits<seg_t>::max()) {
-                cc_edges.emplace_back(ccid, i);
-            }
-            ccid = ccids[e.v0];
+        if (ccids[e_prev.v0] != ccids[e.v0]) {
+            cc_edges.emplace_back(ccids[e_prev.v0], i);
         }
     }
-    if ((cc_edges.empty() or ccid != cc_edges.back().first) and ccid != std::numeric_limits<seg_t>::max()) {
+    if (i == rg_vector.size() and (cc_edges.empty() or (i-1) != cc_edges.back().second)) {
         cc_edges.emplace_back(ccid, rg_vector.size());
     }
     return cc_edges;
