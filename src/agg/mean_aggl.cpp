@@ -121,20 +121,20 @@ struct handle_wrapper
 
 struct agglomeration_size_heuristic_t
 {
-    size_t small_voxel_threshold = 1000000;
-    size_t large_voxel_threshold = 10000000;
+    size_t small_voxel_threshold = 1'000'000;
+    size_t large_voxel_threshold = 10'000'000;
 };
 
 struct agglomeration_semantic_heuristic_t
 {
-    size_t total_signal_threshold = 100000;
+    size_t total_signal_threshold = 100'000;
     double dominant_signal_ratio = 0.6;
 };
 
 struct agglomeration_twig_heuristic_t
 {
     aff_t aff_threshold_delta = 0;
-    size_t voxel_threshold = 100000;
+    size_t voxel_threshold = 100'000;
     size_t area_threshold = 50;
 };
 
@@ -148,7 +148,7 @@ struct agglomeration_param_t
     aff_t starting_aff_threshold = 0.9;
     aff_t agglomeration_step = 0.1;
     size_t optimal_number_of_partitions = omp_get_num_procs() ;
-    size_t minimal_number_of_edges = 100000;
+    size_t minimal_number_of_edges = 100'000;
 };
 
 template <class T, class Compare = std::greater<T> >
