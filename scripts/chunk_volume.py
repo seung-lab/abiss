@@ -1,7 +1,6 @@
 from chunkiterator import ChunkIterator
 import sys
 import json
-from joblib import Parallel, delayed
 from chunk_utils import get_chunk_offset, chunk_voxels
 
 def process_atomic_chunks(c, top_mip, ac_offset):
@@ -62,15 +61,6 @@ batch_mip = data["BATCH_MIP"]
 
 batch_chunks = []
 if a[0] > batch_mip and top_mip > batch_mip:
-    for c in v:
-        if c.mip_level() < batch_mip:
-            break
-        elif c.mip_level() == batch_mip:
-            batch_chunks.append(ChunkIterator(data_bbox, chunk_size, start_from = [batch_mip]+c.coordinate()))
-        else:
-            process_composite_chunks(c, top_mip, chunk_voxels)
+    process_composite_chunks(v.next(), top_mip, chunk_voxels)
 else:
-    batch_chunks=[v]
-
-print("parallel starts: {}".format(len(batch_chunks)))
-Parallel(n_jobs=-2)(delayed(process_batch_chunk)(sv, chunk_voxels) for sv in batch_chunks)
+    process_batch_chunk(v, chunk_voxels)
