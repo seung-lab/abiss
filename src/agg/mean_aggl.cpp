@@ -705,10 +705,10 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 }
                 if (!comp(e.edge->w, backbone_threshold)){
                     if ((p.first > twig_params.voxel_threshold) or (e.edge->w.num > twig_params.area_threshold)) {
+                        e.edge->w = Limits::nil();
                         continue;
                     } else {
                         output.twig_rg_vector.push_back(*(e.edge));
-                        e.edge->w = Limits::nil();
                     }
                 }
             }
