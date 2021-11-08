@@ -6,8 +6,6 @@ output=`basename $1 .json`
 
 try acquire_cpu_slot
 try touch chunkmap.data
-#try python3 $SCRIPT_PATH/generate_filelist.py $1 1|tee filelist.txt
-#try cat filelist.txt|$PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/{}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o {/}.data"
 try taskset -c $cpuid python3 $SCRIPT_PATH/cut_chunk_remap.py $1 $WS_PATH
 try python3 $SCRIPT_PATH/merge_remaps.py $1
 try python3 $SCRIPT_PATH/merge_size.py $1
