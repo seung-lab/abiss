@@ -1,56 +1,50 @@
 import sys
-import struct
 import os
 import chunk_utils as cu
 
-def read_meta(branches):
-    remaps = 0
-    for s in branches:
-        fn = "meta_"+s+".data"
-        data = open(fn, "rb").read()
-        meta_data = struct.unpack("llllll", data)
-        remaps += meta_data[5]
+def merge_remaps(prefixes, ancestor_tags, offset):
+    content = b''
+    for a in ancestor_tags:
+        for p in prefixes:
+            payload = cu.download_slice(p, a, offset)
+            if payload:
+                content += payload
 
-    return remaps
+    with open('remap.data','wb') as out:
+        out.write(content)
 
-def merge_remaps(branches_tags, expected):
-    fnList = []
-    for t in branches_tags:
-        if t.startswith("0_"):
-            fnList.append("chunkmap_"+t+".data")
-
-    for t in branches_tags:
-        fnList.append("remap_"+t+".data")
-
-    cu.merge_files("remap.data", fnList)
-    filesize = os.path.getsize("remap.data")
-    if filesize != expected*16:
-        print("Something is wrong in remap, got {0} while expecting {1}".format(filesize//16, expected))
-
-    return filesize
+    return len(content)
 
 param = cu.read_inputs(sys.argv[1])
+global_param = cu.read_inputs(os.environ['PARAM_JSON'])
 
-top_mip = param["top_mip_level"]
-mip = param["mip_level"]
-indices = param["indices"]
+ancestors = cu.generate_ancestors(sys.argv[1])
+ancestors = list(ancestors)
+if os.environ["STAGE"] == "ws":
+    prefixes = ['remap/done_pre', 'remap/done_post']
+    ancestors = ancestors[1:]
+elif os.environ["STAGE"] == "agg":
+    prefixes = ['remap/done']
 
-descedants = list(reversed(cu.generate_descedants(sys.argv[1])))
+offset = param["offset"]
 
-ancestors = list(cu.generate_ancestors(sys.argv[1]))
+#print(ancestors)
 
-branches = descedants+[cu.chunk_tag(mip, indices)]+ancestors
-
-print(branches)
-
-bbox = param["bbox"]
-sizes = [bbox[i+3]-bbox[i] for i in range(3)]
-remaps = read_meta(branches)
-actual_size = merge_remaps(branches, remaps)//16
-print(actual_size)
-with open("param.txt","w") as f:
-    f.write(" ".join([str(i) for i in sizes]))
-    f.write("\n")
-    f.write(str(actual_size))
-    f.write("\n")
-    f.write("0")
+if param["mip_level"] == 0:
+    bbox = param["bbox"]
+    sizes = [bbox[i+3]-bbox[i] for i in range(3)]
+    actual_size = merge_remaps(prefixes, ancestors, offset)//16
+    print(actual_size)
+    with open("param.txt","w") as f:
+        f.write(" ".join([str(i) for i in sizes]))
+        f.write("\n")
+        f.write(str(actual_size))
+        f.write("\n")
+        if os.environ["STAGE"] == "ws" and global_param.get("CHUNKED_OUTPUT", True):
+            f.write("1")
+        elif os.environ["STAGE"] == "agg" and global_param.get("CHUNKED_OUTPUT", False):
+            f.write("1")
+        else:
+            f.write("0")
+else:
+    print("only atomic chunks need remapping")

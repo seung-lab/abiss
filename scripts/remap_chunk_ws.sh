@@ -9,7 +9,7 @@ try touch chunkmap.data
 #try python3 $SCRIPT_PATH/generate_filelist.py $1 0|tee filelist.txt
 #try cat filelist.txt|$PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/{}.data.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -o {/}.data"
 retry 10 $DOWNLOAD_CMD $FILE_PATH/seg/seg_"${output}".data."${COMPRESSED_EXT}" seg_"${output}".data."${COMPRESSED_EXT}"
-try python3 $SCRIPT_PATH/merge_remaps_ws.py $1 1
+try python3 $SCRIPT_PATH/merge_remaps.py $1
 try $COMPRESS_CMD -d seg_"${output}".data."${COMPRESSED_EXT}"
 try taskset -c $cpuid $BIN_PATH/ws3 param.txt seg_"${output}".data
 try taskset -c $cpuid python3 $SCRIPT_PATH/upload_chunk.py $1 $WS_PATH $WS_MIP
