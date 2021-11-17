@@ -28,6 +28,10 @@ elif os.environ["STAGE"] == "agg":
 
 offset = param["offset"]
 
+chunked_agg_output = False
+if len(sys.argv) > 2:
+    chunked_agg_output = bool(sys.argv[2])
+
 #print(ancestors)
 
 if param["mip_level"] == 0:
@@ -40,9 +44,7 @@ if param["mip_level"] == 0:
         f.write("\n")
         f.write(str(actual_size))
         f.write("\n")
-        if os.environ["STAGE"] == "ws" and global_param.get("CHUNKED_OUTPUT", True):
-            f.write("1")
-        elif os.environ["STAGE"] == "agg" and global_param.get("CHUNKED_OUTPUT", False):
+        if os.environ["STAGE"] == "ws" or chunked_agg_output:
             f.write("1")
         else:
             f.write("0")

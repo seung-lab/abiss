@@ -2,7 +2,7 @@ import os
 import sys
 import json
 
-env = ["SCRATCH_PATH", "CHUNKMAP_INPUT", "CHUNKMAP_OUTPUT", "AFF_PATH", "AFF_MIP", "SEM_PATH", "SEM_MIP", "WS_PATH", "SEG_PATH", "WS_HIGH_THRESHOLD", "WS_LOW_THRESHOLD", "WS_SIZE_THRESHOLD", "AGG_THRESHOLD", "GT_PATH", "CLEFT_PATH", "MYELIN_THRESHOLD", "ADJUSTED_AFF_PATH"]
+env = ["SCRATCH_PATH", "CHUNKMAP_INPUT", "CHUNKMAP_OUTPUT", "AFF_PATH", "AFF_MIP", "SEM_PATH", "SEM_MIP", "WS_PATH", "SEG_PATH", "WS_HIGH_THRESHOLD", "WS_LOW_THRESHOLD", "WS_SIZE_THRESHOLD", "AGG_THRESHOLD", "GT_PATH", "CLEFT_PATH", "MYELIN_THRESHOLD", "ADJUSTED_AFF_PATH", "CHUNKED_AGG_OUTPUT", "CHUNKED_SEG_PATH"]
 
 with open(sys.argv[1]) as f:
     data = json.load(f)
@@ -15,6 +15,11 @@ for s in ["SCRATCH", "WS", "SEG"]:
 
 if "CHUNKMAP_INPUT" not in data:
     data["CHUNKMAP_INPUT"] = os.path.join(data["SCRATCH_PATH"], "ws", "chunkmap")
+
+if data.get("CHUNKED_AGG_OUTPUT", False):
+    data["CHUNKED_AGG_OUTPUT"] = 1
+else:
+    data["CHUNKED_AGG_OUTPUT"] = 0
 
 for e in env:
     if e in data:
