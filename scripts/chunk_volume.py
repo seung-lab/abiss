@@ -57,7 +57,7 @@ v = ChunkIterator(data_bbox, chunk_size, start_from=a)
 
 top_mip = v.top_mip_level()
 
-batch_mip = data["BATCH_MIP"]
+batch_mip = data.get("BATCH_MIP", 3)
 
 batch_chunks = []
 if a[0] > batch_mip and top_mip > batch_mip:
