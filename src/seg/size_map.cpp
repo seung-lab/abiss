@@ -41,7 +41,7 @@ int main(int argc, char * argv[])
         }
         auto size = size_dict[segid];
         if ((!has_cleft) or (cleft_segs.count(segid) != 0 and cleft_segs.at(segid) > 10)) {
-            if (size < 10) {
+            if (size < 10000) {
                 return 255;
             } else {
                 return 0;

@@ -222,7 +222,7 @@ void split_remap(const remap_t<T> & remap_data, size_t ac_offset, const std::str
 int main(int argc, char *argv[])
 {
     auto remap_data = load_remap<seg_t>("localmap.data");
-    classify_segments(remap_data, "ongoing_segments.data", "done_segments.data");
+    classify_segments(remap_data, "ongoing_size.data", "done_size.data");
     size_t ac_offset = 0;
     std::cout << "remap size:" << remap_data.remaps.size() << std::endl;
     std::ifstream param_file(argv[1]);
