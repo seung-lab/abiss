@@ -74,5 +74,3 @@ if param["mip_level"] == 0:
 else:
     print("mip level:", param["mip_level"])
     merge_chunks(param)
-
-    cu.touch_done_files(sys.argv[1], cu.chunk_tag(param["mip_level"], param["indices"]))
