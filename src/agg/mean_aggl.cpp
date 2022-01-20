@@ -121,12 +121,14 @@ struct handle_wrapper
 
 struct agglomeration_size_heuristic_t
 {
+    aff_t aff_threshold = 0.35;
     size_t small_voxel_threshold = 1'000'000;
     size_t large_voxel_threshold = 10'000'000;
 };
 
 struct agglomeration_semantic_heuristic_t
 {
+    aff_t aff_threshold = 0.5;
     size_t total_signal_threshold = 100'000;
     double dominant_signal_ratio = 0.6;
 };
@@ -144,7 +146,7 @@ struct agglomeration_param_t
     agglomeration_semantic_heuristic_t sem_params;
     agglomeration_twig_heuristic_t twig_params;
     aff_t input_aff_threshold;
-    aff_t heuristics_aff_threshold = 0.5;
+    aff_t heuristics_aff_threshold = size_params.aff_threshold > sem_params.aff_threshold ? size_params.aff_threshold : sem_params.aff_threshold;
     aff_t starting_aff_threshold = 0.9;
     aff_t agglomeration_step = 0.1;
     size_t optimal_number_of_partitions = omp_get_num_procs() ;
@@ -640,6 +642,8 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
     Plus    plus;
 
     T const h_threshold = T(agg_data.params.heuristics_aff_threshold,1);
+    T const size_aff_threshold = T(agg_data.params.size_params.aff_threshold, 1);
+    T const sem_aff_threshold = T(agg_data.params.sem_params.aff_threshold, 1);
     T const backbone_threshold = T(agg_data.params.input_aff_threshold, 1);
     const auto twig_params = agg_data.params.twig_params;
     const auto size_params = agg_data.params.size_params;
@@ -686,7 +690,7 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 continue;
             }
 
-            if (!comp(e.edge->w, h_threshold)) {
+            if (!comp(e.edge->w, sem_aff_threshold)) {
                 if (!sem_counts.empty()){
                     if (!sem_can_merge(sem_counts[v0],sem_counts[v1],sem_params)) {
                         output.sem_rg_vector.push_back(*(e.edge));
@@ -694,7 +698,9 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                         continue;
                     }
                 }
+            }
 
+            if (!comp(e.edge->w, size_aff_threshold)) {
                 size_t size0 = seg_size[v0];
                 size_t size1 = seg_size[v1];
                 auto p = std::minmax({size0, size1});
@@ -703,13 +709,17 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                     e.edge->w = Limits::nil();
                     continue;
                 }
-                if (!comp(e.edge->w, backbone_threshold)){
-                    if ((p.first > twig_params.voxel_threshold) or (e.edge->w.num > twig_params.area_threshold)) {
-                        e.edge->w = Limits::nil();
-                        continue;
-                    } else {
-                        output.twig_rg_vector.push_back(*(e.edge));
-                    }
+            }
+
+            if (!comp(e.edge->w, backbone_threshold)){
+                size_t size0 = seg_size[v0];
+                size_t size1 = seg_size[v1];
+                auto p = std::minmax({size0, size1});
+                if ((p.first > twig_params.voxel_threshold) or (e.edge->w.num > twig_params.area_threshold)) {
+                    e.edge->w = Limits::nil();
+                    continue;
+                } else {
+                    output.twig_rg_vector.push_back(*(e.edge));
                 }
             }
 #ifdef FINAL
