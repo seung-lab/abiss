@@ -5,11 +5,14 @@ INIT_PATH="$(dirname "$0")"
 OP=$2
 CHUNK=$3
 WORK_PATH="$(realpath "$1")"
+TASK_KEY="${STAGE}_${OP}_${CHUNK}"
 
 set +e
-try_to_skip $DOWNLOAD_ST_CMD $FILE_PATH/done/"$OP"/"$CHUNK".txt .
+try_to_skip python3 ${SCRIPT_PATH}/check_task_flag.py ${TASK_KEY}
 
 set -euo pipefail
+
+try python3 ${SCRIPT_PATH}/update_task_flag.py ${TASK_KEY} "IN_PROGRESS"
 
 just_in_case cat /root/.cloudvolume/secrets/sysinfo.txt
 
@@ -28,10 +31,8 @@ try pushd "$CHUNK"
 try "$SCRIPT_PATH"/"$OP".sh "$WORK_PATH"/"$CHUNK".json
 try popd
 
-try touch "${CHUNK}".txt
-try $UPLOAD_ST_CMD "${CHUNK}".txt $FILE_PATH/done/"$OP"/"${CHUNK}".txt
+try python3 ${SCRIPT_PATH}/update_task_flag.py ${TASK_KEY} "DONE"
 
 try rm -rf "$CHUNK"
-try rm "$CHUNK".txt
 
 try popd

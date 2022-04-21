@@ -2,10 +2,13 @@
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh
 
+TASK_KEY="batch_${2}_${3}_${1}"
+
 set +e
-try_to_skip $DOWNLOAD_ST_CMD $FILE_PATH/done/batch_"$2"_"$3"_"$1".txt .
+try_to_skip python3 ${SCRIPT_PATH}/check_task_flag.py ${TASK_KEY}
 
 set -euo pipefail
+try python3 ${SCRIPT_PATH}/update_task_flag.py ${TASK_KEY} "IN_PROGRESS"
 
 if [ "$1" = 0 ]; then
     try cat "$1".txt | $PARALLEL_CMD $SCRIPT_PATH/run_wrapper.sh . "$2" {}
@@ -17,6 +20,4 @@ else
     try cat "$1".txt | parallel -j 4 --verbose $SCRIPT_PATH/run_wrapper.sh . "$2" {}
 fi
 
-try touch done.txt
-
-try $UPLOAD_ST_CMD done.txt $FILE_PATH/done/batch_"$2"_"$3"_"$1".txt
+try python3 ${SCRIPT_PATH}/update_task_flag.py ${TASK_KEY} "DONE"
