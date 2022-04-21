@@ -686,7 +686,7 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 supervoxel_counts[v0] |= frozen;
                 supervoxel_counts[v1] |= frozen;
                 output.res_rg_vector.push_back(*(e.edge));
-                e.edge->w = Limits::nil();
+                e.edge->w = Limits::min();
                 continue;
             }
 
@@ -694,7 +694,7 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 if (!sem_counts.empty()){
                     if (!sem_can_merge(sem_counts[v0],sem_counts[v1],sem_params)) {
                         output.sem_rg_vector.push_back(*(e.edge));
-                        e.edge->w = Limits::nil();
+                        e.edge->w = Limits::min();
                         continue;
                     }
                 }
@@ -706,7 +706,7 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 auto p = std::minmax({size0, size1});
                 if (p.first > size_params.small_voxel_threshold and p.second > size_params.large_voxel_threshold) {
                     output.rej_rg_vector.push_back(*(e.edge));
-                    e.edge->w = Limits::nil();
+                    e.edge->w = Limits::min();
                     continue;
                 }
             }
@@ -716,7 +716,7 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 size_t size1 = seg_size[v1];
                 auto p = std::minmax({size0, size1});
                 if ((p.first > twig_params.voxel_threshold) or (e.edge->w.num > twig_params.area_threshold)) {
-                    e.edge->w = Limits::nil();
+                    e.edge->w = Limits::min();
                     continue;
                 } else {
                     output.twig_rg_vector.push_back(*(e.edge));
@@ -771,7 +771,7 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
             // v0 is dissapearing from the graph
 
             // loop over other edges e0 = {v0,v}
-            e.edge->w = Limits::nil();
+            e.edge->w = Limits::min();
             for (auto p: incident[v0]) {
                 auto v = p.first;
                 auto e0 = p.second;
@@ -803,7 +803,7 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                         e_dual.handle = e.handle;
                     }
                     e.edge->w=plus(e.edge->w, e0.edge->w);
-                    e0.edge->w = Limits::nil();
+                    e0.edge->w = Limits::min();
                     if (e.valid_handle()) {
                         heap.update(e.handle);
                         if (e0.valid_handle()) {

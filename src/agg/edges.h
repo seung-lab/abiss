@@ -34,6 +34,8 @@ struct mean_edge_greater
 {
     bool operator()(mean_edge const& a, mean_edge const& b) const
     {
+        if (b.num == 0) return false;
+        if (a.num == 0) return true;
         return a.sum / a.num > b.sum / b.num;
     }
 };
@@ -44,7 +46,7 @@ struct mean_edge_limits
     {
         return mean_edge(std::numeric_limits<aff_t>::max());
     }
-    static constexpr mean_edge nil()
+    static constexpr mean_edge min()
     {
         return mean_edge(0,0);
     }
@@ -95,6 +97,8 @@ struct mst_edge_greater
 {
     bool operator()(mst_edge const& a, mst_edge const& b) const
     {
+        if (b.num == 0) return false;
+        if (a.num == 0) return true;
         return a.sum / a.num > b.sum / b.num;
     }
 };
@@ -105,7 +109,7 @@ struct mst_edge_limits
     {
         return mst_edge(std::numeric_limits<aff_t>::max());
     }
-    static constexpr mst_edge nil()
+    static constexpr mst_edge min()
     {
         return mst_edge(0,0);
     }
