@@ -275,37 +275,35 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
     return sem_counts;
 }
 
-template <class T, class Compare = std::greater<T>, class Plus = std::plus<T> >
+template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>, class Limits = std::numeric_limits<T> >
 void merge_edges(agglomeration_data_t<T, Compare> & agg_data, size_t offset)
 {
     Plus plus;
-    std::vector<edge_t<T> > new_rg_vector;
     std::vector<edge_t<T> > & rg_vector = agg_data.rg_vector;
-    std::copy_if(rg_vector.begin(), rg_vector.begin()+offset, std::back_inserter(new_rg_vector), [] (const auto & e) {
-        return (e.w.sum != 0 or e.w.num != 0);
-    });
-    std::sort(std::execution::par, std::begin(rg_vector)+offset, std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
     std::cout << "rg_vector size:" << rg_vector.size() << std::endl;
 
-    if (offset == rg_vector.size()) {
-        std::swap(rg_vector, new_rg_vector);
-        return;
-    }
-
-    auto current_edge = rg_vector[offset];
-    for (size_t i = offset+1; i != rg_vector.size(); i++) {
-        const auto & e = rg_vector[i];
-        if (current_edge.v0 == e.v0 && current_edge.v1 == e.v1) {
-            current_edge.w = plus(std::move(current_edge.w), e.w);
-        } else {
-            new_rg_vector.push_back(std::move(current_edge));
-            current_edge = e;
+    if (offset != rg_vector.size()) {
+        std::sort(std::execution::par, std::begin(rg_vector)+offset, std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
+        auto idx = offset;
+        for (size_t i = offset+1; i != rg_vector.size(); i++) {
+            auto & e = rg_vector[i];
+            if (rg_vector[idx].v0 == e.v0 && rg_vector[idx].v1 == e.v1) {
+                rg_vector[idx].w = plus(rg_vector[idx].w, e.w);
+                e.w = Limits::min();
+            } else {
+                idx = i;
+            }
         }
     }
-    new_rg_vector.push_back(std::move(current_edge));
 
-    std::cout << "new_rg_vector size:" << new_rg_vector.size() << std::endl;
-    std::swap(rg_vector, new_rg_vector);
+    auto erase_pos = std::remove_if(rg_vector.begin(), rg_vector.end(), [] (const auto & e) {
+        return (e.w.sum == 0 and e.w.num == 0);
+    });
+
+    rg_vector.erase(erase_pos, rg_vector.end());
+    rg_vector.shrink_to_fit();
+
+    std::cout << "new_rg_vector size:" << rg_vector.size() << std::endl;
 }
 
 template <class T, class Compare = std::greater<T> >
@@ -486,7 +484,7 @@ std::vector<std::pair<seg_t, size_t> > sorted_components(std::vector<seg_t> ccid
     return cc_comps;
 }
 
-template <class T, class Compare = std::greater<T>, class Plus = std::plus<T> >
+template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>, class Limits = std::numeric_limits<T> >
 inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filename, const char * fs_filename, const char * ns_filename)
 {
     Plus plus;
@@ -574,7 +572,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
             }
         });
 
-    merge_edges<T, Compare, Plus>(agg_data, 0);
+    merge_edges<T, Compare, Plus, Limits>(agg_data, 0);
 
     return agg_data;
 }
@@ -921,7 +919,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
     size_t min_edge_threshold = params.minimal_number_of_edges;
     size_t min_cc_threshold = min_edge_threshold/10;
 
-    auto agg_data = preprocess_inputs<T, Compare, Plus>(rg_filename, fs_filename, ns_filename);
+    auto agg_data = preprocess_inputs<T, Compare, Plus, Limits>(rg_filename, fs_filename, ns_filename);
     agg_data.params = params;
     auto & supervoxel_counts = agg_data.supervoxel_counts;
     auto & seg_indices = agg_data.seg_indices;
@@ -1052,7 +1050,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         std::cout << "finish agglomeration connect components" << std::endl;
 
         remap_edges<T, Compare>(agg_data, remaps, total_size);
-        merge_edges<T, Compare, Plus>(agg_data, total_size);
+        merge_edges<T, Compare, Plus, Limits>(agg_data, total_size);
         std::for_each(std::execution::par, agg_data.incident.begin(), agg_data.incident.end(), [](auto & d) {d.clear();});
         if (target_th == th) {
             std::cout << "stop agglomeration" << std::endl;
