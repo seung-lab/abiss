@@ -41,7 +41,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
         git \
         gfortran \
         libtbb-dev \
-    && pip3 install --no-cache-dir -U pybind11 DracoPy pillow brotlipy orjson \
+    && pip3 install --no-cache-dir -U pybind11 DracoPy pillow brotlipy orjson redis \
     #&& pip install -U pip Pillow brotlipy\
     && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build_ext numpy \
     && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build_ext scipy \
