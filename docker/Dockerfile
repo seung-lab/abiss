@@ -5,6 +5,9 @@ ARG SEG_HOME=/workspace/seg
 ENV SEG_HOME ${SEG_HOME}
 ARG SEG_USER=seg
 ENV SEG_USER ${SEG_USER}
+ARG MINICONDA_PATH=/opt/conda
+ARG MINICONDA_URL=https://repo.anaconda.com/miniconda/Miniconda3-py39_4.11.0-Linux-x86_64.sh
+ENV PATH ${MINICONDA_PATH}/bin:${PATH}
 
 WORKDIR ${SEG_HOME}
 
@@ -22,9 +25,6 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && apt-get update -y \
     && apt-get install -y --no-install-recommends \
         build-essential \
-        python3-dev \
-        python3-pip \
-        libopenblas-dev liblapack-dev cython libffi-dev libssl-dev \
         ca-certificates \
         gnupg-agent \
         gnupg \
@@ -37,18 +37,23 @@ RUN savedAptMark="$(apt-mark showmanual)" \
         libboost-system-dev \
         libboost-iostreams-dev \
         libjemalloc-dev \
-        libjpeg-dev \
         git \
-        gfortran \
         libtbb-dev \
-    && pip3 install --no-cache-dir -U cryptography redis \
-    #&& pip install -U pip Pillow brotlipy\
-    && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build_ext numpy \
-    && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build_ext scipy \
-    && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build git+https://github.com/seung-lab/chunk_iterator#egg=chunk-iterator \
-    && CFLAGS="-Os -g0 -Wl,--strip-all" pip3 install --no-cache-dir -U --compile --global-option=build crcmod gsutil joblib \
-    && pip3 install --no-cache-dir -U cloud-volume \
-    && cd /usr/local/lib/python3.8/dist-packages \
+    && mkdir -p /opt \
+    && curl -o ~/miniconda.sh ${MINICONDA_URL} \
+    && chmod +x ~/miniconda.sh \
+    && ~/miniconda.sh -b -p ${MINICONDA_PATH} \
+    && rm ~/miniconda.sh \
+    && conda install nomkl \
+    && conda install -y numpy scipy cryptography redis-py \
+    && conda install -c conda-forge -y joblib gsutil \
+    && find ${MINICONDA_PATH} -follow -type f -name '*.a' -delete \
+    && find ${MINICONDA_PATH} -follow -type f -name '*.js.map' -delete \
+    && conda clean -yaf \
+    && PYTHON_VERSION="$(python --version | cut -d " " -f 2 | cut -d "." -f 1-2)" \
+    && pip install --no-cache-dir -U pip \
+    && pip install --no-cache-dir -U --compile --global-option=build git+https://github.com/seung-lab/chunk_iterator#egg=chunk-iterator \
+    && pip install --no-cache-dir -U cloud-volume \
     && echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \
     && mkdir -p ${SEG_HOME}/build \
     && cd ${SEG_HOME}/build \
@@ -59,7 +64,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && cmake .. -DCMAKE_BUILD_TYPE=Release -DEXTRACT_SIZE=ON \
     && make -j4 \
     && apt-mark auto '.*' > /dev/null \
-    && apt-mark manual $savedAptMark python3-pip python3-six python3-requests zstd parallel coreutils libopenblas0 liblapack3 libjpeg8 libtbb2 libjemalloc2 \
+    && apt-mark manual $savedAptMark zstd parallel coreutils libtbb2 libjemalloc2 \
     && find ${SEG_HOME}/build -type f -executable -exec ldd '{}' ';' \
         | awk '/=>/ { print $(NF-1) }' \
         | sed 's/^\///g' \
@@ -68,10 +73,8 @@ RUN savedAptMark="$(apt-mark showmanual)" \
         | cut -d: -f1 \
         | sort -u \
         | xargs -r apt-mark manual \
-    && find /usr/local -depth \
+    && find ${MINICONDA_PATH} -depth \
         \( \
-            \( -type d -a \( -name test -o -name tests \) \) \
-            -o \
             \( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
     \) -exec rm -rf '{}' + \
     && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
