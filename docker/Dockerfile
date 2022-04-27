@@ -54,6 +54,12 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && pip install --no-cache-dir -U pip \
     && pip install --no-cache-dir -U --compile --global-option=build git+https://github.com/seung-lab/chunk_iterator#egg=chunk-iterator \
     && pip install --no-cache-dir -U cloud-volume \
+    && cd ${SEG_HOME} \
+    && git clone https://github.com/abseil/abseil-cpp.git \
+    && cd abseil-cpp && mkdir build && cd build \
+    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DABSL_BUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build . --target install \
+    && cd ${SEG_HOME} && rm -rf abseil-cpp \
     && echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \
     && mkdir -p ${SEG_HOME}/build \
     && cd ${SEG_HOME}/build \
