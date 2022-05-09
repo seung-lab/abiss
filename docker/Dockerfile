@@ -32,6 +32,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
         cmake \
         pkg-config \
         zstd \
+        netcat \
         parallel \
         coreutils \
         libboost-system-dev \
@@ -70,7 +71,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && cmake .. -DCMAKE_BUILD_TYPE=Release -DEXTRACT_SIZE=ON \
     && make -j4 \
     && apt-mark auto '.*' > /dev/null \
-    && apt-mark manual $savedAptMark zstd parallel coreutils libtbb2 libjemalloc2 \
+    && apt-mark manual $savedAptMark zstd netcat parallel coreutils libtbb2 libjemalloc2 \
     && find ${SEG_HOME}/build -type f -executable -exec ldd '{}' ';' \
         | awk '/=>/ { print $(NF-1) }' \
         | sed 's/^\///g' \
