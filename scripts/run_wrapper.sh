@@ -4,6 +4,8 @@ INIT_PATH="$(dirname "$0")"
 
 OP=$2
 CHUNK=$3
+COORD=(${CHUNK//_/ })
+STEPS=(${OP//_/ })
 WORK_PATH="$(realpath "$1")"
 TASK_KEY="${STAGE}_${OP}_${CHUNK}"
 
@@ -28,7 +30,7 @@ just_in_case rm -rf "$CHUNK"
 
 try mkdir "$CHUNK"
 try pushd "$CHUNK"
-try "$SCRIPT_PATH"/"$OP".sh "$WORK_PATH"/"$CHUNK".json
+timeit "$SCRIPT_PATH"/"$OP".sh "$WORK_PATH"/"$CHUNK".json
 try popd
 
 try python3 ${SCRIPT_PATH}/update_task_flag.py ${TASK_KEY} "DONE"

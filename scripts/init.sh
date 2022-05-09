@@ -21,6 +21,15 @@ retry() {
     done
 }
 
+timeit() {
+    local -r cmd="$@"
+    local -i start=$(($(date +%s%N)/1000000))
+    try $cmd
+    local -i end=$(($(date +%s%N)/1000000))
+    local -i duration=end-start
+    echo "${STATSD_PREFIX}.segmentation.${STAGE}.${STEPS[0]}.${COORD[0]}.duration:${duration}|ms" | nc -w 1 -u ${STATSD_HOST:-"localhost"} ${STATSD_PORT:-"9125"}
+}
+
 
 lock_prefix="${AIRFLOW_TMP_DIR}/.cpulock"
 ncpus=$(python3 -c "import os; print(len(os.sched_getaffinity(0)))")
