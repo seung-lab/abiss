@@ -24,7 +24,7 @@ public:
 
     void collectBoundary(int face, Coord c, Tseg segid) {}
     void collectContactingSurface(int nv, Coord c, Tseg segid1, Tseg segid2) {}
-    const MapContainer<Tseg, sem_array_t> & sem_lables() {
+    const MapContainer<Tseg, sem_array_t> & sem_labels() {
         return m_labels;
     }
 
