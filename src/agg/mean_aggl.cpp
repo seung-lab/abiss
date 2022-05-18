@@ -127,7 +127,7 @@ struct agglomeration_size_heuristic_t
 
 struct agglomeration_semantic_heuristic_t
 {
-    aff_t aff_threshold = 0.5;
+    aff_t aff_threshold = 1.0;
     size_t total_signal_threshold = 100'000;
     double dominant_signal_ratio = 0.6;
 };
@@ -269,7 +269,12 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
     std::sort(std::execution::par, std::begin(sem_array), std::end(sem_array), [](auto & a, auto & b) { return a.first < b.first; });
 
     for (auto & [k, v] : sem_array) {
-        std::transform(sem_counts[k].begin(), sem_counts[k].end(), v.begin(), sem_counts[k].begin(), std::plus<>());
+        if (sem_counts[k][0] > 0 and v[0] > 0 and v[0] != sem_counts[k][0]) {
+            sem_counts[k][1] = 1;
+        }
+        if (v[0] > 0) {
+            sem_counts[k] = v;
+        }
     }
     return sem_counts;
 }
@@ -624,20 +629,14 @@ std::pair<size_t, size_t> sem_label(const sem_array_t & labels)
 
 bool sem_can_merge(const sem_array_t & labels1, const sem_array_t & labels2, const agglomeration_semantic_heuristic_t & sem_params)
 {
-    auto max_label1 = std::distance(labels1.begin(), std::max_element(labels1.begin(), labels1.end()));
-    auto max_label2 = std::distance(labels2.begin(), std::max_element(labels2.begin(), labels2.end()));
-    auto total_label1 = std::accumulate(labels1.begin(), labels1.end(), static_cast<size_t>(0));
-    auto total_label2 = std::accumulate(labels2.begin(), labels2.end(), static_cast<size_t>(0));
-    if (labels1[max_label1] < sem_params.dominant_signal_ratio * total_label1 || total_label1 < sem_params.total_signal_threshold) { //unsure about the semantic label
-        return true;
+    if (labels1[1] > 0 or labels2[1] > 0) {
+        return false;
     }
-    if (labels2[max_label2] < sem_params.dominant_signal_ratio * total_label2 || total_label2 < sem_params.total_signal_threshold) { //unsure about the semantic label
+    if (labels1[0] == 0 or labels2[0] == 0 or labels1[0] == labels2[0]) {
         return true;
+    } else {
+        return false;
     }
-    if (max_label1 == max_label2) {
-        return true;
-    }
-    return false;
 }
 
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
@@ -752,9 +751,11 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
             std::swap(seg_size[v0], seg_size[s]);
 
             if (!sem_counts.empty()) {
-                std::transform(sem_counts[v0].begin(), sem_counts[v0].end(), sem_counts[v1].begin(), sem_counts[v0].begin(), std::plus<size_t>());
-                sem_counts[v1] = sem_array_t();
-                std::swap(sem_counts[v0], sem_counts[s]);
+                if (sem_counts[v0][0] > 0) {
+                    std::swap(sem_counts[v0], sem_counts[s]);
+                } else {
+                    std::swap(sem_counts[v1], sem_counts[s]);
+                }
             }
 
             output.merged_rg_vector.push_back(*(e.edge));
