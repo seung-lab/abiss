@@ -83,58 +83,39 @@ get_region_graph(
 	id_pair ids = std::pair<ID,ID>(max_segid + 1, max_segid + 1);
 	F* curr;
 
-	for (std::ptrdiff_t z = 1; z < sz - 1; ++z) {
-		for (std::ptrdiff_t y = 1; y < sy - 1; ++y) {
-			for (std::ptrdiff_t x = 1; x < sx - 1; ++x) {
+	std::ptrdiff_t x, y, z;
 
-				if ( 
-						(x > boundary_flags[0]) 
-						&& seg[x][y][z] 
-						&& seg[x-1][y][z] 
-						&& seg[x][y][z] != seg[x-1][y][z]
-				) {
-					id_pair p = std::minmax(seg[x][y][z], seg[x-1][y][z]);
-					if (p != ids) {
-						curr = &edges[p.first][p.second];
-						ids = p;	
-					}
-					if (!curr) {
-						pairs.push_back(p);
-					}
-					*curr = std::max(curr, aff[x][y][z][0]);
-				}
+	auto maxfn = [&](std::ptrdiff_t ix, std::ptrdiff_t iy, std::ptrdiff_t iz, std::ptrdiff_t channel) {
 
-				if ( 
-					(y > boundary_flags[1]) 
-					&& seg[x][y][z] 
-					&& seg[x][y-1][z] 
-					&& seg[x][y][z] != seg[x][y-1][z]
-				) {
-					id_pair p = std::minmax(seg[x][y][z], seg[x][y-1][z]);
-					if (p != ids) {
-						curr = &edges[p.first][p.second];
-						ids = p;	
-					}
-					if (!curr) {
-						pairs.push_back(p);
-					}
-					*curr = std::max(curr, aff[x][y][z][1]);
+		if ( 
+			   seg[x][y][z] 
+			&& seg[ix][iy][iz] 
+			&& seg[x][y][z] != seg[ix][iy][iz]
+		) {
+			id_pair p = std::minmax(seg[x][y][z], seg[ix][iy][iz]);
+			if (p != ids) {
+				curr = &edges[p.first][p.second];
+				ids = p;	
+			}
+			if (!(*curr)) {
+				pairs.push_back(p);
+			}
+			*curr = std::max(*curr, aff[ix][iy][iz][channel]);
+		}
+	};
+
+	for (z = 1; z < sz - 1; ++z) {
+		for (y = 1; y < sy - 1; ++y) {
+			for (x = 1; x < sx - 1; ++x) {
+
+				if (x > boundary_flags[0]) {
+					maxfn(x-1,y,z,0);
 				}
-				if ( 
-					(z > boundary_flags[2]) 
-					&& seg[x][y][z] 
-					&& seg[x][y][z-1] 
-					&& seg[x][y][z] != seg[x][y][z-1]
-				) {
-					id_pair p = std::minmax(seg[x][y][z], seg[x][y][z-1]);
-					if (p != ids) {
-						curr = &edges[p.first][p.second];
-						ids = p;	
-					}
-					if (!curr) {
-						pairs.push_back(p);
-					}
-					*curr = std::max(curr, aff[x][y][z][2]);
+				if (y > boundary_flags[1]) {
+					maxfn(x,y-1,z,1);
+				}
+				if (z > boundary_flags[2]) {
+					maxfn(x,y,z-1,2);
 				}
 			}
 		}
