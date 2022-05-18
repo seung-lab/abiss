@@ -22,7 +22,7 @@ using ContactRegionExt = MapContainer<Coord, int, HashFunction<Coord> >;
 template <class Ta>
 using Edge = std::array<MapContainer<Coord, Ta, HashFunction<Coord> >, 3>;
 
-using semantic_t = uint8_t;
+using semantic_t = uint64_t;
 
 template <class T>
 struct __attribute__((packed)) matching_entry_t

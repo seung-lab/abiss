@@ -6,7 +6,7 @@
 #include <iostream>
 #include <fstream>
 
-using sem_array_t = std::array<size_t, 3>;
+using sem_array_t = std::array<seg_t, 3>;
 
 template<typename Tseg, typename Tsem, typename Chunk>
 class SemExtractor
@@ -17,8 +17,14 @@ public:
     void collectVoxel(Coord c, Tseg segid)
     {
         auto sem_label = m_sem[c[0]][c[1]][c[2]];
-        if (sem_label >= 0 and sem_map[sem_label] >= 0) {
-            m_labels[segid][sem_map[sem_label]] += 1;
+        if (m_labels[segid][1] > 0 or sem_label == 0) {
+            return;
+        }
+
+        if (m_labels[segid][0] == 0) {
+            m_labels[segid][0] = sem_label;
+        } else if (m_labels[segid][0] != sem_label){
+            m_labels[segid][1] = 1;
         }
     }
 
@@ -38,10 +44,10 @@ public:
             if (chunkMap.count(k) > 0) {
                 svid = chunkMap.at(k);
             }
-            if (remapped_labels.count(svid) == 0) {
+            if (remapped_labels.count(svid) == 0 or remapped_labels[svid][0] == 0) {
                 remapped_labels[svid] = v;
-            } else {
-                std::transform(remapped_labels[svid].begin(), remapped_labels[svid].end(), v.begin(), remapped_labels[svid].begin(), std::plus<size_t>());
+            } else if (v[0] > 0 and remapped_labels[svid][0] != v[0]) {
+                remapped_labels[svid][1] = 1;
             }
         }
         for (const auto & [k,v] : remapped_labels) {
