@@ -81,7 +81,7 @@ get_region_graph(
 	}
 
 	id_pair ids = std::pair<ID,ID>(max_segid + 1, max_segid + 1);
-	F& curr;
+	F* curr;
 
 	for (std::ptrdiff_t z = 1; z < sz - 1; ++z) {
 		for (std::ptrdiff_t y = 1; y < sy - 1; ++y) {
@@ -95,13 +95,13 @@ get_region_graph(
 				) {
 					id_pair p = std::minmax(seg[x][y][z], seg[x-1][y][z]);
 					if (p != ids) {
-						curr = edges[p.first][p.second];
+						curr = &edges[p.first][p.second];
 						ids = p;	
 					}
 					if (!curr) {
 						pairs.push_back(p);
 					}
-					curr = std::max(curr, aff[x][y][z][0]);
+					*curr = std::max(curr, aff[x][y][z][0]);
 				}
 
 				if ( 
@@ -112,13 +112,13 @@ get_region_graph(
 				) {
 					id_pair p = std::minmax(seg[x][y][z], seg[x][y-1][z]);
 					if (p != ids) {
-						curr = edges[p.first][p.second];
+						curr = &edges[p.first][p.second];
 						ids = p;	
 					}
 					if (!curr) {
 						pairs.push_back(p);
 					}
-					curr = std::max(curr, aff[x][y][z][1]);
+					*curr = std::max(curr, aff[x][y][z][1]);
 				}
 				if ( 
 					(z > boundary_flags[2]) 
@@ -128,13 +128,13 @@ get_region_graph(
 				) {
 					id_pair p = std::minmax(seg[x][y][z], seg[x][y][z-1]);
 					if (p != ids) {
-						curr = edges[p.first][p.second];
+						curr = &edges[p.first][p.second];
 						ids = p;	
 					}
 					if (!curr) {
 						pairs.push_back(p);
 					}
-					curr = std::max(curr, aff[x][y][z][2]);
+					*curr = std::max(curr, aff[x][y][z][2]);
 				}
 			}
 		}
