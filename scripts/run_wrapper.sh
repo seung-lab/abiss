@@ -30,7 +30,7 @@ just_in_case rm -rf "$CHUNK"
 
 try mkdir "$CHUNK"
 try pushd "$CHUNK"
-timeit "$SCRIPT_PATH"/"$OP".sh "$WORK_PATH"/"$CHUNK".json
+timeit "${STEPS[0]}.${COORD[0]}" "$SCRIPT_PATH"/"$OP".sh "$WORK_PATH"/"$CHUNK".json
 try popd
 
 try python3 ${SCRIPT_PATH}/update_task_flag.py ${TASK_KEY} "DONE"

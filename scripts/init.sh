@@ -22,12 +22,13 @@ retry() {
 }
 
 timeit() {
+    local -r task_tag="$1"; shift
     local -r cmd="$@"
     local -i start=$(($(date +%s%N)/1000000))
     try $cmd
     local -i end=$(($(date +%s%N)/1000000))
     local -i duration=end-start
-    echo "${STATSD_PREFIX}.segmentation.${STAGE}.${STEPS[0]}.${COORD[0]}.duration:${duration}|ms" | nc -w 1 -u ${STATSD_HOST:-"localhost"} ${STATSD_PORT:-"9125"}
+    echo "${STATSD_PREFIX}.segmentation.${STAGE}.${task_tag}.duration:${duration}|ms" | nc -w 1 -u ${STATSD_HOST:-"localhost"} ${STATSD_PORT:-"9125"}
 }
 
 
