@@ -86,7 +86,6 @@ get_region_graph(
 	std::ptrdiff_t x, y, z;
 
 	auto maxfn = [&](std::ptrdiff_t ix, std::ptrdiff_t iy, std::ptrdiff_t iz, std::ptrdiff_t channel) {
-
 		if ( 
 			   seg[x][y][z] 
 			&& seg[ix][iy][iz] 
@@ -104,18 +103,19 @@ get_region_graph(
 		}
 	};
 
-
-
 	for (std::ptrdiff_t gz = 0; gz < sz / 64; gz++) {
 		for (std::ptrdiff_t gy = 0; gy < sy / 64; gy++) {
 			for (std::ptrdiff_t gx = 0; gx < sx / 64; gx++) {
-				z = gz * 64 + 1;
-				y = gy * 64 + 1;
-				x = gx * 64 + 1;
+				z = (gz * 64) + 1;
+				y = (gy * 64) + 1;
+				x = (gx * 64) + 1;
 
 				for (int k = 0; k < std::min(static_cast<std::ptrdiff_t>(64), sz - z - 1); k++, z++) {
 					for (int j = 0; j < std::min(static_cast<std::ptrdiff_t>(64), sy - y - 1); j++, y++) {
 						for (int i = 0; i < std::min(static_cast<std::ptrdiff_t>(64), sx - x - 1); i++, x++) {
+
+							printf("%d %d %d\n", x, y, z);
+
 							if (x > boundary_flags[0]) {
 								maxfn(x-1,y,z,0);
 							}
