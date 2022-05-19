@@ -104,12 +104,18 @@ get_region_graph(
 		}
 	};
 
-	for (z = 1; z < sz - 1;) {
-		for (y = 1; y < sy - 1;) {
-			for (x = 1; x < sx - 1;) {
-				for (int k = 0; k < 64; k++, z++) {
-					for (int j = 0; j < 64; j++, y++) {
-						for (int i = 0; i < 64; i++, x++) {
+
+
+	for (std::ptrdiff_t gz = 0; gz < sz / 64; gz++) {
+		for (std::ptrdiff_t gy = 0; gy < sy / 64; gy++) {
+			for (std::ptrdiff_t gx = 0; gx < sx / 64; gx++) {
+				z = gz * 64 + 1;
+				y = gy * 64 + 1;
+				x = gx * 64 + 1;
+
+				for (int k = 0; k < std::min(64, sz - z - 1); k++, z++) {
+					for (int j = 0; j < std::min(64, sy - y - 1); j++, y++) {
+						for (int i = 0; i < std::min(64, sx - x - 1); i++, x++) {
 							if (x > boundary_flags[0]) {
 								maxfn(x-1,y,z,0);
 							}
