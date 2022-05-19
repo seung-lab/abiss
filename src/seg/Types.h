@@ -22,6 +22,6 @@ using ContactRegionExt = MapContainer<Coord, int, HashFunction<Coord> >;
 template <class Ta>
 using Edge = std::array<MapContainer<Coord, Ta, HashFunction<Coord> >, 3>;
 
-using sem_t = uint8_t;
+using semantic_t = uint8_t;
 
 #endif

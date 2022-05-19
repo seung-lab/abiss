@@ -69,12 +69,12 @@ int main(int argc, char * argv[])
 
     if (std::filesystem::exists("sem.raw")) {
         bio::mapped_file_source sem_file;
-        size_t sem_bytes = sizeof(sem_t)*dim[0]*dim[1]*dim[2];
+        size_t sem_bytes = sizeof(semantic_t)*dim[0]*dim[1]*dim[2];
         sem_file.open("sem.raw", sem_bytes);
         assert(sem_file.is_open());
-        ConstChunkRef<sem_t, 3> sem_chunk(reinterpret_cast<const sem_t*>(sem_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])], boost::fortran_storage_order());
+        ConstChunkRef<semantic_t, 3> sem_chunk(reinterpret_cast<const semantic_t*>(sem_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])], boost::fortran_storage_order());
         std::cout << "mmap sem data" << std::endl;
-        SemExtractor<seg_t, sem_t, ConstChunkRef<sem_t, 3> > sem_extractor(sem_chunk);
+        SemExtractor<seg_t, semantic_t, ConstChunkRef<semantic_t, 3> > sem_extractor(sem_chunk);
         traverseSegments<1>(seg_chunk, boundary_extractor, affinity_extractor, sem_extractor, chunked_rg_extractor, com_extractor
 #ifdef EXTRACT_SIZE
                      ,size_extractor
