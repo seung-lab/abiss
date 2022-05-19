@@ -28,6 +28,7 @@ if(JEMALLOC_FOUND)
 endif(JEMALLOC_FOUND)
 
 if(absl_FOUND)
+    add_definitions(-DUSE_ABSL_HASHMAP)
     set(optionalLibs ${optionalLibs}
         absl::flat_hash_map
         absl::flat_hash_set
