@@ -110,12 +110,14 @@ get_region_graph(
 				std::ptrdiff_t y0 = (gy * 64);
 				std::ptrdiff_t x0 = (gx * 64);
 
-				z = std::min(z0, static_cast<std::ptrdiff_t>(1));
-				y = std::min(y0, static_cast<std::ptrdiff_t>(1));
-				x = std::min(x0, static_cast<std::ptrdiff_t>(1));
+				z = std::max(z0, static_cast<std::ptrdiff_t>(1));
+				y = std::max(y0, static_cast<std::ptrdiff_t>(1));
+				x = std::max(x0, static_cast<std::ptrdiff_t>(1));
 
 				for (int k = 0; k < std::min(static_cast<std::ptrdiff_t>(64), sz - z0 - 1); k++, z++) {
+					y = std::max(y0, static_cast<std::ptrdiff_t>(1));
 					for (int j = 0; j < std::min(static_cast<std::ptrdiff_t>(64), sy - y0 - 1); j++, y++) {
+						x = std::max(x0, static_cast<std::ptrdiff_t>(1));
 						for (int i = 0; i < std::min(static_cast<std::ptrdiff_t>(64), sx - x0 - 1); i++, x++) {
 
 							// printf("%d %d %d\n", x, y, z);
@@ -129,7 +131,7 @@ get_region_graph(
 							if (z > boundary_flags[2]) {
 								maxfn(x,y,z-1,2);
 							}
-						}
+						}	
 					}
 				}
 			}
