@@ -34,6 +34,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
         zstd \
         netcat \
         parallel \
+        binutils \
         coreutils \
         libboost-system-dev \
         libboost-iostreams-dev \
@@ -97,12 +98,12 @@ RUN echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \
 
 COPY scripts ${SEG_HOME}/scripts
 
-RUN groupadd -r ${SEG_USER} \
-      && useradd -r -d ${SEG_HOME} -g ${SEG_USER} -s /bin/bash ${SEG_USER} \
-      && chown -R ${SEG_USER}: ${SEG_HOME} \
-      && echo "${SEG_USER} ALL=NOPASSWD: ALL" >> /etc/sudoers
+# RUN groupadd -r ${SEG_USER} \
+#       && useradd -r -d ${SEG_HOME} -g ${SEG_USER} -s /bin/bash ${SEG_USER} \
+#       && chown -R ${SEG_USER}: ${SEG_HOME} \
+#       && echo "${SEG_USER} ALL=NOPASSWD: ALL" >> /etc/sudoers
 
-LABEL workspace_path=${SEG_HOME} \
-      mount_path="/run/secrets"
+# LABEL workspace_path=${SEG_HOME} \
+#       mount_path="/run/secrets"
 
-USER ${SEG_USER}
+# USER root
