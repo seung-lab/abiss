@@ -113,9 +113,9 @@ get_region_graph(
 				y = gy * 64 + 1;
 				x = gx * 64 + 1;
 
-				for (int k = 0; k < std::min(64, sz - z - 1); k++, z++) {
-					for (int j = 0; j < std::min(64, sy - y - 1); j++, y++) {
-						for (int i = 0; i < std::min(64, sx - x - 1); i++, x++) {
+				for (int k = 0; k < std::min(static_cast<std::ptrdiff_t>(64), sz - z - 1); k++, z++) {
+					for (int j = 0; j < std::min(static_cast<std::ptrdiff_t>(64), sy - y - 1); j++, y++) {
+						for (int i = 0; i < std::min(static_cast<std::ptrdiff_t>(64), sx - x - 1); i++, x++) {
 							if (x > boundary_flags[0]) {
 								maxfn(x-1,y,z,0);
 							}
