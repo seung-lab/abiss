@@ -104,27 +104,27 @@ get_region_graph(
 		}
 	};
 
-	for (z = 1; z < sz - 1; ++z) {
-		for (y = 1; y < sy - 1; ++y) {
-			for (x = 1; x < sx - 1; ++x) {
-
-				if (x > boundary_flags[0]) {
-					maxfn(x-1,y,z,0);
-				}
-				if (y > boundary_flags[1]) {
-					maxfn(x,y-1,z,1);
-				}
-				if (z > boundary_flags[2]) {
-					maxfn(x,y,z-1,2);
+	for (z = 1; z < sz - 1;) {
+		for (y = 1; y < sy - 1;) {
+			for (x = 1; x < sx - 1;) {
+				for (int k = 0; k < 64; k++, z++) {
+					for (int j = 0; j < 64; j++, y++) {
+						for (int i = 0; i < 64; i++, x++) {
+							if (x > boundary_flags[0]) {
+								maxfn(x-1,y,z,0);
+							}
+							if (y > boundary_flags[1]) {
+								maxfn(x,y-1,z,1);
+							}
+							if (z > boundary_flags[2]) {
+								maxfn(x,y,z-1,2);
+							}
+						}
+					}
 				}
 			}
 		}
 	}
-
-	// std::vector<ID> inv_remap(remap.size() + 1);
-	// for (auto& p : remap) {
-	// 	inv_remap[p.second] = p.first;
-	// }
 
 	region_graph<ID,F> rg;
 
