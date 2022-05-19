@@ -110,9 +110,9 @@ get_region_graph(
 				std::ptrdiff_t y0 = (gy * 64);
 				std::ptrdiff_t x0 = (gx * 64);
 
-				z = std::min(z0, 1);
-				y = std::min(y0, 1);
-				x = std::min(x0, 1);
+				z = std::min(z0, static_cast<std::ptrdiff_t>(1));
+				y = std::min(y0, static_cast<std::ptrdiff_t>(1));
+				x = std::min(x0, static_cast<std::ptrdiff_t>(1));
 
 				for (int k = 0; k < std::min(static_cast<std::ptrdiff_t>(64), sz - z0 - 1); k++, z++) {
 					for (int j = 0; j < std::min(static_cast<std::ptrdiff_t>(64), sy - y0 - 1); j++, y++) {
