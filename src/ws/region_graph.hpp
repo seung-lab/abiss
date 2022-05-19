@@ -105,9 +105,9 @@ get_region_graph(
 
 	const std::ptrdiff_t block_size = 128;
 
-	for (std::ptrdiff_t gz = 0; gz < sz / block_size; gz++) {
-		for (std::ptrdiff_t gy = 0; gy < sy / block_size; gy++) {
-			for (std::ptrdiff_t gx = 0; gx < sx / block_size; gx++) {
+	for (std::ptrdiff_t gz = 0; gz <= sz / block_size; gz++) {
+		for (std::ptrdiff_t gy = 0; gy <= sy / block_size; gy++) {
+			for (std::ptrdiff_t gx = 0; gx <= sx / block_size; gx++) {
 				std::ptrdiff_t z0 = (gz * block_size);
 				std::ptrdiff_t y0 = (gy * block_size);
 				std::ptrdiff_t x0 = (gx * block_size);
