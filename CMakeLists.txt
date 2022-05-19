@@ -9,7 +9,7 @@ set(optionalLibs)
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -g -pg -fopenmp")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Og -g -pg -fopenmp")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O3 -g -pg -fopenmp")
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
@@ -28,6 +28,7 @@ if(JEMALLOC_FOUND)
 endif(JEMALLOC_FOUND)
 
 if(absl_FOUND)
+    add_definitions(-DUSE_ABSL_HASHMAP)
     set(optionalLibs ${optionalLibs}
         absl::flat_hash_map
         absl::flat_hash_set
