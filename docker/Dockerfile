@@ -60,8 +60,9 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && cd abseil-cpp && mkdir build && cd build \
     && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DABSL_BUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
     && cmake --build . --target install \
-    && cd ${SEG_HOME} && rm -rf abseil-cpp \
-    && echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \
+    && cd ${SEG_HOME} && rm -rf abseil-cpp
+
+RUN echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \
     && mkdir -p ${SEG_HOME}/build \
     && cd ${SEG_HOME}/build \
     #&& cmake .. -DEXTRACT_SIZE=ON -DMST_EDGE=ON \
