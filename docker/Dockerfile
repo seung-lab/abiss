@@ -63,7 +63,6 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && cmake --build . --target install \
     && cd ${SEG_HOME} && rm -rf abseil-cpp
 
-ARG RESTART_FROM_HERE=unknown
 RUN echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \
     && mkdir -p ${SEG_HOME}/build \
     && cd ${SEG_HOME}/build \
