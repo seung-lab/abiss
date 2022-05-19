@@ -106,15 +106,19 @@ get_region_graph(
 	for (std::ptrdiff_t gz = 0; gz < sz / 64; gz++) {
 		for (std::ptrdiff_t gy = 0; gy < sy / 64; gy++) {
 			for (std::ptrdiff_t gx = 0; gx < sx / 64; gx++) {
-				std::ptrdiff_t z0 = (gz * 64) + 1;
-				std::ptrdiff_t y0 = (gy * 64) + 1;
-				std::ptrdiff_t x0 = (gx * 64) + 1;
+				std::ptrdiff_t z0 = (gz * 64);
+				std::ptrdiff_t y0 = (gy * 64);
+				std::ptrdiff_t x0 = (gx * 64);
 
-				for (int k = 0, z = z0; k < std::min(static_cast<std::ptrdiff_t>(64), sz - z0 - 1); k++, z++) {
-					for (int j = 0, y = y0; j < std::min(static_cast<std::ptrdiff_t>(64), sy - y0 - 1); j++, y++) {
-						for (int i = 0, x = x0; i < std::min(static_cast<std::ptrdiff_t>(64), sx - x0 - 1); i++, x++) {
+				z = std::min(z0, 1);
+				y = std::min(y0, 1);
+				x = std::min(x0, 1);
 
-							printf("%d %d %d\n", x, y, z);
+				for (int k = 0; k < std::min(static_cast<std::ptrdiff_t>(64), sz - z0 - 1); k++, z++) {
+					for (int j = 0; j < std::min(static_cast<std::ptrdiff_t>(64), sy - y0 - 1); j++, y++) {
+						for (int i = 0; i < std::min(static_cast<std::ptrdiff_t>(64), sx - x0 - 1); i++, x++) {
+
+							// printf("%d %d %d\n", x, y, z);
 
 							if (x > boundary_flags[0]) {
 								maxfn(x-1,y,z,0);
