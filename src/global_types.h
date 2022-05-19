@@ -20,7 +20,7 @@ using aff_t = float;
 #ifdef USE_ABSL_HASHMAP
 template<typename K, typename V, typename H=absl::Hash<K> >
 using MapContainer = absl::flat_hash_map<K, V, H>;
-template<typename K, typename V, typename H=absl::Hash<K> >
+template<typename K, typename H=absl::Hash<K> >
 using SetContainer = absl::flat_hash_set<K, H>;
 template<typename T>
 using HashFunction = absl::Hash<T>;
