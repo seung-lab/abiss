@@ -118,8 +118,8 @@ get_region_graph(
   std::cout << "Sort vectors (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
   begin = clock();
-  Edge edge = edges[0];
-  affinity_t max_affinity = edge_values[0];
+  Edge edge = edges[0].edge;
+  affinity_t max_affinity = edges[0].value;
 
   for (std::ptrdiff_t i = 0; i < edges.size(); i++) {
   	if (edges[i].edge == edge) {
@@ -129,7 +129,7 @@ get_region_graph(
   		ID e1 = edge & mask;
   		ID e2 = edge >> shift;
   		rg.emplace_back(max_affinity, e1, e2);
-  		edge = &edges[i];
+  		edge = edges[i].edge;
   	}
   }
 
