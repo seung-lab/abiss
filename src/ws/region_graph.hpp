@@ -93,7 +93,7 @@ get_region_graph(
 	std::vector<std::size_t> edge_permutation(edges.size()); // sort indices
   std::iota(edge_permutation.begin(), edge_permutation.end(), 0);
   std::sort(edge_permutation.begin(), edge_permutation.end(),
-        [&](std::size_t i, std::size_t j){ return edges[i] < edges[j] });
+        [&](std::size_t i, std::size_t j){ return edges[i] < edges[j]; });
 
   edges = apply_permutation(edges, edge_permutation);
   edge_values = apply_permutation(edge_values, edge_permutation);
