@@ -163,10 +163,10 @@ get_region_graph(
 
 	std::cout << "Region graph size: " << rg.size() << std::endl;
 
-	begin = clock();
-	std::stable_sort(std::begin(rg), std::end(rg), [](auto & a, auto & b) { return std::get<0>(a) > std::get<0>(b); });
-	end = clock();
-	std::cout << "Sort region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
+	// begin = clock();
+	// std::stable_sort(std::begin(rg), std::end(rg), [](auto & a, auto & b) { return std::get<0>(a) > std::get<0>(b); });
+	// end = clock();
+	// std::cout << "Sort region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
 	std::cout << "Sorted" << std::endl;
 	return rg;
