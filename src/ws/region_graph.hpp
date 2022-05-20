@@ -21,6 +21,13 @@ std::vector<T> apply_permutation(
   return sorted_vec;
 }
 
+template <typename F>
+struct Edge {
+	uint64_t edge,
+	F value
+	void Edge(uint64_t e, F v) : edge(e), value(v); 
+};
+
 template< typename ID, typename F, typename L>
 inline region_graph<ID,F>
 get_region_graph(
@@ -42,10 +49,8 @@ get_region_graph(
 	ID* seg = seg_ptr->data();
 	affinity_t* aff = aff_ptr->data();
 
-	std::vector<uint64_t> edges;
-	std::vector<F> edge_values;
+	std::vector<Edge<affinity_t>> edges;
 	edges.reserve(voxels);
-	edge_values.reserve(voxels);
 
 	// save edges as a uint64 like min(e1,e2)|max(e1,e2)
 	// this shift and mask are needed to encoding and decoding
@@ -69,8 +74,7 @@ get_region_graph(
 						? (seg[loc] | (seg[loc-1] << shift))
 						: (seg[loc-1] | (seg[loc] << shift));
 
-					edges.push_back(edge);
-					edge_values.push_back(aff[(loc-1) + sxy * sz * 0]);
+					edges.emplace_back(edge, aff[(loc-1) + sxy * sz * 0]);
 				}
 				if ( 
 					y > boundary_flags[1]
@@ -82,8 +86,7 @@ get_region_graph(
 						? (seg[loc] | (seg[loc-sx] << shift))
 						: (seg[loc-sx] | (seg[loc] << shift));
 
-					edges.push_back(edge);
-					edge_values.push_back(aff[(loc-sx) + sxy * sz * 1]);
+					edges.emplace_back(edge, aff[(loc-sx) + sxy * sz * 1]);
 				}
 				if ( 
 					z > boundary_flags[2]
@@ -95,8 +98,7 @@ get_region_graph(
 						? (seg[loc] | (seg[loc-sxy] << shift))
 						: (seg[loc-sxy] | (seg[loc] << shift));
 
-					edges.push_back(edge);
-					edge_values.push_back(aff[(loc-sxy) + sxy * sz * 2]);
+					edges.emplace_back(edge, aff[(loc-sxy) + sxy * sz * 2]);
 				}
 			}
 		}
@@ -111,37 +113,27 @@ get_region_graph(
 	}
 
 	begin = clock();
-	std::vector<std::size_t> edge_permutation(edges.size()); // sort indices
-  std::iota(edge_permutation.begin(), edge_permutation.end(), 0);
-  std::sort(edge_permutation.begin(), edge_permutation.end(),
-        [&](std::size_t i, std::size_t j){ return edges[i] < edges[j]; });
-  end = clock();
-	std::cout << "Create permutation (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
-
-	begin = clock();
-  edges = std::move(apply_permutation(edges, edge_permutation));
-  edge_values = std::move(apply_permutation(edge_values, edge_permutation));
+	std::sort(std::begin(edges), std::end(edges), [](auto & a, auto & b) { return a.edge > b.edge });
   end = clock();
   std::cout << "Sort vectors (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
-
   begin = clock();
-  uint64_t edge = edges[0];
+  Edge edge = edges[0];
   affinity_t max_affinity = edge_values[0];
 
   for (std::ptrdiff_t i = 0; i < edges.size(); i++) {
-  	if (edges[i] == edge) {
-  		max_affinity = std::max(max_affinity, edge_values[i]);
+  	if (edges[i].edge == edge) {
+  		max_affinity = std::max(max_affinity, edges[i].value);
   	}
   	else {
   		ID e1 = edge & mask;
   		ID e2 = edge >> shift;
   		rg.emplace_back(max_affinity, e1, e2);
-  		edge = edges[i];
+  		edge = &edges[i];
   	}
   }
 
-  rg.emplace_back(max_affinity, (edge & mask), (edge >> shift));
+  rg.emplace_back(max_affinity, (edge.edge & mask), (edge.value >> shift));
 
 	end = clock();
   std::cout << "Create region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
