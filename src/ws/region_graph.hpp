@@ -124,8 +124,8 @@ get_region_graph(
 	std::cout << "Create permutation (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
 	begin = clock();
-  edges = apply_permutation(edges, edge_permutation);
-  edge_values = apply_permutation(edge_values, edge_permutation);
+  edges = std::move(apply_permutation(edges, edge_permutation));
+  edge_values = std::move(apply_permutation(edge_values, edge_permutation));
   end = clock();
   std::cout << "Sort vectors (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
