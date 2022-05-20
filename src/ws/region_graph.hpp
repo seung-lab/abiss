@@ -25,7 +25,7 @@ template <typename F>
 struct Edge {
 	uint64_t edge;
 	F value;
-	Edge(uint64_t e, F v) : edge(e), value(v); 
+	Edge(uint64_t e, F v) : edge(e), value(v) {}; 
 };
 
 template< typename ID, typename F, typename L>
