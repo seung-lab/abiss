@@ -113,7 +113,7 @@ get_region_graph(
 	}
 
 	begin = clock();
-	std::sort(std::begin(edges), std::end(edges), [](auto & a, auto & b) { return a.edge > b.edge });
+	std::sort(std::begin(edges), std::end(edges), [](auto & a, auto & b) { return a.edge > b.edge; });
   end = clock();
   std::cout << "Sort vectors (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
