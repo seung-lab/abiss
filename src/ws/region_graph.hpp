@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <iostream>
 #include <limits>
+#include <cmath>
 
 template <typename T>
 std::vector<T> apply_permutation(
@@ -51,7 +52,7 @@ get_region_graph(
 
 	// save edges as a uint64 like min(e1,e2)|max(e1,e2)
 	// this shift and mask are needed to encoding and decoding
-	const uint64_t shift = 8 * sizeof(ID);
+	const uint64_t shift = 8 * static_cast<uint64_t>(std::ceil(std::log2(max_segid)));
 	const uint64_t mask = ~(std::numeric_limits<uint64_t>::max() >> shift << shift);
 
 	auto maxfn = [&](std::ptrdiff_t ix, std::ptrdiff_t iy, std::ptrdiff_t iz, std::ptrdiff_t channel) {
