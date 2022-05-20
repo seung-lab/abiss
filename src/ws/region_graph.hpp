@@ -31,8 +31,6 @@ get_region_graph(
 	const std::array<bool,6> & boundary_flags
 ) {
 	using affinity_t = F;
-	using id_pair = std::pair<ID,ID>;
-	affinity_t low  = static_cast<affinity_t>(lowv);
 
 	const std::ptrdiff_t sx = aff_ptr->shape()[0];
 	const std::ptrdiff_t sy = aff_ptr->shape()[1];
@@ -41,11 +39,8 @@ get_region_graph(
 	const std::ptrdiff_t sxy = sx * sy;
 	const std::ptrdiff_t voxels = sx * sy * sz;
 
-	// volume<ID>& seg_boost = *seg_ptr;
 	ID* seg = seg_ptr->data();
-
 	affinity_t* aff = aff_ptr->data();
-	std::vector<id_pair> pairs;
 
 	std::vector<uint64_t> edges;
 	std::vector<F> edge_values;
@@ -142,6 +137,7 @@ get_region_graph(
   		ID e1 = edge & mask;
   		ID e2 = edge >> shift;
   		rg.emplace_back(max_affinity, e1, e2);
+  		edge = edges[i];
   	}
   }
 
