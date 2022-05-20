@@ -6,6 +6,7 @@
 #include <iostream>
 #include <limits>
 #include <cmath>
+#include <ctime>
 
 template <typename T>
 std::vector<T> apply_permutation(
@@ -69,6 +70,8 @@ get_region_graph(
 	// 	}
 	// };
 
+	clock_t begin = clock();
+
 	for (std::ptrdiff_t z = 1; z < sz - 1; z++) {
 		for (std::ptrdiff_t y = 1; y < sy - 1; y++) {
 			for (std::ptrdiff_t x = 1; x < sx - 1; x++) {
@@ -114,6 +117,8 @@ get_region_graph(
 			}
 		}
 	}
+	clock_t end = clock();
+	std::cout << "Image scan (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
 	region_graph<ID,F> rg;
 	if (edges.size() == 0) {
@@ -121,14 +126,22 @@ get_region_graph(
 		return rg;
 	}
 
+	begin = clock();
 	std::vector<std::size_t> edge_permutation(edges.size()); // sort indices
   std::iota(edge_permutation.begin(), edge_permutation.end(), 0);
   std::sort(edge_permutation.begin(), edge_permutation.end(),
         [&](std::size_t i, std::size_t j){ return edges[i] < edges[j]; });
+  end = clock();
+	std::cout << "Create permutation (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
+	begin = clock();
   edges = apply_permutation(edges, edge_permutation);
   edge_values = apply_permutation(edge_values, edge_permutation);
+  end = clock();
+  std::cout << "Sort vectors (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
+
+  begin = clock();
   uint64_t edge = edges[0];
   affinity_t max_affinity = edge_values[0];
 
@@ -145,9 +158,15 @@ get_region_graph(
 
   rg.emplace_back(max_affinity, (edge & mask), (edge >> shift));
 
+	end = clock();
+  std::cout << "Create region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
+
 	std::cout << "Region graph size: " << rg.size() << std::endl;
 
+	begin = clock();
 	std::stable_sort(std::begin(rg), std::end(rg), [](auto & a, auto & b) { return std::get<0>(a) > std::get<0>(b); });
+	end = clock();
+	std::cout << "Sort region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
 	std::cout << "Sorted" << std::endl;
 	return rg;
