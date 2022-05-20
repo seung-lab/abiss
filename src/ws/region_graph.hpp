@@ -133,7 +133,7 @@ get_region_graph(
   	}
   }
 
-  rg.emplace_back(max_affinity, (edge.edge & mask), (edge.value >> shift));
+  rg.emplace_back(max_affinity, (edge & mask), (edge >> shift));
 
 	end = clock();
   std::cout << "Create region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
