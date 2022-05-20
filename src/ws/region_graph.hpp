@@ -44,7 +44,7 @@ get_region_graph(
 	// volume<ID>& seg_boost = *seg_ptr;
 	ID* seg = seg_ptr->data();
 
-	affinity_graph<F>& aff = *aff_ptr;
+	affinity_t* aff = aff_ptr->data();
 	std::vector<id_pair> pairs;
 
 	std::vector<uint64_t> edges;
@@ -56,22 +56,6 @@ get_region_graph(
 	// this shift and mask are needed to encoding and decoding
 	const uint64_t shift = 8 * static_cast<uint64_t>(std::ceil(std::log2(max_segid)));
 	const uint64_t mask = ~(std::numeric_limits<uint64_t>::max() >> shift << shift);
-
-	// auto maxfn = [&](std::ptrdiff_t ix, std::ptrdiff_t iy, std::ptrdiff_t iz, std::ptrdiff_t channel) {
-	// 	if ( 
-	// 		x > boundary_flags[0]
-	// 		&& seg[x][y][z] 
-	// 		&& seg[ix][iy][iz] 
-	// 		&& seg[x][y][z] != seg[ix][iy][iz]
-	// 	) {
-	// 		uint64_t edge = (seg[x][y][z] > seg[ix][iy][iz])
-	// 			? (seg[x][y][z] | (seg[ix][iy][iz] << shift))
-	// 			: (seg[ix][iy][iz] | (seg[x][y][z] << shift));
-
-	// 		edges.push_back(edge);
-	// 		edge_values.push_back(aff[ix][iy][iz][channel]);
-	// 	}
-	// };
 
 	clock_t begin = clock();
 
@@ -91,7 +75,7 @@ get_region_graph(
 						: (seg[loc-1] | (seg[loc] << shift));
 
 					edges.push_back(edge);
-					edge_values.push_back(aff[x-1][y][z][0]);
+					edge_values.push_back(aff[(loc-1) + sxy * sz * 0]);
 				}
 				if ( 
 					y > boundary_flags[1]
@@ -104,7 +88,7 @@ get_region_graph(
 						: (seg[loc-sx] | (seg[loc] << shift));
 
 					edges.push_back(edge);
-					edge_values.push_back(aff[x][y-1][z][1]);
+					edge_values.push_back(aff[(loc-sx) + sxy * sz * 1]);
 				}
 				if ( 
 					z > boundary_flags[2]
@@ -117,7 +101,7 @@ get_region_graph(
 						: (seg[loc-sxy] | (seg[loc] << shift));
 
 					edges.push_back(edge);
-					edge_values.push_back(aff[x][y][z-1][2]);
+					edge_values.push_back(aff[(loc-sxy) + sxy * sz * 2]);
 				}
 			}
 		}
