@@ -23,8 +23,8 @@ std::vector<T> apply_permutation(
 
 template <typename F>
 struct Edge {
-	uint64_t edge,
-	F value
+	uint64_t edge;
+	F value;
 	void Edge(uint64_t e, F v) : edge(e), value(v); 
 };
 
