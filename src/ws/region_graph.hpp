@@ -38,9 +38,12 @@ get_region_graph(
 	const std::ptrdiff_t sy = aff_ptr->shape()[1];
 	const std::ptrdiff_t sz = aff_ptr->shape()[2];
 
+	const std::ptrdiff_t sxy = sx * sy;
 	const std::ptrdiff_t voxels = sx * sy * sz;
 
-	volume<ID>& seg = *seg_ptr;
+	// volume<ID>& seg_boost = *seg_ptr;
+	ID* seg = seg_ptr->data();
+
 	affinity_graph<F>& aff = *aff_ptr;
 	std::vector<id_pair> pairs;
 
@@ -75,41 +78,43 @@ get_region_graph(
 	for (std::ptrdiff_t z = 1; z < sz - 1; z++) {
 		for (std::ptrdiff_t y = 1; y < sy - 1; y++) {
 			for (std::ptrdiff_t x = 1; x < sx - 1; x++) {
+				std::ptrdiff_t loc = x + sx * y + sxy * z;
+
 				if ( 
 					x > boundary_flags[0]
-					&& seg[x][y][z] 
-					&& seg[x-1][y][z] 
-					&& seg[x][y][z] != seg[x-1][y][z]
+					&& seg[loc]
+					&& seg[loc-1]
+					&& seg[loc] != seg[loc-1]
 				) {
-					uint64_t edge = (seg[x][y][z] > seg[x-1][y][z])
-						? (seg[x][y][z] | (seg[x-1][y][z] << shift))
-						: (seg[x-1][y][z] | (seg[x][y][z] << shift));
+					uint64_t edge = (seg[loc] > seg[loc-1])
+						? (seg[loc] | (seg[loc-1] << shift))
+						: (seg[loc-1] | (seg[loc] << shift));
 
 					edges.push_back(edge);
 					edge_values.push_back(aff[x-1][y][z][0]);
 				}
 				if ( 
 					y > boundary_flags[1]
-					&& seg[x][y][z] 
-					&& seg[x][y-1][z] 
-					&& seg[x][y][z] != seg[x][y-1][z]
+					&& seg[loc] 
+					&& seg[loc-sx] 
+					&& seg[loc] != seg[loc-sx]
 				) {
-					uint64_t edge = (seg[x][y][z] > seg[x][y-1][z])
-						? (seg[x][y][z] | (seg[x][y-1][z] << shift))
-						: (seg[x][y-1][z] | (seg[x][y][z] << shift));
+					uint64_t edge = (seg[loc] > seg[loc-sx])
+						? (seg[loc] | (seg[loc-sx] << shift))
+						: (seg[loc-sx] | (seg[loc] << shift));
 
 					edges.push_back(edge);
 					edge_values.push_back(aff[x][y-1][z][1]);
 				}
 				if ( 
 					z > boundary_flags[2]
-					&& seg[x][y][z] 
-					&& seg[x][y][z-1] 
-					&& seg[x][y][z] != seg[x][y][z-1]
+					&& seg[loc] 
+					&& seg[loc-sxy] 
+					&& seg[loc] != seg[loc-sxy]
 				) {
-					uint64_t edge = (seg[x][y][z] > seg[x][y][z-1])
-						? (seg[x][y][z] | (seg[x][y][z-1] << shift))
-						: (seg[x][y][z-1] | (seg[x][y][z] << shift));
+					uint64_t edge = (seg[loc] > seg[loc-sxy])
+						? (seg[loc] | (seg[loc-sxy] << shift))
+						: (seg[loc-sxy] | (seg[loc] << shift));
 
 					edges.push_back(edge);
 					edge_values.push_back(aff[x][y][z-1][2]);
