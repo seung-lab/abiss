@@ -13,11 +13,11 @@ std::vector<T> apply_permutation(
   const std::vector<T>& vec,
   const std::vector<std::size_t>& p
 ) {
-  std::vector<T> sorted_vec(vec.size());
-  std::transform(
-  	p.begin(), p.end(), sorted_vec.begin(),
-    [&](std::size_t i){ return vec[i]; }
-  );
+	const std::size_t N = vec.size();
+  std::vector<T> sorted_vec(N);
+  for (std::size_t i = 0; i < N; i++) {
+  	sorted_vec[p[i]] = vec[i];
+  }
   return sorted_vec;
 }
 
