@@ -118,7 +118,7 @@ get_region_graph(
   std::cout << "Sort vectors (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
   begin = clock();
-  Edge<affinity_t> edge = edges[0].edge;
+  uint64_t edge = edges[0].edge;
   affinity_t max_affinity = edges[0].value;
 
   for (std::ptrdiff_t i = 0; i < edges.size(); i++) {
