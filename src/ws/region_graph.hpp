@@ -49,7 +49,7 @@ get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
             if (!curr) {
                 pairs.push_back(p);
             }
-            curr = std::max(curr, affaff[(loc-1) + sxyz * 0]);
+            curr = std::max(curr, aff[(loc-1) + sxyz * 0]);
         }
 				if ( 
 					y > boundary_flags[1]
@@ -62,7 +62,7 @@ get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
             if (!curr) {
                 pairs.push_back(p);
             }
-            curr = std::max(curr, affaff[(loc-sx) + sxyz * 1]);
+            curr = std::max(curr, aff[(loc-sx) + sxyz * 1]);
         }
 				if ( 
 					z > boundary_flags[2]
@@ -75,7 +75,7 @@ get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
             if (!curr) {
                 pairs.push_back(p);
             }
-            curr = std::max(curr, affaff[(loc-sxy) + sxyz * 2]);
+            curr = std::max(curr, aff[(loc-sxy) + sxyz * 2]);
         }
 			}
 		}
