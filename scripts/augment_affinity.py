@@ -82,7 +82,7 @@ def close_affinitymap(data, params, threshold):
 def adjust_affinitymap(aff, bbox, boundary_flags, padding_before, padding_after):
     global_param = cu.read_inputs(os.environ['PARAM_JSON'])
 
-    if global_param.get("CLOSING_AFF", False) and os.environ['STAGE'] == "ws":
+    if global_param.get("CLOSING_AFF", False):
         print("adjusting affinit map")
         erode_params = [[3,0.99], [3,0.99], [1,0.99]]
         start_coord = [bbox[i]-(1-boundary_flags[i])*(padding_before+erode_params[i][0]) for i in range(3)]
