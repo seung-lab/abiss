@@ -113,27 +113,27 @@ get_region_graph(
 	}
 
 	begin = clock();
-	std::sort(std::begin(edges), std::end(edges), [](auto & a, auto & b) { return a.edge > b.edge; });
+	std::sort(std::begin(edges), std::end(edges), [](auto & a, auto & b) {
+		if (a.edge == b.edge) {
+			return a.value > b.value;
+		}
+		return (a.edge < b.edge);
+	});
   end = clock();
   std::cout << "Sort vectors (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
   begin = clock();
   uint64_t edge = edges[0].edge;
-  affinity_t max_affinity = edges[0].value;
+  rg.emplace_back(edges[0].value, edge & mask, edge >> shift);
 
-  for (std::ptrdiff_t i = 0; i < edges.size(); i++) {
-  	if (edges[i].edge == edge) {
-  		max_affinity = std::max(max_affinity, edges[i].value);
-  	}
-  	else {
+  for (std::ptrdiff_t i = 1; i < edges.size(); i++) {
+  	if (edges[i].edge != edge) {
   		ID e1 = edge & mask;
   		ID e2 = edge >> shift;
-  		rg.emplace_back(max_affinity, e1, e2);
+  		rg.emplace_back(edges[i].value, e1, e2);
   		edge = edges[i].edge;
   	}
   }
-
-  rg.emplace_back(max_affinity, (edge & mask), (edge >> shift));
 
 	end = clock();
   std::cout << "Create region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
@@ -145,6 +145,6 @@ get_region_graph(
 	// end = clock();
 	// std::cout << "Sort region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
-	std::cout << "Sorted" << std::endl;
+	// std::cout << "Sorted" << std::endl;
 	return rg;
 }
