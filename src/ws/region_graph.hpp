@@ -115,13 +115,13 @@ get_region_graph(
 	std::vector<uint64_t> renumber(edges.size() + 1);
 	uint64_t label = 1;
 	for (std::size_t i = 0; i < edges.size(); i++) {
-		uint64_t edge = edges[i];
+		uint64_t edge = edges[i].edge;
 		if (renumber[edge] == 0) {
 			renumber[label] = edge;
 			label++;
 		}
 		else {
-			edges[i] = renumber[label];
+			edges[i].edge = renumber[label];
 		}
 	}
 
