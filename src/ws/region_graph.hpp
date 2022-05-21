@@ -114,7 +114,10 @@ get_region_graph(
 
 	begin = clock();
 	std::sort(std::begin(edges), std::end(edges), [](auto & a, auto & b) {
-		if (a.edge == b.edge) {
+		if (a.value > b.value && a.edge != b.edge) {
+			return true;
+		}
+		else if (a.edge == b.edge) {
 			return a.value > b.value;
 		}
 		return (a.edge < b.edge);
