@@ -84,7 +84,7 @@ def adjust_affinitymap(aff, bbox, boundary_flags, padding_before, padding_after)
 
     if global_param.get("CLOSING_AFF", False):
         print("adjusting affinit map")
-        erode_params = [[3,0.99], [3,0.99], [1,0.99]]
+        erode_params = [[10,0.7], [10,0.7], [2,0.7]]
         start_coord = [bbox[i]-(1-boundary_flags[i])*(padding_before+erode_params[i][0]) for i in range(3)]
         end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*(padding_after+erode_params[i][0]) for i in range(3)]
         data = erode_affinitymap(fold_aff(cut_data(aff, start_coord, end_coord, [0,0,0,0,0,0])), erode_params, 0.5)
