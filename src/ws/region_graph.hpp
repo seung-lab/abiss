@@ -136,7 +136,7 @@ get_region_graph(
 
   std::vector<bool> seen(edges.size());
   for (std::ptrdiff_t i = 0; i < edges.size(); i++) {
-  	edge = edges[i].edge;
+  	uint64_t edge = edges[i].edge;
   	if (seen[edge]) {
   		continue;
   	}
