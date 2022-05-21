@@ -19,6 +19,6 @@ retry 10 $UPLOAD_ST_CMD ongoing_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/
 retry 10 $UPLOAD_ST_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 try tar -cvf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 retry 10 $UPLOAD_ST_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/dend/"${output}".tar."${COMPRESSED_EXT}"
-retry 10 try $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/dend/"${output}".data.md5sum
+retry 10 $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/dend/"${output}".data.md5sum
 try rm -rf remap
 try release_cpu_slot
