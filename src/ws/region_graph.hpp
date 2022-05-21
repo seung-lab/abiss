@@ -112,6 +112,7 @@ get_region_graph(
 		return rg;
 	}
 
+	begin = clock();
 	std::vector<uint64_t> renumber(edges.size() + 1);
 	uint64_t label = 1;
 	for (std::size_t i = 0; i < edges.size(); i++) {
@@ -124,6 +125,8 @@ get_region_graph(
 			edges[i].edge = renumber[label];
 		}
 	}
+	end = clock();
+	std::cout << "Renumber (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
 	begin = clock();
 	std::sort(std::begin(edges), std::end(edges), [](auto & a, auto & b) {
