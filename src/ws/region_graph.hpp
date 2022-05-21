@@ -112,30 +112,40 @@ get_region_graph(
 		return rg;
 	}
 
+	std::vector<uint64_t> renumber(edges.size() + 1);
+	uint64_t label = 1;
+	for (std::size_t i = 0; i < edges.size(); i++) {
+		uint64_t edge = edges[i];
+		if (renumber[edge] == 0) {
+			renumber[label] = edge;
+			label++;
+		}
+		else {
+			edges[i] = renumber[label];
+		}
+	}
+
 	begin = clock();
 	std::sort(std::begin(edges), std::end(edges), [](auto & a, auto & b) {
-		if (a.value > b.value && a.edge != b.edge) {
-			return true;
-		}
-		else if (a.edge == b.edge) {
-			return a.value > b.value;
-		}
-		return (a.edge < b.edge);
+		return a.value > b.value;
 	});
   end = clock();
   std::cout << "Sort vectors (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
   begin = clock();
-  uint64_t edge = edges[0].edge;
-  rg.emplace_back(edges[0].value, edge & mask, edge >> shift);
 
-  for (std::ptrdiff_t i = 1; i < edges.size(); i++) {
-  	if (edges[i].edge != edge) {
-  		ID e1 = edge & mask;
-  		ID e2 = edge >> shift;
-  		rg.emplace_back(edges[i].value, e1, e2);
-  		edge = edges[i].edge;
+  std::vector<bool> seen(edges.size());
+  for (std::ptrdiff_t i = 0; i < edges.size(); i++) {
+  	edge = edges[i].edge;
+  	if (seen[edge]) {
+  		continue;
   	}
+
+  	seen[edge] = true;
+  	edge = renumber[edge];
+		ID e1 = edge & mask;
+		ID e2 = edge >> shift;
+		rg.emplace_back(edges[i].value, e1, e2);
   }
 
 	end = clock();
