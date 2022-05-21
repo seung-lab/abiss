@@ -702,7 +702,7 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 size_t size0 = seg_size[v0];
                 size_t size1 = seg_size[v1];
                 auto p = std::minmax({size0, size1});
-                if (p.first > size_params.small_voxel_threshold and p.second > size_params.large_voxel_threshold) {
+                if (p.first > size_params.small_voxel_threshold and (size0+size1) > size_params.large_voxel_threshold) {
                     output.rej_rg_vector.push_back(*(e.edge));
                     e.edge->w = Limits::min();
                     continue;
