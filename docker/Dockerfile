@@ -46,7 +46,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && rm ~/miniconda.sh \
     && conda install nomkl \
     && conda install -y numpy scipy cryptography redis-py \
-    && conda install -c conda-forge -y joblib gsutil \
+    && conda install -c conda-forge -y gsutil \
     && find ${MINICONDA_PATH} -follow -type f -name '*.a' -delete \
     && find ${MINICONDA_PATH} -follow -type f -name '*.js.map' -delete \
     && conda clean -yaf \
