@@ -21,17 +21,8 @@ def save_raw_data(fn,data, data_type):
     f[:] = data[:]
     del f
 
-def pad_boundary(boundary_flags):
-    pad = [[0,0],[0,0],[0,0]]
-    for i in range(3):
-        if boundary_flags[i] == 1:
-            pad[i][0] = 1
-        if boundary_flags[i+3] == 1:
-            pad[i][1] = 1
-    return list(pad)
-
-def pad_data(data, boundary_flags):
-    pad = pad_boundary(boundary_flags)
+def pad_data(data, padding):
+    pad = [[padding[i], padding[i+3]] for i in range(3)]
     if len(data.shape) == 3:
         return numpy.lib.pad(data, pad, 'constant', constant_values=0)
     elif len(data.shape) == 4:
