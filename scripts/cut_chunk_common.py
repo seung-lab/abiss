@@ -39,15 +39,15 @@ def pad_data(data, boundary_flags):
     else:
         raise RuntimeError("encountered array of dimension " + str(len(data.shape)))
 
-def cut_data(data, start_coord, end_coord, boundary_flags):
+def cut_data(data, start_coord, end_coord, padding):
     bb = tuple(slice(start_coord[i], end_coord[i]) for i in range(3))
     if data.shape[3] == 1:
         if data.dtype == 'float32':
-            return pad_data(numpy.stack([numpy.squeeze(data[bb])]*3, axis=-1), boundary_flags)
+            return pad_data(numpy.stack([numpy.squeeze(data[bb])]*3, axis=-1), padding)
         else:
-            return pad_data(data[bb], boundary_flags)
+            return pad_data(data[bb], padding)
     elif data.shape[3] == 3:
-        return pad_data(data[bb+(slice(0,3),)], boundary_flags)
+        return pad_data(data[bb+(slice(0,3),)], padding)
     elif data.shape[3] == 4: #0-2 affinity, 3 myelin
         global_param = cu.read_inputs(os.environ['PARAM_JSON'])
         th = global_param.get('MYELIN_THRESHOLD', 0.3)
@@ -60,7 +60,7 @@ def cut_data(data, start_coord, end_coord, boundary_flags):
             tmp = affinity[:,:,:,i]
             tmp[mask] = 0
             #affinity[:,:,:,i] = numpy.multiply(affinity[:,:,:,i]*(1-myelin))
-        return pad_data(affinity, boundary_flags)
+        return pad_data(affinity, padding)
 
     else:
         raise RuntimeError("encountered array of dimension " + str(len(data.shape)))
