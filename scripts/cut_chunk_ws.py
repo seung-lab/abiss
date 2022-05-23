@@ -2,7 +2,7 @@ import sys
 from cloudvolume import CloudVolume
 import chunk_utils as cu
 from cut_chunk_common import load_data, cut_data, save_raw_data
-from augment_affinity import warp_z, adjust_affinitymap
+from augment_affinity import warp_z, adjust_affinitymap, mask_affinity_with_semantic_labels
 import os
 
 def write_metadata(fn, size, boundaries, offset):
@@ -26,6 +26,10 @@ offset = param["offset"]
 
 aff = load_data(global_param['AFF_PATH'],mip=global_param['AFF_RESOLUTION'],fill_missing=False)
 aff_cutout = adjust_affinitymap(aff, aff_bbox, boundary_flags, 1, 1)
+
+if "SEM_PATH" in global_param and global_param.get("SEMANTIC_WS", False):
+    sem = load_data(global_param['SEM_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=False)
+    aff_cutout = mask_affinity_with_semantic_labels(aff_cutout, sem, bbox, boundary_flags, 1, 1)
 
 if 'ADJUSTED_AFF_PATH' in global_param:
     vol = CloudVolume(global_param['ADJUSTED_AFF_PATH'], mip=global_param['AFF_RESOLUTION'], cdn_cache=False)

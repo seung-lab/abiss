@@ -114,4 +114,21 @@ def adjust_affinitymap(aff, bbox, boundary_flags, padding_before, padding_after)
         end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*padding_after for i in range(3)]
         return fold_aff(cut_data(aff, start_coord, end_coord, boundary_flags))
 
+def mask_affinity_with_semantic_labels(aff_cutout, sem, bbox, boundary_flags, padding_before, padding_after):
+    start_coord = [bbox[i]-(1-boundary_flags[i])*(1+padding_before) for i in range(3)]
+    end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*padding_after for i in range(3)]
+    sem_cutout = numpy.squeeze(cut_data(sem, start_coord, end_coord,
+                                        [boundary_flags[i]*(1+padding_before) for i in range(3)]
+                                        + [boundary_flags[i+3]*padding_after for i in range(3)]))
+    sem_shape = sem_cutout.shape
+    sem_aligned = sem_cutout[1:, 1:, 1:]
+    offsets = [[1,0,0], [0,1,0], [0,0,1]]
+    for i in range(3):
+        aff_i = aff_cutout[:,:,:,i]
+        sem_offset = sem_cutout[(1-offsets[i][0]):sem_shape[0]-offsets[i][0],
+                                (1-offsets[i][1]):sem_shape[1]-offsets[i][1],
+                                (1-offsets[i][2]):sem_shape[2]-offsets[i][2]]
+        #aff_i[numpy.logical_and(sem_aligned > 0, sem_offset == sem_aligned)] = 1.0
+        aff_i[sem_offset != sem_aligned] = 0
 
+    return aff_cutout
