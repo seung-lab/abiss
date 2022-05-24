@@ -93,11 +93,11 @@ get_region_graph(
 
 	region_graph<ID,F> rg;
 	rg.reserve(edges.size());
-  for (const uint64_t& edge : edges) {
-    uint64_t v = edges[e];
-		ID e1 = edge & mask;
-		ID e2 = edge >> shift;
-    rg.emplace_back(v, e1, e2);
+  for (const auto& p : edges) {
+    uint64_t val = p.first;
+		ID e1 = p.second & mask;
+		ID e2 = p.second >> shift;
+    rg.emplace_back(val, e1, e2);
   }
 
 	end = clock();
