@@ -89,8 +89,10 @@ get_region_graph(
 	clock_t end = clock();
 	std::cout << "Image scan (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
-	clock_t begin = clock();
+	begin = clock();
 
+	region_graph<ID,F> rg;
+	rg.reserve(edges.size());
   for (const auto& e : edges) {
     auto v = edges[e];
 		ID e1 = edge & mask;
@@ -98,7 +100,7 @@ get_region_graph(
     rg.emplace_back(v, e1, e2);
   }
 
-	clock_t end = clock();
+	end = clock();
 	std::cout << "Build region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
 	begin = clock();
