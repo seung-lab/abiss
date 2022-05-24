@@ -55,7 +55,7 @@ get_region_graph(
 						: (seg[loc-1] | (seg[loc] << shift));
 
 					F& curr = edges[edge];
-          curr = std::max(curr, aff[(loc-1) + sxyz * 0]);
+          curr = std::max(curr, aff[(loc-1) + sxy * sz * 0]);
 				}
 				if ( 
 					y > boundary_flags[1]
@@ -68,7 +68,7 @@ get_region_graph(
 						: (seg[loc-sx] | (seg[loc] << shift));
 
 					F& curr = edges[edge];
-          curr = std::max(curr, aff[(loc-sx) + sxyz * 1]);
+          curr = std::max(curr, aff[(loc-sx) + sxy * sz * 1]);
 				}
 				if ( 
 					z > boundary_flags[2]
@@ -81,7 +81,7 @@ get_region_graph(
 						: (seg[loc-sxy] | (seg[loc] << shift));
 
 					F& curr = edges[edge];
-          curr = std::max(curr, aff[(loc-sxy) + sxyz * 2]);
+          curr = std::max(curr, aff[(loc-sxy) + sxy * sz * 2]);
 				}
 			}
 		}
