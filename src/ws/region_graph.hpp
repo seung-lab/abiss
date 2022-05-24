@@ -94,9 +94,9 @@ get_region_graph(
 	region_graph<ID,F> rg;
 	rg.reserve(edges.size());
   for (const auto& p : edges) {
-    uint64_t val = p.first;
-		ID e1 = p.second & mask;
-		ID e2 = p.second >> shift;
+    uint64_t val = p.second;
+		ID e1 = p.first & mask;
+		ID e2 = p.first >> shift;
     rg.emplace_back(val, e1, e2);
   }
 
