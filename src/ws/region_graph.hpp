@@ -8,26 +8,6 @@
 #include <cmath>
 #include <ctime>
 
-template <typename T>
-std::vector<T> apply_permutation(
-  const std::vector<T>& vec,
-  const std::vector<std::size_t>& p
-) {
-	const std::size_t N = vec.size();
-  std::vector<T> sorted_vec(N);
-  for (std::size_t i = 0; i < N; i++) {
-  	sorted_vec[p[i]] = vec[i];
-  }
-  return sorted_vec;
-}
-
-template <typename F>
-struct Edge {
-	uint64_t edge;
-	F value;
-	Edge(uint64_t e, F v) : edge(e), value(v) {}; 
-};
-
 template< typename ID, typename F, typename L>
 inline region_graph<ID,F>
 get_region_graph(
@@ -49,15 +29,15 @@ get_region_graph(
 	ID* seg = seg_ptr->data();
 	affinity_t* aff = aff_ptr->data();
 
-	std::vector<Edge<affinity_t>> edges;
-	edges.reserve(voxels);
-
 	// save edges as a uint64 like min(e1,e2)|max(e1,e2)
 	// this shift and mask are needed to encoding and decoding
 	const uint64_t shift = 8 * static_cast<uint64_t>(std::ceil(std::log2(max_segid)));
-	const uint64_t mask = ~(std::numeric_limits<uint64_t>::max() >> shift << shift);
+	const uint64_t mask = ~(std::numeric_limits<uint64_t>::max() >> shift << shift);    
 
-	clock_t begin = clock();
+  MapContainer<ID, F> edges;
+  edges.reserve(voxels);
+
+  clock_t begin = clock();
 
 	for (std::ptrdiff_t z = 1; z < sz - 1; z++) {
 		for (std::ptrdiff_t y = 1; y < sy - 1; y++) {
@@ -74,7 +54,8 @@ get_region_graph(
 						? (seg[loc] | (seg[loc-1] << shift))
 						: (seg[loc-1] | (seg[loc] << shift));
 
-					edges.emplace_back(edge, aff[(loc-1) + sxy * sz * 0]);
+					F& curr = edges[edge];
+          curr = std::max(curr, aff[(loc-1) + sxyz * 0]);
 				}
 				if ( 
 					y > boundary_flags[1]
@@ -86,7 +67,8 @@ get_region_graph(
 						? (seg[loc] | (seg[loc-sx] << shift))
 						: (seg[loc-sx] | (seg[loc] << shift));
 
-					edges.emplace_back(edge, aff[(loc-sx) + sxy * sz * 1]);
+					F& curr = edges[edge];
+          curr = std::max(curr, aff[(loc-sx) + sxyz * 1]);
 				}
 				if ( 
 					z > boundary_flags[2]
@@ -98,7 +80,8 @@ get_region_graph(
 						? (seg[loc] | (seg[loc-sxy] << shift))
 						: (seg[loc-sxy] | (seg[loc] << shift));
 
-					edges.emplace_back(edge, aff[(loc-sxy) + sxy * sz * 2]);
+					F& curr = edges[edge];
+          curr = std::max(curr, aff[(loc-sxy) + sxyz * 2]);
 				}
 			}
 		}
@@ -106,61 +89,23 @@ get_region_graph(
 	clock_t end = clock();
 	std::cout << "Image scan (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
-	region_graph<ID,F> rg;
-	if (edges.size() == 0) {
-		std::cout << "Region graph size: " << rg.size() << std::endl;
-		return rg;
-	}
+	clock_t begin = clock();
 
-	begin = clock();
-	std::vector<uint64_t> renumber(edges.size() + 1);
-	uint64_t label = 1;
-	for (std::size_t i = 0; i < edges.size(); i++) {
-		uint64_t edge = edges[i].edge;
-		if (renumber[edge] == 0) {
-			renumber[label] = edge;
-			label++;
-		}
-		else {
-			edges[i].edge = renumber[label];
-		}
-	}
-	end = clock();
-	std::cout << "Renumber (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
-
-	begin = clock();
-	std::sort(std::begin(edges), std::end(edges), [](auto & a, auto & b) {
-		return a.value > b.value;
-	});
-  end = clock();
-  std::cout << "Sort vectors (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
-
-  begin = clock();
-
-  std::vector<bool> seen(edges.size());
-  for (std::ptrdiff_t i = 0; i < edges.size(); i++) {
-  	uint64_t edge = edges[i].edge;
-  	if (seen[edge]) {
-  		continue;
-  	}
-
-  	seen[edge] = true;
-  	edge = renumber[edge];
+  for (const auto& e : edges) {
+    auto v = edges[e];
 		ID e1 = edge & mask;
 		ID e2 = edge >> shift;
-		rg.emplace_back(edges[i].value, e1, e2);
+    rg.emplace_back(v, e1, e2);
   }
 
+	clock_t end = clock();
+	std::cout << "Build region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
+
+	begin = clock();
+	std::stable_sort(std::begin(rg), std::end(rg), [](auto & a, auto & b) { return std::get<0>(a) > std::get<0>(b); });
 	end = clock();
-  std::cout << "Create region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
+	std::cout << "Sort region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
 
-	std::cout << "Region graph size: " << rg.size() << std::endl;
-
-	// begin = clock();
-	// std::stable_sort(std::begin(rg), std::end(rg), [](auto & a, auto & b) { return std::get<0>(a) > std::get<0>(b); });
-	// end = clock();
-	// std::cout << "Sort region graph (sec): " << double(end - begin) / CLOCKS_PER_SEC << std::endl;
-
-	// std::cout << "Sorted" << std::endl;
+	std::cout << "Sorted" << std::endl;
 	return rg;
 }
