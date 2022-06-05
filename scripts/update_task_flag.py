@@ -13,4 +13,4 @@ if "REDIS_SERVER" in os.environ:
 else:
     cf = CloudFiles(os.environ["SCRATCH_PATH"])
     if STATE == "DONE":
-        cf.put(f'done/{TASK_KEY}.txt', "")
+        cf.put(f'done/{TASK_KEY}.txt', b"")
