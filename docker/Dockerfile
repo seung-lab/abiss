@@ -32,7 +32,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
         git \
         libtbb-dev \
     && mkdir -p /opt \
-    && curl -o ~/miniconda.sh ${MINICONDA_URL} \
+    && curl -L -o ~/miniconda.sh ${MINICONDA_URL} \
     && chmod +x ~/miniconda.sh \
     && ~/miniconda.sh -b -p ${MINICONDA_PATH} \
     && rm ~/miniconda.sh \
