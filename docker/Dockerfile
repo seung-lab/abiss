@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:22.04
 MAINTAINER ranlu
 
 ARG SEG_HOME=/workspace/seg
@@ -18,17 +18,9 @@ COPY LICENSE ${SEG_HOME}
 RUN savedAptMark="$(apt-mark showmanual)" \
     && apt-get update -y \
     && apt-get install -y --no-install-recommends \
-        curl \
-        apt-transport-https \
-        software-properties-common \
-    && add-apt-repository ppa:ubuntu-toolchain-r/test \
-    && apt-get update -y \
-    && apt-get install -y --no-install-recommends \
-        build-essential \
         ca-certificates \
-        gnupg-agent \
-        gnupg \
-        dirmngr \
+        curl \
+        build-essential \
         cmake \
         pkg-config \
         zstd \
