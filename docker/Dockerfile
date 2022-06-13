@@ -6,7 +6,7 @@ ENV SEG_HOME ${SEG_HOME}
 ARG SEG_USER=seg
 ENV SEG_USER ${SEG_USER}
 ARG MINICONDA_PATH=/opt/conda
-ARG MINICONDA_URL=https://repo.anaconda.com/miniconda/Miniconda3-py39_4.11.0-Linux-x86_64.sh
+ARG MINICONDA_URL=https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-Linux-x86_64.sh
 ENV PATH ${MINICONDA_PATH}/bin:${PATH}
 
 WORKDIR ${SEG_HOME}
