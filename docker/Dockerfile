@@ -50,7 +50,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && cd ${SEG_HOME} \
     && git clone https://github.com/abseil/abseil-cpp.git \
     && cd abseil-cpp && mkdir build && cd build \
-    && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=${SEG_HOME}/abseil -DABSL_BUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
+    && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=${SEG_HOME}/abseil -DABSL_BUILD_TESTING=OFF -DABSL_PROPAGATE_CXX_STD=ON -DCMAKE_BUILD_TYPE=Release \
     && cmake --build . --target install -v \
     && cd ${SEG_HOME} && rm -rf abseil-cpp \
     && echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \
