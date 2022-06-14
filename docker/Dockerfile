@@ -50,7 +50,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && cd ${SEG_HOME} \
     && git clone https://github.com/abseil/abseil-cpp.git \
     && cd abseil-cpp && mkdir build && cd build \
-    && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DABSL_BUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
+    && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=${SEG_HOME}/abseil -DABSL_BUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
     && cmake --build . --target install -v \
     && cd ${SEG_HOME} && rm -rf abseil-cpp \
     && echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \
@@ -60,8 +60,9 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     #&& cmake .. -DEXTRACT_SIZE=ON -DDOUBLE=ON \
     #&& cmake .. -DEXTRACT_SIZE=ON -DEXTRACT_BBOX=ON \
     #&& cmake .. -DEXTRACT_SIZE=ON -DSEM_EDGE=ON\
-    && cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXTRACT_SIZE=ON \
+    && cmake .. -G Ninja -DCMAKE_PREFIX_PATH=${SEG_HOME}/abseil -DCMAKE_BUILD_TYPE=Release -DEXTRACT_SIZE=ON \
     && cmake --build . -v \
+    && rm -rf ${SEG_HOME}/abseil \
     && apt-mark auto '.*' > /dev/null \
     && apt-mark manual $savedAptMark zstd parallel coreutils libtbb2 libjemalloc2 \
     && find ${SEG_HOME}/build -type f -executable -exec ldd '{}' ';' \
