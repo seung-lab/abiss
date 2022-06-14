@@ -51,7 +51,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && git clone https://github.com/abseil/abseil-cpp.git \
     && cd abseil-cpp && mkdir build && cd build \
     && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DABSL_BUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build . --target install \
+    && cmake --build . --target install -v \
     && cd ${SEG_HOME} && rm -rf abseil-cpp \
     && echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \
     && mkdir -p ${SEG_HOME}/build \
@@ -61,7 +61,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     #&& cmake .. -DEXTRACT_SIZE=ON -DEXTRACT_BBOX=ON \
     #&& cmake .. -DEXTRACT_SIZE=ON -DSEM_EDGE=ON\
     && cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXTRACT_SIZE=ON \
-    && cmake --build . \
+    && cmake --build . -v \
     && apt-mark auto '.*' > /dev/null \
     && apt-mark manual $savedAptMark zstd parallel coreutils libtbb2 libjemalloc2 \
     && find ${SEG_HOME}/build -type f -executable -exec ldd '{}' ';' \
