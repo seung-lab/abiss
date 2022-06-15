@@ -65,9 +65,6 @@ try rm residual_rg*.data
 #try $BIN_PATH/split_remap chunk_offset.txt $output
 #try $BIN_PATH/assort $output $META
 #
-#try mv meta.data meta_"$output".data
-#try mv mst.data mst_"$output".data
-try mv remap.data remap_"$output".data
 try cp sem_cuts.data vetoed_edges_"$output".data
 try cat extra_remaps.data >> ongoing_"$output".data
 
@@ -82,7 +79,6 @@ try mv reduced_ongoing_semantic_labels_"$output".data ongoing_semantic_labels_"$
 try mv reduced_ongoing_seg_size_"$output".data ongoing_seg_size_"$output".data
 
 #try mv residual_rg.data residual_rg_"$output".data
-#try mv final_rg.data final_rg_"$output".data
 try mv done_segments.data info_"$output"_extra.data
 try mv done_sem.data semantic_labels_"$output".data
 try mv done_size.data seg_size_"$output".data
@@ -90,10 +86,6 @@ try mv sem_cuts.data sem_rejected_edges_"$output".log
 #try mv ongoing_segments.data ongoing_supervoxel_counts_"$output".data
 #try mv rejected_edges.log rejected_edges_"$output".log
 #
-#try $COMPRESS_CMD mst_"${output}".data
-try $COMPRESS_CMD remap_"${output}".data
-#try $COMPRESS_CMD edges_"${output}".data
-#try $COMPRESS_CMD final_rg_"${output}".data
 #try cat done_remap.txt | $PARALLEL_CMD -X $COMPRESSST_CMD
 #
 #if [ -n "$META" ]; then
@@ -105,11 +97,6 @@ retry 10 $UPLOAD_CMD semantic_labels_"${output}".data $FILE_PATH/info/semantic_l
 retry 10 $UPLOAD_CMD seg_size_"${output}".data $FILE_PATH/info/seg_size_"${output}"_extra.data
 retry 10 $UPLOAD_CMD sem_rejected_edges_"${output}".log $FILE_PATH/info/sem_rejected_edges_"${output}".log
 #try $UPLOAD_CMD rejected_edges_"${output}".log $FILE_PATH/info/rejected_edges_"${output}".log
-#try $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
-#try $UPLOAD_CMD mst_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/chunked_mst/mst_"${output}".data."${COMPRESSED_EXT}"
-retry 10 $UPLOAD_CMD remap_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap2/remap_"${output}".data."${COMPRESSED_EXT}"
-#try $UPLOAD_CMD edges_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/edges_"${output}".data."${COMPRESSED_EXT}"
-#try $UPLOAD_CMD final_rg_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/region_graph/final_rg_"${output}".data."${COMPRESSED_EXT}"
 #try cat done_remap.txt | $PARALLEL_CMD -X $UPLOAD_ST_CMD {}.$COMPRESSED_EXT $FILE_PATH/remap/
 try md5sum *_"${output}".data > "${output}".data.md5sum
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
