@@ -25,7 +25,6 @@ retry 10 $UPLOAD_CMD done_post_"${output}".data $FILE_PATH/remap/done_post_"${ou
 try md5sum *_"${output}".data > "${output}".data.md5sum
 retry 10 $COMPRESS_CMD ongoing_"${output}".data
 retry 10 $UPLOAD_CMD ongoing_"${output}".data."${COMPRESSED_EXT}" $FILE_PATH/remap/
-retry 10 $UPLOAD_CMD meta_"${output}".data $FILE_PATH/meta/meta_"${output}".data
 retry 10 tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
 retry 10 $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/dend/"${output}".tar."${COMPRESSED_EXT}"
 retry 10 $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/dend/"${output}".data.md5sum
