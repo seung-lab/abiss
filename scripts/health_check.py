@@ -1,7 +1,7 @@
 import psutil
 import sys
 
-cpu_percent = psutil.cpu_percent(5)
+cpu_percent = sum(psutil.cpu_percent(5, percpu=True))
 
 if cpu_percent > 5:
     sys.exit(0)
