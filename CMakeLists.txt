@@ -46,6 +46,11 @@ if(EXTRACT_BBOX)
     add_definitions(-DEXTRACT_BBOX)
 endif(EXTRACT_BBOX)
 
+if(EXTRACT_COM)
+    add_definitions(-DEXTRACT_COM)
+endif(EXTRACT_COM)
+
+
 if(MST_EDGE)
     add_definitions(-DMST_EDGE)
 endif(MST_EDGE)

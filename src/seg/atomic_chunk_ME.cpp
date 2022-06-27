@@ -57,7 +57,9 @@ int main(int argc, char * argv[])
     AffinityExtractorME<seg_t, aff_t, ConstChunkRef<aff_t, 4> > affinity_extractor(aff_chunk);
     ChunkedRGExtractor<seg_t, aff_t, ConstChunkRef<aff_t, 4> > chunked_rg_extractor(aff_chunk);
     BoundaryExtractor<seg_t> boundary_extractor;
+#ifdef EXTRACT_COM
     COMExtractor<seg_t> com_extractor;
+#endif
 
     //traverseSegments(seg_chunk, true, boundary_extractor, affinity_extractor);
 #ifdef EXTRACT_SIZE
@@ -75,7 +77,10 @@ int main(int argc, char * argv[])
         ConstChunkRef<semantic_t, 3> sem_chunk(reinterpret_cast<const semantic_t*>(sem_file.data()), boost::extents[Range(offset[0], offset[0]+dim[0])][Range(offset[1], offset[1]+dim[1])][Range(offset[2], offset[2]+dim[2])], boost::fortran_storage_order());
         std::cout << "mmap sem data" << std::endl;
         SemExtractor<seg_t, semantic_t, ConstChunkRef<semantic_t, 3> > sem_extractor(sem_chunk);
-        traverseSegments<1>(seg_chunk, boundary_extractor, affinity_extractor, sem_extractor, chunked_rg_extractor, com_extractor
+        traverseSegments<1>(seg_chunk, boundary_extractor, affinity_extractor, sem_extractor, chunked_rg_extractor
+#ifdef EXTRACT_COM
+                     ,com_extractor
+#endif
 #ifdef EXTRACT_SIZE
                      ,size_extractor
 #endif
@@ -85,7 +90,10 @@ int main(int argc, char * argv[])
                      );
         sem_extractor.output(map, "ongoing_semantic_labels.data");
     } else {
-        traverseSegments<1>(seg_chunk, boundary_extractor, affinity_extractor, chunked_rg_extractor, com_extractor
+        traverseSegments<1>(seg_chunk, boundary_extractor, affinity_extractor, chunked_rg_extractor
+#ifdef EXTRACT_COM
+                     ,com_extractor
+#endif
 #ifdef EXTRACT_SIZE
                      ,size_extractor
 #endif
@@ -102,7 +110,9 @@ int main(int argc, char * argv[])
     affinity_extractor.output(incomplete_segments, map, "edges_"+chunk_tag+".data", "incomplete_edges_"+chunk_tag+".data");
     chunked_rg_extractor.output(map, chunk_tag, ac_offset);
 
+#ifdef EXTRACT_COM
     chunkedOutput(com_extractor.com(), "chunked_rg/com", chunk_tag, ac_offset);
+#endif
 
 #ifdef EXTRACT_SIZE
     size_extractor.output(map, "ongoing_seg_size.data");
