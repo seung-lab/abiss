@@ -7,8 +7,13 @@ try acquire_cpu_slot
 
 just_in_case rm -rf remap
 just_in_case rm -rf chunked_rg
+just_in_case rm -rf agg_out
+
 try mkdir remap
 try mkdir chunked_rg
+
+try mkdir -p agg_out/{info,scratch}
+
 for d in $META; do
     echo "create $d"
     just_in_case rm -rf $d
@@ -39,16 +44,21 @@ try cat remap.data >> localmap.data
 try taskset -c $cpuid $BIN_PATH/split_remap chunk_offset.txt $output
 try taskset -c $cpuid $BIN_PATH/assort $output $META
 
+try mv done_segments.data agg_out/info/info_"$output".data
+try mv done_sem.data agg_out/info/semantic_labels_"$output".data
+try mv done_size.data agg_out/info/seg_size_"$output".data
+try mv sem_cuts.data agg_out/info/sem_rejected_edges_"$output".log
+try mv rejected_edges.log agg_out/info/size_rejected_edges_"$output".log
+try mv twig_edges.log agg_out/info/twig_edges_"$output".log
+try mv chunked_rg agg_out
+try mv remap agg_out
+
 try mv residual_rg.data residual_rg_"$output".data
-try mv done_segments.data info_"$output".data
 try mv ongoing_segments.data ongoing_supervoxel_counts_"$output".data
-try mv done_sem.data semantic_labels_"$output".data
 try mv ongoing_sem.data ongoing_semantic_labels_"$output".data
-try mv done_size.data seg_size_"$output".data
 try mv ongoing_size.data ongoing_seg_size_"$output".data
-try mv sem_cuts.data sem_rejected_edges_"$output".log
-try mv rejected_edges.log size_rejected_edges_"$output".log
-try mv twig_edges.log twig_edges_"$output".log
+try md5sum *_"${output}".data > agg_out/scratch/"${output}".data.md5sum
+try tar -cvf - *_"${output}".data | $COMPRESS_CMD > agg_out/scratch/"${output}".tar."${COMPRESSED_EXT}"
 
 for d in $META; do
     if [ "$(ls -A $d)"  ]; then
@@ -56,23 +66,12 @@ for d in $META; do
     fi
 done
 
-retry 10 $UPLOAD_CMD info_"${output}".data $FILE_PATH/info/info_"${output}".data
-retry 10 $UPLOAD_CMD semantic_labels_"${output}".data $FILE_PATH/info/semantic_labels_"${output}".data
-retry 10 $UPLOAD_CMD seg_size_"${output}".data $FILE_PATH/info/seg_size_"${output}".data
-retry 10 $UPLOAD_CMD sem_rejected_edges_"${output}".log $FILE_PATH/info/sem_rejected_edges_"${output}".log
-retry 10 $UPLOAD_CMD size_rejected_edges_"${output}".log $FILE_PATH/info/size_rejected_edges_"${output}".log
-retry 10 $UPLOAD_CMD twig_edges_"${output}".log $FILE_PATH/info/twig_edges_"${output}".log
-retry 10 $UPLOAD_CMD remap/done_"${output}".data $FILE_PATH/remap/done_"${output}".data
-retry 10 $UPLOAD_CMD remap/size_"${output}".data $FILE_PATH/remap/size_"${output}".data
-retry 10 $UPLOAD_CMD -r chunked_rg $FILE_PATH/
-
-try md5sum *_"${output}".data > "${output}".data.md5sum
-try tar -cvf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
-retry 10 $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch/"${output}".tar."${COMPRESSED_EXT}"
-retry 10 $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/scratch/"${output}".data.md5sum
+retry 10 $UPLOAD_CMD -r "agg_out/*" $FILE_PATH
 
 try rm -rf chunked_rg
 try rm -rf remap
+try rm -rf agg_out
+
 for d in $META; do
     try rm -rf $d
 done
