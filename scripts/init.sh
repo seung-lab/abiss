@@ -103,7 +103,9 @@ META=""
 export PARAM_JSON=$SECRETS/param
 #export PARAM_JSON="$SCRIPT_PATH"/param.json
 
-try python3 $SCRIPT_PATH/set_env.py $PARAM_JSON > $SECRETS/config.sh
+if [ ! -f "$SECRETS"/config.sh  ]; then
+    try python3 $SCRIPT_PATH/set_env.py $PARAM_JSON > $SECRETS/config.sh
+fi
 
 try source $SECRETS/config.sh
 #try . /root/google-cloud-sdk/path.bash.inc
