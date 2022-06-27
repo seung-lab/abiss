@@ -13,6 +13,7 @@ output=`basename $1 .json`
 #    try touch $d/.nonempty_"$output".txt
 #done
 
+try mkdir -p agg_out/{info,scratch2}
 
 for fn in $(cat filelist.txt)
 do
@@ -45,7 +46,7 @@ try rm *.tmp
 retry 10 $DOWNLOAD_CMD $FILE_PATH/scratch/${output}.tar.${COMPRESSED_EXT} .
 try $COMPRESS_CMD -d ${output}.tar.${COMPRESSED_EXT}
 try tar xvf ${output}.tar
-try rm ${output}.tar
+try rm ${output}.tar.${COMPRESSED_EXT}
 try $DOWNLOAD_ST_CMD $FILE_PATH/scratch/${output}.data.md5sum .
 try md5sum -c --quiet ${output}.data.md5sum
 
@@ -72,11 +73,10 @@ try mv reduced_ongoing_supervoxel_counts_"$output".data ongoing_supervoxel_count
 try mv reduced_ongoing_semantic_labels_"$output".data ongoing_semantic_labels_"$output".data
 try mv reduced_ongoing_seg_size_"$output".data ongoing_seg_size_"$output".data
 
-#try mv residual_rg.data residual_rg_"$output".data
-try mv done_segments.data info_"$output"_extra.data
-try mv done_sem.data semantic_labels_"$output".data
-try mv done_size.data seg_size_"$output".data
-try mv sem_cuts.data sem_rejected_edges_"$output".log
+try mv done_segments.data agg_out/info/info_"$output"_extra.data
+try mv done_sem.data agg_out/info/semantic_labels_"$output".data
+try mv done_size.data agg_out/info/seg_size_"$output".data
+try mv sem_cuts.data agg_out/info/sem_rejected_edges_"$output".log
 #try mv ongoing_segments.data ongoing_supervoxel_counts_"$output".data
 #try mv rejected_edges.log rejected_edges_"$output".log
 #
@@ -86,16 +86,11 @@ try mv sem_cuts.data sem_rejected_edges_"$output".log
 #    try $PARALLEL_CMD $UPLOAD_CMD -r {} $FILE_PATH/ ::: $META
 #fi
 #
-retry 10 $UPLOAD_CMD info_"${output}"_extra.data $FILE_PATH/info/info_"${output}"_extra.data
-retry 10 $UPLOAD_CMD semantic_labels_"${output}".data $FILE_PATH/info/semantic_labels_"${output}"_extra.data
-retry 10 $UPLOAD_CMD seg_size_"${output}".data $FILE_PATH/info/seg_size_"${output}"_extra.data
-retry 10 $UPLOAD_CMD sem_rejected_edges_"${output}".log $FILE_PATH/info/sem_rejected_edges_"${output}".log
 #try $UPLOAD_CMD rejected_edges_"${output}".log $FILE_PATH/info/rejected_edges_"${output}".log
 #try cat done_remap.txt | $PARALLEL_CMD -X $UPLOAD_ST_CMD {}.$COMPRESSED_EXT $FILE_PATH/remap/
-try md5sum *_"${output}".data > "${output}".data.md5sum
-try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
-retry 10 $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/scratch2/"${output}".data.md5sum
-retry 10 $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch2/"${output}".tar."${COMPRESSED_EXT}"
+try md5sum *_"${output}".data > agg_out/scratch2/"${output}".data.md5sum
+try tar -cf - *_"${output}".data | $COMPRESS_CMD > agg_out/scratch2/"${output}".tar."${COMPRESSED_EXT}"
+retry 10 $UPLOAD_CMD -r "agg_out/*" $FILE_PATH
 #try rm *.data
 #try rm *.zst
 #
@@ -108,3 +103,4 @@ retry 10 $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch2/"${
 #for d in $META; do
 #    try rm -rf $d
 #done
+try rm -rf agg_out

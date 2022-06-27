@@ -5,6 +5,7 @@ INIT_PATH="$(dirname "$0")"
 output=`basename $1 .json`
 
 just_in_case rm -rf remap
+just_in_case rm -rf agg_out
 
 if [ "$OVERLAP" = "2"  ]; then
     SCRATCH="scratch2"
@@ -14,6 +15,9 @@ fi
 
 try mkdir remap
 try touch remap/.nonempty_"$output".txt
+
+try mkdir -p agg_out/{info,$SCRATCH}
+
 for d in $META; do
     just_in_case rm -rf $d
     try mkdir $d
@@ -79,38 +83,28 @@ if [ "$OVERLAP" = "2" ]; then
     done
 fi
 
+try mv done_segments.data agg_out/info/info_"$output".data
+try mv done_sem.data agg_out/info/semantic_labels_"$output".data
+try mv done_size.data agg_out/info/seg_size_"$output".data
+try mv sem_cuts.data agg_out/info/sem_rejected_edges_"$output".log
+try mv rejected_edges.log agg_out/info/size_rejected_edges_"$output".log
+try mv twig_edges.log agg_out/info/twig_edges_"$output".log
+try mv remap agg_out
+
 try mv residual_rg.data residual_rg_"$output".data
-try mv done_segments.data info_"$output".data
 try mv ongoing_segments.data ongoing_supervoxel_counts_"$output".data
-try mv done_sem.data semantic_labels_"$output".data
 try mv ongoing_sem.data ongoing_semantic_labels_"$output".data
-try mv done_size.data seg_size_"$output".data
 try mv ongoing_size.data ongoing_seg_size_"$output".data
-try mv rejected_edges.log size_rejected_edges_"$output".log
-try mv sem_cuts.data sem_rejected_edges_"$output".log
-try mv twig_edges.log twig_edges_"$output".log
 
 if [ -n "$META" ]; then
     retry 10 $PARALLEL_CMD $UPLOAD_CMD -r {} $FILE_PATH/ ::: $META
 fi
 
-retry 10 $UPLOAD_CMD info_"${output}".data $FILE_PATH/info/info_"${output}".data
-retry 10 $UPLOAD_CMD semantic_labels_"${output}".data $FILE_PATH/info/semantic_labels_"${output}".data
-retry 10 $UPLOAD_CMD seg_size_"${output}".data $FILE_PATH/info/seg_size_"${output}".data
-retry 10 $UPLOAD_CMD size_rejected_edges_"${output}".log $FILE_PATH/info/size_rejected_edges_"${output}".log
-retry 10 $UPLOAD_CMD sem_rejected_edges_"${output}".log $FILE_PATH/info/sem_rejected_edges_"${output}".log
-retry 10 $UPLOAD_CMD twig_edges_"${output}".log $FILE_PATH/info/twig_edges_"${output}".log
-retry 10 $UPLOAD_CMD remap/done_"${output}".data $FILE_PATH/remap/done_"${output}".data
-retry 10 $UPLOAD_CMD remap/size_"${output}".data $FILE_PATH/remap/size_"${output}".data
-try md5sum *_"${output}".data > "${output}".data.md5sum
-try tar -cf - *_"${output}".data | $COMPRESS_CMD > "${output}".tar."${COMPRESSED_EXT}"
-if [ "$OVERLAP" = "2"  ]; then
-    retry 10 $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch2/"${output}".tar."${COMPRESSED_EXT}"
-    retry 10 $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/scratch2/"${output}".data.md5sum
-else
-    retry 10 $UPLOAD_CMD "${output}".tar."${COMPRESSED_EXT}" $FILE_PATH/scratch/"${output}".tar."${COMPRESSED_EXT}"
-    retry 10 $UPLOAD_CMD "${output}".data.md5sum $FILE_PATH/scratch/"${output}".data.md5sum
-fi
+try md5sum *_"${output}".data > agg_out/"${SCRATCH}"/"${output}".data.md5sum
+
+try tar -cf - *_"${output}".data | $COMPRESS_CMD > agg_out/"${SCRATCH}"/"${output}".tar."${COMPRESSED_EXT}"
+
+retry 10 $UPLOAD_CMD -r "agg_out/*" $FILE_PATH
 
 for fn in $(cat filelist.txt)
 do
@@ -118,6 +112,8 @@ do
 done
 
 try rm -rf remap
+try rm -rf agg_out
+
 for d in $META; do
     try rm -rf $d
 done
