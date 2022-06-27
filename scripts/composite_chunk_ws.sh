@@ -7,13 +7,8 @@ output=`basename $1 .json`
 just_in_case rm -rf remap
 try mkdir remap
 
-try python3 $SCRIPT_PATH/generate_children.py $1|tee filelist.txt
 
-try cat filelist.txt|$PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/dend/{}.tar.${COMPRESSED_EXT} - | $COMPRESS_CMD -d -c - | tar xf -"
-
-try cat filelist.txt|$PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/dend/{}.data.md5sum ."
-
-try cat filelist.txt|$PARALLEL_CMD --halt 2 "md5sum -c --quiet {}.data.md5sum"
+try download_children $1 $FILE_PATH/dend
 
 try python3 $SCRIPT_PATH/merge_chunks_ws.py $1
 #try $BIN_PATH/ws2 param.txt $output >& debug_"${output}".log

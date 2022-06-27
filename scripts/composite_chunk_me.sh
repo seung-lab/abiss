@@ -5,6 +5,13 @@ INIT_PATH="$(dirname "$0")"
 output=`basename $1 .json`
 
 just_in_case rm -rf remap
+
+if [ "$OVERLAP" = "2"  ]; then
+    SCRATCH="scratch2"
+else
+    SCRATCH="scratch"
+fi
+
 try mkdir remap
 try touch remap/.nonempty_"$output".txt
 for d in $META; do
@@ -13,28 +20,12 @@ for d in $META; do
     try touch $d/.nonempty_"$output".txt
 done
 
-try python3 $SCRIPT_PATH/generate_children.py $1|tee filelist.txt
-
 for fn in $(cat filelist.txt)
 do
     just_in_case rm -rf $fn
 done
 
-if [ "$OVERLAP" = "2" ]; then
-    try cat filelist.txt | $PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/scratch2/{}.tar.${COMPRESSED_EXT} ."
-    try cat filelist.txt | $PARALLEL_CMD --retries 10 "$COMPRESS_CMD -d {}.tar.${COMPRESSED_EXT}"
-    try cat filelist.txt | $PARALLEL_CMD --retries 10 "tar xvf {}.tar"
-    try cat filelist.txt | $PARALLEL_CMD --retries 10 "rm {}.tar"
-    try cat filelist.txt | $PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/scratch2/{}.data.md5sum ."
-else
-    try cat filelist.txt | $PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/scratch/{}.tar.${COMPRESSED_EXT} ."
-    try cat filelist.txt | $PARALLEL_CMD --retries 10 "$COMPRESS_CMD -d {}.tar.${COMPRESSED_EXT}"
-    try cat filelist.txt | $PARALLEL_CMD --retries 10 "tar xvf {}.tar"
-    try cat filelist.txt | $PARALLEL_CMD --retries 10 "rm {}.tar"
-    try cat filelist.txt | $PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/scratch/{}.data.md5sum ."
-fi
-
-try cat filelist.txt | $PARALLEL_CMD --halt 2 "md5sum -c --quiet {}.data.md5sum"
+try download_children $1 $FILE_PATH/$SCRATCH
 
 try python3 $SCRIPT_PATH/merge_chunks_me.py $1 $META
 try mv ongoing.data localmap.data

@@ -13,19 +13,13 @@ output=`basename $1 .json`
 #    try touch $d/.nonempty_"$output".txt
 #done
 
-try python3 $SCRIPT_PATH/generate_neighbours.py $1|tee filelist.txt
 
 for fn in $(cat filelist.txt)
 do
     just_in_case rm -rf $fn
 done
 
-try cat filelist.txt | $PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/scratch/{}.tar.${COMPRESSED_EXT} ."
-try cat filelist.txt | $PARALLEL_CMD --retries 10 "$COMPRESS_CMD -d {}.tar.${COMPRESSED_EXT}"
-try cat filelist.txt | $PARALLEL_CMD --retries 10 "tar xvf {}.tar"
-try cat filelist.txt | $PARALLEL_CMD --retries 10 "rm {}.tar"
-try cat filelist.txt | $PARALLEL_CMD --retries 10 "$DOWNLOAD_ST_CMD $FILE_PATH/scratch/{}.data.md5sum ."
-try cat filelist.txt | $PARALLEL_CMD --halt 2 "md5sum -c --quiet {}.data.md5sum"
+try download_neighbors $1 $FILE_PATH/scratch
 
 try python3 $SCRIPT_PATH/merge_chunks_overlap.py $1 $META
 try mv ongoing.data localmap.data

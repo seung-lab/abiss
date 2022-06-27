@@ -31,6 +31,30 @@ timeit() {
     echo "${STATSD_PREFIX}.segmentation.${STAGE}.${task_tag}.duration:${duration}|ms" > /dev/udp/${STATSD_HOST:-"localhost"}/${STATSD_PORT:-"9125"}
 }
 
+download_children() {
+    local -r json_input="$1"
+    local -r fpath="$2"
+    try python3 $SCRIPT_PATH/generate_children.py $json_input|tee filelist.txt
+    try download_intermediary_files filelist.txt $fpath
+    try rm filelist.txt
+}
+
+download_neighbors() {
+    local -r json_input="$1"
+    local -r fpath="$2"
+    try python3 $SCRIPT_PATH/generate_neighbours.py $json_input|tee filelist.txt
+    try download_intermediary_files filelist.txt $fpath
+    try rm filelist.txt
+}
+
+download_intermediary_files() {
+    local -r flist="$1"
+    local -r fpath="$2"
+    try awk -v fpath=$fpath -v ext="tar.${COMPRESSED_EXT}" '{printf "%s/%s.%s\n%s/%s.data.md5sum\n", fpath, $0, ext, fpath, $0}' $flist | $DOWNLOAD_CMD -I .
+    try cat $flist | $PARALLEL_CMD --retries 10 "tar axvf {}.tar.${COMPRESSED_EXT}"
+    try rm *.tar.${COMPRESSED_EXT}
+    try cat $flist | $PARALLEL_CMD --halt 2 "md5sum -c --quiet {}.data.md5sum"
+}
 
 lock_prefix="${AIRFLOW_TMP_DIR}/.cpulock"
 ncpus=$(python3 -c "import os; print(len(os.sched_getaffinity(0)))")
