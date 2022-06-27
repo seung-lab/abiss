@@ -117,7 +117,3 @@ try rm -rf agg_out
 for d in $META; do
     try rm -rf $d
 done
-
-rm *.data
-rm *.tmp
-rm *.zst
