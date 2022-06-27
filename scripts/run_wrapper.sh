@@ -7,7 +7,7 @@ CHUNK=$3
 COORD=(${CHUNK//_/ })
 STEPS=(${OP//_/ })
 WORK_PATH="$(realpath "$1")"
-TASK_KEY="${STAGE}_${OP}_${CHUNK}"
+TASK_KEY="${STATSD_PREFIX}_${STAGE}_${OP}_${CHUNK}"
 
 set +e
 try_to_skip python3 ${SCRIPT_PATH}/check_task_flag.py ${TASK_KEY}

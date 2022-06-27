@@ -2,7 +2,7 @@
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh
 
-TASK_KEY="batch_${2}_${3}_${1}"
+TASK_KEY="${STATSD_PREFIX}_batch_${2}_${3}_${1}"
 
 set +e
 try_to_skip python3 ${SCRIPT_PATH}/check_task_flag.py ${TASK_KEY}
