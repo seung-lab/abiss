@@ -42,8 +42,7 @@ try rm incomplete_*.data
 try rm *.tmp
 
 retry 10 $DOWNLOAD_CMD $FILE_PATH/scratch/${output}.tar.${COMPRESSED_EXT} .
-try $COMPRESS_CMD -d ${output}.tar.${COMPRESSED_EXT}
-try tar xvf ${output}.tar
+try tar axvf ${output}.tar.${COMPRESSED_EXT}
 try rm ${output}.tar.${COMPRESSED_EXT}
 try $DOWNLOAD_ST_CMD $FILE_PATH/scratch/${output}.data.md5sum .
 try md5sum -c --quiet ${output}.data.md5sum
