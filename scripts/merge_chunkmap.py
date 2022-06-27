@@ -1,16 +1,22 @@
 import sys
 import os
 import chunk_utils as cu
+from cloudfiles import CloudFiles
+from zstandard import decompress
+
+cf = CloudFiles(os.environ["CHUNKMAP_INPUT"])
 
 mip, indices, volume, faces, edges, vertices = cu.generate_siblings(sys.argv[1])
+fn = f"chunkmap_{cu.chunk_tag(mip, indices)}.data.zst"
+chunkmap_data = decompress(cf.get(fn))
+with open("localmap.data", "wb") as binary_file:
+    binary_file.write(chunkmap_data)
+
 siblings = []
-for offset in volume+faces+edges+vertices:
+for offset in faces+edges+vertices:
     c = [indices[i]+offset[i] for i in range(3)]
-    siblings.append(c)
+    fn = f"chunkmap_{cu.chunk_tag(mip, c)}.data.zst"
+    chunkmap_data += decompress(cf.get(fn))
 
-slist = [cu.chunk_tag(mip, s) for s in siblings]
-
-fnList = ["chunkmap_{}.data".format(s) for s in slist]
-cu.merge_files("chunkmap.data", fnList)
-filesize = os.path.getsize("chunkmap.data")
-print("chunkmap size:", filesize//16)
+with open("chunkmap.data", "wb") as binary_file:
+    binary_file.write(chunkmap_data)
