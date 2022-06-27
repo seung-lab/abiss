@@ -38,9 +38,7 @@ done
 try $BIN_PATH/agg_extra $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
 
 try rm boundary_*.data
-try rm meta_*.data
 try rm incomplete_*.data
-try rm info_*.data
 try rm *.tmp
 
 retry 10 $DOWNLOAD_CMD $FILE_PATH/scratch/${output}.tar.${COMPRESSED_EXT} .
