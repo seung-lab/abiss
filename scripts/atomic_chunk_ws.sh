@@ -12,7 +12,9 @@ try touch ongoing_"${output}".data
 try $COMPRESS_CMD seg_"${output}".data
 try mv seg_"${output}".data."${COMPRESSED_EXT}" ws_out/seg/
 try mv remap ws_out/
-try md5sum *_"${output}".data > ws_out/dend/"${output}".data.md5sum
+if [ "$PARANOID" = "1" ]; then
+    try md5sum *_"${output}".data > ws_out/dend/"${output}".data.md5sum
+fi
 try tar -cvf - *_"${output}".data | $COMPRESS_CMD > ws_out/dend/"${output}".tar."${COMPRESSED_EXT}"
 retry 10 $UPLOAD_CMD -r "ws_out/*" $FILE_PATH
 try rm -rf ws_out

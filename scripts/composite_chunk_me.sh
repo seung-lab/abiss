@@ -100,7 +100,9 @@ if [ -n "$META" ]; then
     retry 10 $PARALLEL_CMD $UPLOAD_CMD -r {} $FILE_PATH/ ::: $META
 fi
 
-try md5sum *_"${output}".data > agg_out/"${SCRATCH}"/"${output}".data.md5sum
+if [ "$PARANOID" = "1" ]; then
+    try md5sum *_"${output}".data > agg_out/"${SCRATCH}"/"${output}".data.md5sum
+fi
 
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > agg_out/"${SCRATCH}"/"${output}".tar."${COMPRESSED_EXT}"
 

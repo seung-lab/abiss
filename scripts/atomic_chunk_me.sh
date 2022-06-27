@@ -57,7 +57,11 @@ try mv residual_rg.data residual_rg_"$output".data
 try mv ongoing_segments.data ongoing_supervoxel_counts_"$output".data
 try mv ongoing_sem.data ongoing_semantic_labels_"$output".data
 try mv ongoing_size.data ongoing_seg_size_"$output".data
-try md5sum *_"${output}".data > agg_out/scratch/"${output}".data.md5sum
+
+if [ "$PARANOID" = "1" ]; then
+    try md5sum *_"${output}".data > agg_out/scratch/"${output}".data.md5sum
+fi
+
 try tar -cvf - *_"${output}".data | $COMPRESS_CMD > agg_out/scratch/"${output}".tar."${COMPRESSED_EXT}"
 
 for d in $META; do

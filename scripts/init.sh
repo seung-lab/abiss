@@ -50,10 +50,16 @@ download_neighbors() {
 download_intermediary_files() {
     local -r flist="$1"
     local -r fpath="$2"
-    try awk -v fpath=$fpath -v ext="tar.${COMPRESSED_EXT}" '{printf "%s/%s.%s\n%s/%s.data.md5sum\n", fpath, $0, ext, fpath, $0}' $flist | $DOWNLOAD_CMD -I .
+    if [ "$PARANOID" = "1" ]; then
+        try awk -v fpath=$fpath -v ext="tar.${COMPRESSED_EXT}" '{printf "%s/%s.%s\n%s/%s.data.md5sum\n", fpath, $0, ext, fpath, $0}' $flist | $DOWNLOAD_CMD -I .
+    else
+        try awk -v fpath=$fpath -v ext="tar.${COMPRESSED_EXT}" '{printf "%s/%s.%s\n", fpath, $0, ext}' $flist | $DOWNLOAD_CMD -I .
+    fi
     try cat $flist | $PARALLEL_CMD --retries 10 "tar axvf {}.tar.${COMPRESSED_EXT}"
     try rm *.tar.${COMPRESSED_EXT}
-    try cat $flist | $PARALLEL_CMD --halt 2 "md5sum -c --quiet {}.data.md5sum"
+    if [ "$PARANOID" = "1" ]; then
+        try cat $flist | $PARALLEL_CMD --halt 2 "md5sum -c --quiet {}.data.md5sum"
+    fi
 }
 
 lock_prefix="${AIRFLOW_TMP_DIR}/.cpulock"
