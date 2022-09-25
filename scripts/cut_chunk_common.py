@@ -30,6 +30,14 @@ def pad_data(data, padding):
     else:
         raise RuntimeError("encountered array of dimension " + str(len(data.shape)))
 
+def convert_and_scale_integer_data(data, dtype_out):
+    if numpy.issubdtype(data.dtype, numpy.integer):
+        print(f"convert {data.dtype} to {dtype_out}")
+        info = numpy.iinfo(data.dtype)
+        return (data.astype(dtype_out, order='F') - info.min)/(info.max - info.min)
+    else:
+        return data
+
 def cut_data(data, start_coord, end_coord, padding):
     bb = tuple(slice(start_coord[i], end_coord[i]) for i in range(3))
     if data.shape[3] == 1:
@@ -38,7 +46,7 @@ def cut_data(data, start_coord, end_coord, padding):
         else:
             return pad_data(data[bb], padding)
     elif data.shape[3] == 3:
-        return pad_data(data[bb+(slice(0,3),)], padding)
+        return pad_data(convert_and_scale_integer_data(data[bb+(slice(0,3),)], "float32"), padding)
     elif data.shape[3] == 4: #0-2 affinity, 3 myelin
         global_param = cu.read_inputs(os.environ['PARAM_JSON'])
         th = global_param.get('MYELIN_THRESHOLD', 0.3)
