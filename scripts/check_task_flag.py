@@ -7,7 +7,7 @@ from cloudfiles import CloudFiles
 TASK_KEY = sys.argv[1]
 
 if "REDIS_SERVER" in os.environ:
-    r = redis.Redis(os.environ["REDIS_SERVER"])
+    r = redis.Redis(host=os.environ["REDIS_SERVER"], db=int(os.environ["REDIS_DB"]))
     if r.exists(TASK_KEY) and r.get(TASK_KEY).decode() == "DONE":
         sys.exit(0)
     else:
