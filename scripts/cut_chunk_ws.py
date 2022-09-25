@@ -35,7 +35,7 @@ if 'ADJUSTED_AFF_PATH' in global_param:
     vol = CloudVolume(global_param['ADJUSTED_AFF_PATH'], mip=global_param['AFF_RESOLUTION'], cdn_cache=False)
     vol[bbox[0]:bbox[3], bbox[1]:bbox[4], bbox[2]:bbox[5], :] = aff_cutout[1:-1, 1:-1, 1:-1, :]
 
-save_raw_data("aff.raw", aff_cutout, aff.dtype)
+save_raw_data("aff.raw", aff_cutout)
 
 write_metadata("param.txt", aff_cutout.shape[0:3], boundary_flags, offset)
 

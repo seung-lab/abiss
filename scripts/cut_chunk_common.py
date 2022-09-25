@@ -16,8 +16,8 @@ def load_gt_data(url, mip=0):
 
     return CloudVolume(url, fill_missing=True, bounded=False, mip=mip)
 
-def save_raw_data(fn,data, data_type):
-    f = numpy.memmap(fn, dtype=data_type, mode='w+', order='F', shape=data.shape)
+def save_raw_data(fn, data):
+    f = numpy.memmap(fn, dtype=data.dtype, mode='w+', order='F', shape=data.shape)
     f[:] = data[:]
     del f
 
