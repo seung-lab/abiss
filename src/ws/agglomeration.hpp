@@ -41,8 +41,7 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
                             region_graph<ID,F>& rg,
                             std::vector<std::size_t>& counts,
                             const L& tholds,
-                            const M& lowt,
-                            const ID& offset)
+                            const M& lowt)
 {
     using traits = watershed_traits<id_t>;
     std::vector<ID> rank(counts.size());
@@ -109,11 +108,7 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
 
     for ( std::ptrdiff_t idx = 0; idx < total; ++idx )
     {
-        ID s = remaps[sets.find_set(seg_raw[idx])];
-        if (s != 0) {
-            s += offset;
-        }
-        seg_raw[idx] = s;
+        seg_raw[idx] = remaps[sets.find_set(seg_raw[idx])];
     }
 
     std::cout << "Done with remapping, total: " << (next_id-1) << std::endl;
@@ -142,7 +137,7 @@ inline void merge_segments( const volume_ptr<ID>& seg_ptr,
             auto mm = std::minmax(s1,s2);
             if ( in_rg[mm.first].count(mm.second) == 0 )
             {
-                new_rg.emplace_back(std::get<0>(it), mm.first+offset, mm.second+offset);
+                new_rg.emplace_back(std::get<0>(it), mm.first, mm.second);
                 in_rg[mm.first].insert(mm.second);
             }
         }
