@@ -43,6 +43,9 @@ fi
 try python3 $SCRIPT_PATH/reduce_chunk.py ${output}
 
 try rm residual_rg*.data
+
+try touch residual_rg_"$output".data
+
 try cp sem_cuts.data vetoed_edges_"$output".data
 try cat extra_remaps.data >> ongoing_"$output".data
 

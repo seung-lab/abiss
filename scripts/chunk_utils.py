@@ -75,16 +75,16 @@ def merge_files(target, fnList):
         for fn in fnList:
             try:
                 shutil.copyfileobj(open(fn, 'rb'), outfile)
-            except IOError:
+            except IOError as e:
                 print(fn, " does not exist")
-                pass
+                raise e
 
     for fn in fnList:
         try:
             os.remove(fn)
-        except IOError:
+        except IOError as e:
             print(fn, " does not exist")
-            pass
+            raise e
 
 def lift_intermediate_outputs(p, prefix):
     d = p["children"]
