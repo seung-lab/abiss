@@ -40,7 +40,7 @@ if [ "$PARANOID" = "1" ]; then
     try md5sum -c --quiet ${output}.data.md5sum
 fi
 
-try python3 $SCRIPT_PATH/reduce_chunk.py ${output}
+try $BIN_PATH/reduce_chunk ${output}
 
 try rm residual_rg*.data
 
