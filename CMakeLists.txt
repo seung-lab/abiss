@@ -69,6 +69,8 @@ add_executable(split_remap
     src/seg/split_remap.cpp)
 add_executable(match_chunks
     src/seg/match_chunks.cpp)
+add_executable(reduce_chunk
+    src/seg/reduce_chunk.cpp)
 add_executable(size_map
     src/seg/size_map.cpp)
 add_executable(evaluate
@@ -105,6 +107,7 @@ target_link_libraries(split_remap tbb)
 target_link_libraries(accs ${Boost_LIBRARIES} tbb)
 target_link_libraries(mecs ${Boost_LIBRARIES} tbb)
 target_link_libraries(match_chunks ${Boost_LIBRARIES} tbb)
+target_link_libraries(reduce_chunk ${Boost_LIBRARIES} tbb)
 target_link_libraries(agg ${Boost_LIBRARIES} tbb)
 target_link_libraries(agg_nonoverlap ${Boost_LIBRARIES} tbb)
 target_link_libraries(agg_overlap ${Boost_LIBRARIES} tbb)
