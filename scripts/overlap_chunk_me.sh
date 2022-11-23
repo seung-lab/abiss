@@ -60,9 +60,9 @@ try mv reduced_ongoing_semantic_labels_"$output".data ongoing_semantic_labels_"$
 try mv reduced_ongoing_seg_size_"$output".data ongoing_seg_size_"$output".data
 
 try mv done_segments.data agg_out/info/info_"$output"_extra.data
-try mv done_sem.data agg_out/info/semantic_labels_"$output".data
-try mv done_size.data agg_out/info/seg_size_"$output".data
-try mv sem_cuts.data agg_out/info/sem_rejected_edges_"$output".log
+try mv done_sem.data agg_out/info/semantic_labels_"$output"_extra.data
+try mv done_size.data agg_out/info/seg_size_"$output"_extra.data
+try mv sem_cuts.data agg_out/info/sem_rejected_edges_"$output"_extra.log
 
 if [ "$PARANOID" = "1" ]; then
     try md5sum *_"${output}".data > agg_out/scratch2/"${output}".data.md5sum
