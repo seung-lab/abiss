@@ -11,15 +11,6 @@
 #include "SemExtractor.hpp"
 
 template <class T>
-struct __attribute__((packed)) matching_entry_t
-{
-    T oid;
-    size_t boundary_size;
-    T nid;
-    size_t agg_size;
-};
-
-template <class T>
 struct __attribute__((packed)) matching_value
 {
     T sid;
@@ -34,15 +25,6 @@ struct remap_data
     std::vector<T> segids;
     std::vector<matching_value<T> > remaps;
     std::vector<matching_value<T> > extra_remaps;
-};
-
-template <class T_seg, class T_aff>
-struct __attribute__((packed)) rg_entry
-{
-    T_seg s1;
-    T_seg s2;
-    T_aff aff;
-    size_t area;
 };
 
 template <class T>
