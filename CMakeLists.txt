@@ -20,12 +20,18 @@ find_package(absl)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JEMALLOC jemalloc)
+pkg_check_modules(MIMALLOC mimalloc)
 
 
-if(JEMALLOC_FOUND)
+if(MIMALLOC_FOUND)
+    add_definitions(-DUSE_MIMALLOC)
+    include_directories(${MIMALLOC_INCLUDE_DIRS})
+    set(optionalLibs ${optionalLibs} ${MIMALLOC_LIBRARIES})
+    message(STATUS "Use mimalloc as the default allocator: ${MIMALLOC_INCLUDE_DIRS} and ${MIMALLOC_LIBRARIES}.")
+elseif(JEMALLOC_FOUND)
     set(optionalLibs ${optionalLibs} ${JEMALLOC_LIBRARIES})
     message(STATUS "Use jemalloc as the default allocator.")
-endif(JEMALLOC_FOUND)
+endif()
 
 if(absl_FOUND)
     add_definitions(-DUSE_ABSL_HASHMAP)
