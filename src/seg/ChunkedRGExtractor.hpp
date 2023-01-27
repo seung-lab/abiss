@@ -23,13 +23,12 @@ public:
     void collectContactingSurface(int nv, Coord & c, Ts segid1, Ts segid2)
     {
         auto p = std::minmax(segid1, segid2);
-        m_edges[p][nv].first += m_aff[c[0]][c[1]][c[2]][nv];
-        m_edges[p][nv].second += 1;
+        m_edges[p].first += m_aff[c[0]][c[1]][c[2]][nv];
+        m_edges[p].second += 1;
     }
 
-    void writeEdge(auto & out, const std::pair<Ts, Ts> & k, const std::array<std::pair<Ta, size_t>, 3> & v) {
-        rg_edge_t payload = {k.first, k.second, v[0].first, v[0].second, v[1].first, v[1].second, v[2].first, v[2].second};
-        out.addPayload(std::move(payload));
+    void writeEdge(auto & out, const std::pair<SegPair<Ts>, std::pair<Ta, size_t> > & kv) {
+        out.addPayload(rg_entry(kv));
     }
 
     void output(const MapContainer<Ts, Ts> & chunkMap, const std::string & tag, size_t ac_offset)
@@ -37,17 +36,19 @@ public:
         size_t current_ac1 = std::numeric_limits<std::size_t>::max();
         size_t current_ac2 = std::numeric_limits<std::size_t>::max();
 
-        std::vector<std::pair<SegPair<Ts>, std::array<std::pair<Ta, size_t>, 3> > > sorted_edges(std::begin(m_edges), std::end(m_edges));
+        std::vector<std::pair<SegPair<Ts>, std::pair<Ta, size_t> > > sorted_edges(std::begin(m_edges), std::end(m_edges));
         std::stable_sort(std::begin(sorted_edges), std::end(sorted_edges), [ac_offset](auto & a, auto & b) {
                 auto c1 = a.first.first - (a.first.first % ac_offset);
                 auto c2 = b.first.first - (b.first.first % ac_offset);
                 return (c1 < c2) || (c1 == c2 && a.first.second < b.first.second);
                 });
 
-        SlicedOutput<rg_edge_t, Ts> inChunkOutput(str(boost::format("chunked_rg/in_chunk_%1%.data") % tag));
-        SlicedOutput<rg_edge_t, std::pair<Ts, Ts> > betweenChunksOutput(str(boost::format("chunked_rg/between_chunks_%1%.data") % tag));
-        SlicedOutput<rg_edge_t, std::pair<Ts, Ts> > fakeOutput(str(boost::format("chunked_rg/fake_%1%.data") % tag));
-        for (const auto & [k,v] : sorted_edges) {
+        SlicedOutput<rg_entry<Ts, Ta>, Ts> inChunkOutput(str(boost::format("chunked_rg/in_chunk_%1%.data") % tag));
+        SlicedOutput<rg_entry<Ts, Ta>, SegPair<Ts> > betweenChunksOutput(str(boost::format("chunked_rg/between_chunks_%1%.data") % tag));
+        SlicedOutput<rg_entry<Ts, Ta>, SegPair<Ts> > fakeOutput(str(boost::format("chunked_rg/fake_%1%.data") % tag));
+        for (const auto & kv : sorted_edges) {
+            const auto & k = kv.first;
+            const auto & v = kv.second;
             auto s1 = k.first;
             auto s2 = k.second;
             if (current_ac1 != (s1 - (s1 % ac_offset))) {
@@ -73,11 +74,11 @@ public:
             }
 
             if (s1 == s2) {
-                writeEdge(fakeOutput, k, v);
+                writeEdge(fakeOutput, kv);
             } else if (current_ac1 == current_ac2) {
-                writeEdge(inChunkOutput, k, v);
+                writeEdge(inChunkOutput, kv);
             } else {
-                writeEdge(betweenChunksOutput, k, v);
+                writeEdge(betweenChunksOutput, kv);
             }
         }
         inChunkOutput.flushChunk(current_ac1);
@@ -89,18 +90,8 @@ public:
     }
 
 private:
-    struct __attribute__((packed)) rg_edge_t {
-        Ts s1;
-        Ts s2;
-        Ta aff_x;
-        size_t area_x;
-        Ta aff_y;
-        size_t area_y;
-        Ta aff_z;
-        size_t area_z;
-    };
     const Chunk & m_aff;
-    MapContainer<SegPair<Ts>, std::array<std::pair<Ta, size_t>, 3>, HashFunction<SegPair<Ts> > > m_edges;
+    MapContainer<SegPair<Ts>, std::pair<Ta, size_t>, HashFunction<SegPair<Ts> > > m_edges;
 };
 
 #endif
