@@ -13,7 +13,7 @@ template<typename Ts, typename Ta, typename Chunk>
 class ChunkedRGExtractor
 {
 public:
-    ChunkedRGExtractor(const Chunk & aff)
+    explicit ChunkedRGExtractor(const Chunk & aff)
         :m_aff(aff), m_edges() {}
 
     void collectVoxel(Coord & c, Ts segid) {}

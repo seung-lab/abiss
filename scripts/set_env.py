@@ -13,7 +13,7 @@ for s in ["SCRATCH", "WS", "SEG"]:
     prefix = "{}_PREFIX".format(s)
     path = "{}_PATH".format(s)
     if path not in data:
-         data[path] = data[prefix]+data["NAME"]
+        data[path] = data[prefix]+data["NAME"]
 
 if "CHUNKMAP_INPUT" not in data:
     data["CHUNKMAP_INPUT"] = os.path.join(data["SCRATCH_PATH"], "ws", "chunkmap")

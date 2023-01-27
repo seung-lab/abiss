@@ -51,7 +51,7 @@ int main(int argc, char * argv[])
        }
     });
     std::ofstream fout("size_map.data", fout.out | fout.binary);
-    fout.write((char*)&size_map[0], size_map.size() * sizeof(uint8_t));
+    fout.write(reinterpret_cast<char*>(size_map.data()), size_map.size() * sizeof(uint8_t));
     assert(!fout.bad());
     fout.close();
 }

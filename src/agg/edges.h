@@ -97,8 +97,12 @@ struct mst_edge_greater
 {
     bool operator()(mst_edge const& a, mst_edge const& b) const
     {
-        if (b.num == 0) return false;
-        if (a.num == 0) return true;
+        if (b.num == 0) {
+            return false;
+        }
+        if (a.num == 0) {
+            return true;
+        }
         return a.sum / a.num > b.sum / b.num;
     }
 };

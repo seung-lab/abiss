@@ -37,10 +37,10 @@
 
 #include "edges.h"
 
-static const size_t frozen = (1ul<<(std::numeric_limits<std::size_t>::digits-2));
-static const size_t boundary = (1ul<<(std::numeric_limits<std::size_t>::digits-1))|frozen;
+static const size_t frozen = (1UL<<(std::numeric_limits<std::size_t>::digits-2));
+static const size_t boundary = (1UL<<(std::numeric_limits<std::size_t>::digits-1))|frozen;
 
-size_t filesize(std::string filename)
+size_t filesize(const std::string & filename)
 {
     struct stat stat_buf;
     int rc = stat(filename.c_str(), &stat_buf);
@@ -60,11 +60,10 @@ void print_neighbors(auto neighbors, const auto source)
     std::cout << std::endl;
 }
 
-bool frozen_neighbors(const auto & neighbors, const auto & supervoxel_counts, const auto source)
+bool frozen_neighbors(const auto & neighbors, const auto & supervoxel_counts)
 {
-    for (auto & kv : neighbors) {
-        auto sid = kv.first;
-        if (is_frozen(supervoxel_counts[sid])) {
+    for (auto & [k, v] : neighbors) {
+        if (is_frozen(supervoxel_counts[k])) {
             return true;
         }
     }
@@ -113,8 +112,8 @@ struct handle_wrapper
         : handle(h) {
             edge = e;
         };
-    bool valid_handle() const { return handle != heap_handle_type<T, C>(); }
-    seg_t segid(const seg_t exclude) const {
+    [[nodiscard]] bool valid_handle() const { return handle != heap_handle_type<T, C>(); }
+    [[nodiscard]] seg_t segid(const seg_t exclude) const {
         return exclude == edge->v0 ? edge->v1 : edge->v0;
     }
 };
@@ -248,7 +247,7 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
     std::vector<std::pair<seg_t, sem_array_t> > sem_array = read_array<std::pair<seg_t, sem_array_t> >(sem_filename);
     if (sem_array.empty()) {
         std::cout << "No semantic labels" << std::endl;
-        return std::vector<sem_array_t>();
+        return {};
     }
 
     std::vector<sem_array_t> sem_counts(seg_indices.size());
@@ -270,7 +269,7 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
     std::sort(std::execution::par, std::begin(sem_array), std::end(sem_array), [](auto & a, auto & b) { return a.first < b.first; });
 
     for (auto & [k, v] : sem_array) {
-        std::transform(sem_counts[k].begin(), sem_counts[k].end(), v.begin(), sem_counts[k].begin(), std::plus<size_t>());
+        std::transform(sem_counts[k].begin(), sem_counts[k].end(), v.begin(), sem_counts[k].begin(), std::plus<>());
     }
     return sem_counts;
 }
@@ -384,7 +383,7 @@ std::vector<seg_t> extract_cc(const agglomeration_data_t<T, Compare> & agg_data,
     }
 
     std::vector<seg_t> idx(seg_indices.size());
-    std::iota(idx.begin(), idx.end(), seg_t(0));
+    std::iota(idx.begin(), idx.end(), static_cast<seg_t>(0));
     cc_sets.compress_sets(idx.cbegin(), idx.cend());
     std::cout << "connect components: " << cc_sets.count_sets(idx.cbegin(), idx.cend()) << std::endl;
     return cc_parent;
@@ -437,12 +436,10 @@ void partition_rg(std::vector<edge_t<T> > & rg_vector, const std::vector<seg_t> 
                         std::abort();
                     }
                     return ((*r1).second > (*r2).second) || ((*r1).second == (*r2).second && std::distance(cc_queue.begin(), r1) < std::distance(cc_queue.begin(), r2));
-                } else {
-                    return true;
                 }
-            } else {
-                return false;
+                return true;
             }
+            return false;
     });
     std::cout << "finished partition the edges" << std::endl;
 }
@@ -460,8 +457,9 @@ std::vector<std::pair<seg_t, size_t> > sorted_components(std::vector<seg_t> ccid
     size_t count = 0;
     for (const auto id: ccids) {
         if (id != cc) {
-            if (count > 1)
+            if (count > 1) {
                 cc_comps.emplace_back(cc, count);
+            }
             cc = id;
             count = 0;
         }
@@ -499,7 +497,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     std::vector<seg_t> fs_array = read_array<seg_t>(fs_filename);
 
     std::transform(fs_array.begin(), fs_array.end(), std::back_inserter(ns_pair_array), [](seg_t &a)->std::pair<seg_t, size_t> {
-            return std::make_pair(a, size_t(boundary));
+            return std::make_pair(a, boundary);
             });
 
     std::sort(std::execution::par, std::begin(ns_pair_array), std::end(ns_pair_array), [](auto & a, auto & b) { return a.first < b.first || (a.first == b.first && a.second < b.second); });
@@ -540,7 +538,8 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     agg_data.incident.resize(seg_indices.size());
 
     std::for_each(std::execution::par, rg_vector.begin(), rg_vector.end(), [&seg_indices](auto & a) {
-            size_t u0, u1;
+            size_t u0 = 0;
+            size_t u1 = 0;
             auto it = std::lower_bound(seg_indices.begin(), seg_indices.end(), a.v0);
             if (it == seg_indices.end()) {
                 std::cerr << "Should not happen, rg element does not exist: " << a.v0 << std::endl;
@@ -600,7 +599,7 @@ inline heap_type<T, Compare> populate_heap(agglomeration_data_t<T, Compare> & ag
         incident[e.v0].emplace(v1,handle_wrapper<T, Compare>(&e, handle));
         incident[e.v1].emplace(v0,handle_wrapper<T, Compare>(&e, handle));
         i++;
-        if (i % 10000000 == 0) {
+        if (i % 10'000'000 == 0) {
             std::cout << "reading " << i << "th edge" << std::endl;
         }
     }
@@ -610,7 +609,7 @@ inline heap_type<T, Compare> populate_heap(agglomeration_data_t<T, Compare> & ag
 
 std::pair<size_t, size_t> sem_label(const sem_array_t & labels)
 {
-    auto label = std::max_element(labels.begin(), labels.end());
+    const auto *label = std::max_element(labels.begin(), labels.end());
     return std::make_pair(std::distance(labels.begin(), label), (*label));
 }
 
@@ -618,8 +617,8 @@ bool sem_can_merge(const sem_array_t & labels1, const sem_array_t & labels2, con
 {
     auto max_label1 = std::distance(labels1.begin(), std::max_element(labels1.begin(), labels1.end()));
     auto max_label2 = std::distance(labels2.begin(), std::max_element(labels2.begin(), labels2.end()));
-    auto total_label1 = std::accumulate(labels1.begin(), labels1.end(), size_t(0));
-    auto total_label2 = std::accumulate(labels2.begin(), labels2.end(), size_t(0));
+    auto total_label1 = std::accumulate(labels1.begin(), labels1.end(), static_cast<size_t>(0));
+    auto total_label2 = std::accumulate(labels2.begin(), labels2.end(), static_cast<size_t>(0));
     if (labels1[max_label1] < sem_params.dominant_signal_ratio * total_label1 || total_label1 < sem_params.total_signal_threshold) { //unsure about the semantic label
         return true;
     }
@@ -716,9 +715,8 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 if ((p.first > twig_params.voxel_threshold) or (e.edge->w.num > twig_params.area_threshold)) {
                     e.edge->w = Limits::min();
                     continue;
-                } else {
-                    output.twig_rg_vector.push_back(*(e.edge));
                 }
+                output.twig_rg_vector.push_back(*(e.edge));
             }
 #ifdef FINAL
             if (incident[v0].size() < incident[v1].size()) {
@@ -812,10 +810,12 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 else
                 {
                     auto e = e0.edge;
-                    if (e->v0 == v0)
+                    if (e->v0 == v0) {
                         e->v0 = v1;
-                    if (e->v1 == v0)
+                    }
+                    if (e->v1 == v0) {
                         e->v1 = v1;
+                    }
                     incident[v].emplace(v1,e0);
                     incident[v1].emplace(v,e0);
                 }
@@ -834,7 +834,12 @@ void write_supervoxel_info(const agglomeration_data_t<T, Compare> & agg_data)
     auto & sem_counts = agg_data.sem_counts;
     auto & seg_size = agg_data.seg_size;
 
-    std::ofstream of_fs_ongoing, of_fs_done, of_sem_ongoing, of_sem_done, of_size_ongoing, of_size_done;
+    std::ofstream of_fs_ongoing;
+    std::ofstream of_fs_done;
+    std::ofstream of_sem_ongoing;
+    std::ofstream of_sem_done;
+    std::ofstream of_size_ongoing;
+    std::ofstream of_size_done;
 
     of_fs_ongoing.open("ongoing_segments.data", std::ofstream::out | std::ofstream::trunc);
     of_fs_done.open("done_segments.data", std::ofstream::out | std::ofstream::trunc);
