@@ -112,8 +112,8 @@ struct handle_wrapper
         : handle(h) {
             edge = e;
         };
-    bool valid_handle() const { return handle != heap_handle_type<T, C>(); }
-    seg_t segid(const seg_t exclude) const {
+    [[nodiscard]] bool valid_handle() const { return handle != heap_handle_type<T, C>(); }
+    [[nodiscard]] seg_t segid(const seg_t exclude) const {
         return exclude == edge->v0 ? edge->v1 : edge->v0;
     }
 };
@@ -247,7 +247,7 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
     std::vector<std::pair<seg_t, sem_array_t> > sem_array = read_array<std::pair<seg_t, sem_array_t> >(sem_filename);
     if (sem_array.empty()) {
         std::cout << "No semantic labels" << std::endl;
-        return std::vector<sem_array_t>();
+        return {};
     }
 
     std::vector<sem_array_t> sem_counts(seg_indices.size());
@@ -269,7 +269,7 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
     std::sort(std::execution::par, std::begin(sem_array), std::end(sem_array), [](auto & a, auto & b) { return a.first < b.first; });
 
     for (auto & [k, v] : sem_array) {
-        std::transform(sem_counts[k].begin(), sem_counts[k].end(), v.begin(), sem_counts[k].begin(), std::plus<size_t>());
+        std::transform(sem_counts[k].begin(), sem_counts[k].end(), v.begin(), sem_counts[k].begin(), std::plus<>());
     }
     return sem_counts;
 }
@@ -538,7 +538,8 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     agg_data.incident.resize(seg_indices.size());
 
     std::for_each(std::execution::par, rg_vector.begin(), rg_vector.end(), [&seg_indices](auto & a) {
-            size_t u0, u1;
+            size_t u0 = 0;
+            size_t u1 = 0;
             auto it = std::lower_bound(seg_indices.begin(), seg_indices.end(), a.v0);
             if (it == seg_indices.end()) {
                 std::cerr << "Should not happen, rg element does not exist: " << a.v0 << std::endl;
