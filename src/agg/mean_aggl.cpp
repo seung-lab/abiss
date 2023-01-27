@@ -40,7 +40,7 @@
 static const size_t frozen = (1UL<<(std::numeric_limits<std::size_t>::digits-2));
 static const size_t boundary = (1UL<<(std::numeric_limits<std::size_t>::digits-1))|frozen;
 
-size_t filesize(std::string filename)
+size_t filesize(const std::string & filename)
 {
     struct stat stat_buf;
     int rc = stat(filename.c_str(), &stat_buf);
@@ -610,7 +610,7 @@ inline heap_type<T, Compare> populate_heap(agglomeration_data_t<T, Compare> & ag
 
 std::pair<size_t, size_t> sem_label(const sem_array_t & labels)
 {
-    auto label = std::max_element(labels.begin(), labels.end());
+    const auto *label = std::max_element(labels.begin(), labels.end());
     return std::make_pair(std::distance(labels.begin(), label), (*label));
 }
 
