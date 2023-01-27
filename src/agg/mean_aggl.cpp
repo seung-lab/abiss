@@ -37,8 +37,8 @@
 
 #include "edges.h"
 
-static const size_t frozen = (1ul<<(std::numeric_limits<std::size_t>::digits-2));
-static const size_t boundary = (1ul<<(std::numeric_limits<std::size_t>::digits-1))|frozen;
+static const size_t frozen = (1UL<<(std::numeric_limits<std::size_t>::digits-2));
+static const size_t boundary = (1UL<<(std::numeric_limits<std::size_t>::digits-1))|frozen;
 
 size_t filesize(std::string filename)
 {
@@ -460,8 +460,9 @@ std::vector<std::pair<seg_t, size_t> > sorted_components(std::vector<seg_t> ccid
     size_t count = 0;
     for (const auto id: ccids) {
         if (id != cc) {
-            if (count > 1)
+            if (count > 1) {
                 cc_comps.emplace_back(cc, count);
+            }
             cc = id;
             count = 0;
         }
@@ -600,7 +601,7 @@ inline heap_type<T, Compare> populate_heap(agglomeration_data_t<T, Compare> & ag
         incident[e.v0].emplace(v1,handle_wrapper<T, Compare>(&e, handle));
         incident[e.v1].emplace(v0,handle_wrapper<T, Compare>(&e, handle));
         i++;
-        if (i % 10000000 == 0) {
+        if (i % 10'000'000 == 0) {
             std::cout << "reading " << i << "th edge" << std::endl;
         }
     }
@@ -812,10 +813,12 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 else
                 {
                     auto e = e0.edge;
-                    if (e->v0 == v0)
+                    if (e->v0 == v0) {
                         e->v0 = v1;
-                    if (e->v1 == v0)
+                    }
+                    if (e->v1 == v0) {
                         e->v1 = v1;
+                    }
                     incident[v].emplace(v1,e0);
                     incident[v1].emplace(v,e0);
                 }
@@ -834,7 +837,12 @@ void write_supervoxel_info(const agglomeration_data_t<T, Compare> & agg_data)
     auto & sem_counts = agg_data.sem_counts;
     auto & seg_size = agg_data.seg_size;
 
-    std::ofstream of_fs_ongoing, of_fs_done, of_sem_ongoing, of_sem_done, of_size_ongoing, of_size_done;
+    std::ofstream of_fs_ongoing;
+    std::ofstream of_fs_done;
+    std::ofstream of_sem_ongoing;
+    std::ofstream of_sem_done;
+    std::ofstream of_size_ongoing;
+    std::ofstream of_size_done;
 
     of_fs_ongoing.open("ongoing_segments.data", std::ofstream::out | std::ofstream::trunc);
     of_fs_done.open("done_segments.data", std::ofstream::out | std::ofstream::trunc);
