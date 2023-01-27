@@ -6,7 +6,7 @@ ENV SEG_HOME ${SEG_HOME}
 ARG SEG_USER=seg
 ENV SEG_USER ${SEG_USER}
 ARG MINICONDA_PATH=/opt/conda
-ARG MINICONDA_URL=https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-Linux-x86_64.sh
+ARG MINICONDA_URL=https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
 ENV PATH ${MINICONDA_PATH}/bin:${PATH}
 
 WORKDIR ${SEG_HOME}
@@ -37,9 +37,9 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && chmod +x ~/miniconda.sh \
     && ~/miniconda.sh -b -p ${MINICONDA_PATH} \
     && rm ~/miniconda.sh \
+    && conda update conda \
     && conda install nomkl \
-    && conda install -y numpy=1.22.3 scipy cryptography redis-py boto3 networkx gevent pillow \
-    && conda install -c conda-forge -y gsutil google-crc32c pysimdjson zstandard \
+    && conda install -y numpy=1.22.4 scipy cryptography redis-py boto3 networkx gevent pillow gsutil google-crc32c pysimdjson zstandard \
     && find ${MINICONDA_PATH} -follow -type f -name '*.a' -delete \
     && find ${MINICONDA_PATH} -follow -type f -name '*.js.map' -delete \
     && conda clean -yaf \
