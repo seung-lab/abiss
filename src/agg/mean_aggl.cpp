@@ -60,11 +60,10 @@ void print_neighbors(auto neighbors, const auto source)
     std::cout << std::endl;
 }
 
-bool frozen_neighbors(const auto & neighbors, const auto & supervoxel_counts, const auto source)
+bool frozen_neighbors(const auto & neighbors, const auto & supervoxel_counts)
 {
-    for (auto & kv : neighbors) {
-        auto sid = kv.first;
-        if (is_frozen(supervoxel_counts[sid])) {
+    for (auto & [k, v] : neighbors) {
+        if (is_frozen(supervoxel_counts[k])) {
             return true;
         }
     }
