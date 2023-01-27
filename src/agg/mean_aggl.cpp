@@ -436,12 +436,10 @@ void partition_rg(std::vector<edge_t<T> > & rg_vector, const std::vector<seg_t> 
                         std::abort();
                     }
                     return ((*r1).second > (*r2).second) || ((*r1).second == (*r2).second && std::distance(cc_queue.begin(), r1) < std::distance(cc_queue.begin(), r2));
-                } else {
-                    return true;
                 }
-            } else {
-                return false;
+                return true;
             }
+            return false;
     });
     std::cout << "finished partition the edges" << std::endl;
 }
@@ -716,9 +714,8 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 if ((p.first > twig_params.voxel_threshold) or (e.edge->w.num > twig_params.area_threshold)) {
                     e.edge->w = Limits::min();
                     continue;
-                } else {
-                    output.twig_rg_vector.push_back(*(e.edge));
                 }
+                output.twig_rg_vector.push_back(*(e.edge));
             }
 #ifdef FINAL
             if (incident[v0].size() < incident[v1].size()) {
