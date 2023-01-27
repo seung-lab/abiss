@@ -63,6 +63,15 @@ int main(int argc, char* argv[])
     std::string lt(argv[4]);
     std::string st(argv[5]);
     std::cout << "thresholds: "<< ht << " " << lt << " " << st << std::endl;
+
+#ifdef USE_MIMALLOC
+    size_t huge_pages = xdim * ydim * zdim * 4 * 3 * 4 / 1024 / 1024 / 1024 + 1;
+    auto mi_ret = mi_reserve_huge_os_pages_interleave(huge_pages, 0, 0);
+    if (mi_ret == ENOMEM) {
+       std::cout << "failed to reserve 1GB huge pages" << std::endl;
+    }
+#endif
+
     const char * tag = argv[6];
     auto high_threshold = read_float<aff_t>(ht);
     auto low_threshold = read_float<aff_t>(lt);

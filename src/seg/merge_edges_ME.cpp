@@ -15,6 +15,15 @@ int main(int argc, char * argv[])
 {
     std::string tag(argv[1]);
 
+#ifdef USE_MIMALLOC
+    auto rg_size = filesize(str(boost::format("incomplete_edges_%1%.tmp") % tag));
+    size_t huge_pages = rg_size * 4 / 1024 / 1024 / 1024 + 1;
+    auto mi_ret = mi_reserve_huge_os_pages_interleave(huge_pages, 0, 0);
+    if (mi_ret == ENOMEM) {
+       std::cout << "failed to reserve 1GB huge pages" << std::endl;
+    }
+#endif
+
     SetContainer<seg_t> incomplete_segments;
     for (size_t i = 0; i != 6; i++) {
         incomplete_segments.merge(updateBoundarySegments<seg_t>(i, tag));

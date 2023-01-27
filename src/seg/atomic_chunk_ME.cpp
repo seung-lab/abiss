@@ -37,6 +37,14 @@ int main(int argc, char * argv[])
     std::cout << dim[0] << " " << dim[1] << " " << dim[2] << std::endl;
     std::string chunk_tag(argv[2]);
 
+#ifdef USE_MIMALLOC
+    size_t huge_pages = dim[0] * dim[1] * dim[2] * 4 * 3 * 4 / 1024 / 1024 / 1024 + 1;
+    auto mi_ret = mi_reserve_huge_os_pages_interleave(huge_pages, 0, 0);
+    if (mi_ret == ENOMEM) {
+       std::cout << "failed to reserve 1GB huge pages" << std::endl;
+    }
+#endif
+
     //FIXME: wrap these in classes
     bio::mapped_file_source seg_file;
     size_t seg_bytes = sizeof(seg_t)*dim[0]*dim[1]*dim[2];

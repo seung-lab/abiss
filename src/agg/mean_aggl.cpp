@@ -491,6 +491,15 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     auto & seg_indices = agg_data.seg_indices;
     auto & rg_vector = agg_data.rg_vector;
 
+#ifdef USE_MIMALLOC
+    auto rg_size = filesize(rg_filename);
+    size_t huge_pages = rg_size * 4 / 1024 / 1024 / 1024 + 1;
+    auto mi_ret = mi_reserve_huge_os_pages_interleave(huge_pages, 0, 0);
+    if (mi_ret == ENOMEM) {
+       std::cout << "failed to reserve 1GB huge pages" << std::endl;
+    }
+#endif
+
     rg_vector = read_array<edge_t<T> >(rg_filename);
 
     std::vector<std::pair<seg_t, size_t> > ns_pair_array = read_array<std::pair<seg_t, size_t> >(ns_filename);

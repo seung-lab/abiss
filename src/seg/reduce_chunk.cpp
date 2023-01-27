@@ -206,6 +206,16 @@ void reduce_size(const std::string & tag, const MapContainer<T, T> & remaps)
 int main(int argc, char ** argv)
 {
     std::string tag(argv[1]);
+
+#ifdef USE_MIMALLOC
+    auto rg_size = filesize(str(boost::format("residual_rg_%1%.data") % tag));
+    size_t huge_pages = rg_size * 4 / 1024 / 1024 / 1024 + 1;
+    auto mi_ret = mi_reserve_huge_os_pages_interleave(huge_pages, 0, 0);
+    if (mi_ret == ENOMEM) {
+       std::cout << "failed to reserve 1GB huge pages" << std::endl;
+    }
+#endif
+
     auto remap_array = read_array<remap_data_t<seg_t> >("remap.data");
     auto remaps = consolidate_remap(remap_array);
     auto ongoing_size_array = read_array<size_data_t<seg_t> >("ongoing_segments.data");
