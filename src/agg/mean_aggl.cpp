@@ -383,7 +383,7 @@ std::vector<seg_t> extract_cc(const agglomeration_data_t<T, Compare> & agg_data,
     }
 
     std::vector<seg_t> idx(seg_indices.size());
-    std::iota(idx.begin(), idx.end(), seg_t(0));
+    std::iota(idx.begin(), idx.end(), static_cast<seg_t>(0));
     cc_sets.compress_sets(idx.cbegin(), idx.cend());
     std::cout << "connect components: " << cc_sets.count_sets(idx.cbegin(), idx.cend()) << std::endl;
     return cc_parent;
@@ -497,7 +497,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
     std::vector<seg_t> fs_array = read_array<seg_t>(fs_filename);
 
     std::transform(fs_array.begin(), fs_array.end(), std::back_inserter(ns_pair_array), [](seg_t &a)->std::pair<seg_t, size_t> {
-            return std::make_pair(a, size_t(boundary));
+            return std::make_pair(a, boundary);
             });
 
     std::sort(std::execution::par, std::begin(ns_pair_array), std::end(ns_pair_array), [](auto & a, auto & b) { return a.first < b.first || (a.first == b.first && a.second < b.second); });
@@ -616,8 +616,8 @@ bool sem_can_merge(const sem_array_t & labels1, const sem_array_t & labels2, con
 {
     auto max_label1 = std::distance(labels1.begin(), std::max_element(labels1.begin(), labels1.end()));
     auto max_label2 = std::distance(labels2.begin(), std::max_element(labels2.begin(), labels2.end()));
-    auto total_label1 = std::accumulate(labels1.begin(), labels1.end(), size_t(0));
-    auto total_label2 = std::accumulate(labels2.begin(), labels2.end(), size_t(0));
+    auto total_label1 = std::accumulate(labels1.begin(), labels1.end(), static_cast<size_t>(0));
+    auto total_label2 = std::accumulate(labels2.begin(), labels2.end(), static_cast<size_t>(0));
     if (labels1[max_label1] < sem_params.dominant_signal_ratio * total_label1 || total_label1 < sem_params.total_signal_threshold) { //unsure about the semantic label
         return true;
     }
