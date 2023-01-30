@@ -416,6 +416,16 @@ void write_extra_remaps(remap_data<T> & rep)
 
 int main(int argc, char * argv[])
 {
+
+#ifdef USE_MIMALLOC
+    auto rg_size = filesize("o_residual_rg.data");
+    size_t huge_pages = rg_size * 4 / 1024 / 1024 / 1024 + 1;
+    auto mi_ret = mi_reserve_huge_os_pages_interleave(huge_pages, 0, 0);
+    if (mi_ret == ENOMEM) {
+       std::cout << "failed to reserve 1GB huge pages" << std::endl;
+    }
+#endif
+
     std::string tag(argv[1]);
     auto rep = generate_remaps<seg_t>();
     std::cout << "remaps loaded" << std::endl;

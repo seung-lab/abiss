@@ -53,6 +53,11 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=${SEG_HOME}/abseil -DABSL_BUILD_TESTING=OFF -DABSL_PROPAGATE_CXX_STD=ON -DCMAKE_BUILD_TYPE=Release \
     && cmake --build . --target install -v \
     && cd ${SEG_HOME} && rm -rf abseil-cpp \
+    && git clone --depth 1 --branch v2.0.9 https://github.com/microsoft/mimalloc.git \
+    && cd mimalloc && mkdir build && cd build \
+    && cmake .. -G Ninja -DMI_INSTALL_TOPLEVEL=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build . --target install -v \
+    && cd ${SEG_HOME} && rm -rf mimalloc \
     && echo "[GoogleCompute]\nservice_account = default" > /etc/boto.cfg \
     && mkdir -p ${SEG_HOME}/build \
     && cd ${SEG_HOME}/build \

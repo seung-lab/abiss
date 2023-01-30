@@ -1,5 +1,9 @@
 #ifndef GLOBAL_TYPES_H
 #define GLOBAL_TYPES_H
+#ifdef USE_MIMALLOC
+#include <mimalloc.h>
+#include <mimalloc-new-delete.h>
+#endif
 
 #ifdef USE_ABSL_HASHMAP
 #include <absl/container/flat_hash_set.h>

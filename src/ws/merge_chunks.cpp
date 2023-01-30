@@ -689,6 +689,14 @@ int main(int argc, char* argv[])
     }
     param_file >> face_size >> counts >> dend_size >> remap_size >> ac_offset;
 
+#ifdef USE_MIMALLOC
+    size_t huge_pages = (face_size + dend_size + counts) * (8 + 8 + 8) * 4 / 1024 / 1024 / 1024 + 1;
+    auto mi_ret = mi_reserve_huge_os_pages_interleave(huge_pages, 0, 0);
+    if (mi_ret == ENOMEM) {
+       std::cout << "failed to reserve 1GB huge pages" << std::endl;
+    }
+#endif
+
     if (face_size == 0) {
         std::cout << "Nothing to merge, exit!" << std::endl;
         SlicedOutput<std::pair<seg_t, seg_t>, seg_t> remap_output(str(boost::format("done_pre_%1%.data") % tag));
