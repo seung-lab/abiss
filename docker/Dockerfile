@@ -48,7 +48,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && pip install --no-cache-dir -U --compile --global-option=build git+https://github.com/seung-lab/chunk_iterator#egg=chunk-iterator \
     && pip install --no-cache-dir -U cloud-volume \
     && cd ${SEG_HOME} \
-    && git clone https://github.com/abseil/abseil-cpp.git \
+    && git clone --depth 1 https://github.com/abseil/abseil-cpp.git \
     && cd abseil-cpp && mkdir build && cd build \
     && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=${SEG_HOME}/abseil -DABSL_BUILD_TESTING=OFF -DABSL_PROPAGATE_CXX_STD=ON -DCMAKE_BUILD_TYPE=Release \
     && cmake --build . --target install -v \
