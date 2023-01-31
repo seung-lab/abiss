@@ -88,8 +88,13 @@ struct heapable_edge_compare
 };
 
 template <class T, class C = std::greater<T>>
+#ifdef USE_MIMALLOC
 using heap_type = boost::heap::fibonacci_heap<
-    heapable_edge<T, C>, boost::heap::compare<heapable_edge_compare<T, C>>>;
+    heapable_edge<T, C>, boost::heap::compare<heapable_edge_compare<T, C> >, mi_heap_stl_allocator<heapable_edge<T, C> > >;
+#else
+using heap_type = boost::heap::fibonacci_heap<
+    heapable_edge<T, C>, boost::heap::compare<heapable_edge_compare<T, C> > >;
+#endif
 
 template <class T, class C = std::greater<T>>
 using heap_handle_type = typename heap_type<T, C>::handle_type;
