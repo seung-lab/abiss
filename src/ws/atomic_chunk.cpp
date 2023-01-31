@@ -64,6 +64,13 @@ int main(int argc, char* argv[])
     std::string st(argv[5]);
     std::cout << "thresholds: "<< ht << " " << lt << " " << st << std::endl;
 
+    const char * tag = argv[6];
+    auto high_threshold = read_float<aff_t>(ht);
+    auto low_threshold = read_float<aff_t>(lt);
+    auto size_threshold = read_int(st);
+    param_file >> xdim >> ydim >> zdim;
+    std::cout << xdim << " " << ydim << " " << zdim << std::endl;
+
 #ifdef USE_MIMALLOC
     size_t huge_pages = xdim * ydim * zdim * 4 * 3 * 4 / 1024 / 1024 / 1024 + 1;
     auto mi_ret = mi_reserve_huge_os_pages_interleave(huge_pages, 0, 0);
@@ -72,12 +79,6 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    const char * tag = argv[6];
-    auto high_threshold = read_float<aff_t>(ht);
-    auto low_threshold = read_float<aff_t>(lt);
-    auto size_threshold = read_int(st);
-    param_file >> xdim >> ydim >> zdim;
-    std::cout << xdim << " " << ydim << " " << zdim << std::endl;
     std::array<bool,6> flags({true,true,true,true,true,true});
     for (size_t i = 0; i != 6; i++) {
         param_file >> flag;
