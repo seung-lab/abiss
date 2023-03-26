@@ -1,0 +1,2 @@
+[Credentials]
+gs_service_key_file=/workspace/seg/.cloudvolume/secrets/gsutil-secret.json
