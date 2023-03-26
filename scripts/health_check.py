@@ -13,12 +13,15 @@ def get_hostname():
     return data.split(".")[0]
 
 
-with open("/workspace/seg/.cloudvolume/secrets/param") as f:
-    data = json.load(f)
-    if "REDIS_SERVER" in data:
-        hostname = get_hostname()
-        r = redis.Redis(host=data["REDIS_SERVER"])
-        r.set(hostname, datetime.now().timestamp())
+try:
+    with open("/workspace/seg/.cloudvolume/secrets/param") as f:
+        data = json.load(f)
+        if "REDIS_SERVER" in data:
+            hostname = get_hostname()
+            r = redis.Redis(host=data["REDIS_SERVER"])
+            r.set(hostname, datetime.now().timestamp())
+except:
+    pass
 
 
 cpu_percent = sum(psutil.cpu_percent(5, percpu=True))

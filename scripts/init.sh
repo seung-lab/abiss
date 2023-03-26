@@ -28,7 +28,7 @@ timeit() {
     try $cmd
     local -i end=$(($(date +%s%N)/1000000))
     local -i duration=end-start
-    echo "${STATSD_PREFIX}.segmentation.${STAGE}.${task_tag}.duration:${duration}|ms" > /dev/udp/${STATSD_HOST:-"localhost"}/${STATSD_PORT:-"9125"}
+    echo "${STATSD_PREFIX}.segmentation.${STAGE}.${task_tag}.duration:${duration}|ms" > /dev/udp/${STATSD_HOST:-"localhost"}/${STATSD_PORT:-"9125"} || true
 }
 
 download_children() {
