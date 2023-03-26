@@ -89,7 +89,7 @@ export CLOUD_VOLUME_CACHE_DIR=${AIRFLOW_TMP_DIR}/cache
 
 SCRIPT_PATH="${WORKER_HOME}/scripts"
 BIN_PATH="${WORKER_HOME}/build"
-SECRETS=${SECRETS:-"/run/secrets"}
+SECRETS=${SECRETS:-"${WORKER_HOME}/.cloudvolume/secrets"}
 UPLOAD_CMD="gsutil -q -m cp"
 UPLOAD_ST_CMD="gsutil -q cp"
 DOWNLOAD_CMD="gsutil -m cp"

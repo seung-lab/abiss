@@ -102,6 +102,6 @@ RUN groupadd -r ${SEG_USER} \
 HEALTHCHECK --interval=60s --timeout=30s CMD python ${SEG_HOME}/scripts/health_check.py
 
 LABEL workspace_path=${SEG_HOME} \
-      mount_path="/run/secrets"
+      mount_path="${SEG_HOME}/.cloudvolume/secrets"
 
 USER ${SEG_USER}

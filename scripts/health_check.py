@@ -13,7 +13,7 @@ def get_hostname():
     return data.split(".")[0]
 
 
-with open("/run/secrets/param") as f:
+with open("/workspace/seg/.cloudvolume/secrets/param") as f:
     data = json.load(f)
     if "REDIS_SERVER" in data:
         hostname = get_hostname()
