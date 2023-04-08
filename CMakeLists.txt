@@ -16,6 +16,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Boost COMPONENTS iostreams system REQUIRED)
 find_package(Threads REQUIRED)
 find_package(OpenMP REQUIRED)
+find_package(TBB REQUIRED)
 find_package(absl)
 
 find_package(PkgConfig REQUIRED)
@@ -42,7 +43,7 @@ if(absl_FOUND)
     message(STATUS "Use abseil::flat_hash_map and absl::flat_hash_set")
 endif(absl_FOUND)
 
-link_libraries(tbb ${Boost_LIBRARIES} ${optionalLibs})
+link_libraries(TBB::tbb ${Boost_LIBRARIES} ${optionalLibs})
 
 if(EXTRACT_SIZE)
     add_definitions(-DEXTRACT_SIZE)
