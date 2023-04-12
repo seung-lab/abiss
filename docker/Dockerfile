@@ -14,7 +14,7 @@ WORKDIR ${SEG_HOME}
 COPY src ${SEG_HOME}/src
 COPY CMakeLists.txt ${SEG_HOME}
 COPY LICENSE ${SEG_HOME}
-COPY gsutil.boto ${SEG_HOME}
+COPY docker/gsutil.boto ${SEG_HOME}/gsutil.boto
 
 RUN savedAptMark="$(apt-mark showmanual)" \
     && apt-get update -y \
