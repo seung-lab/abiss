@@ -51,9 +51,9 @@ download_intermediary_files() {
     local -r flist="$1"
     local -r fpath="$2"
     if [ "$PARANOID" = "1" ]; then
-        awk -v fpath=$fpath -v ext="tar.${COMPRESSED_EXT}" '{printf "%s/%s.%s\n%s/%s.data.md5sum\n", fpath, $0, ext, fpath, $0}' $flist | $DOWNLOAD_CMD -I . || die "${FUNCNAME[0]} failed"
+        awk -v fpath=$fpath -v ext="tar.${COMPRESSED_EXT}" '{printf "%s/%s.%s\n%s/%s.data.md5sum\n", fpath, $0, ext, fpath, $0}' $flist | $PARALLEL_CMD $DOWNLOAD_CMD {} . || die "${FUNCNAME[0]} failed"
     else
-        awk -v fpath=$fpath -v ext="tar.${COMPRESSED_EXT}" '{printf "%s/%s.%s\n", fpath, $0, ext}' $flist | $DOWNLOAD_CMD -I . || die "${FUNCNAME[0]} failed"
+        awk -v fpath=$fpath -v ext="tar.${COMPRESSED_EXT}" '{printf "%s/%s.%s\n", fpath, $0, ext}' $flist | $PARALLEL_CMD $DOWNLOAD_CMD {} . || die "${FUNCNAME[0]} failed"
     fi
     cat $flist | $PARALLEL_CMD "tar axvf {}.tar.${COMPRESSED_EXT}" || die "${FUNCNAME[0]} failed"
     try rm *.tar.${COMPRESSED_EXT}
