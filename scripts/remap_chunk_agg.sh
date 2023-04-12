@@ -15,7 +15,7 @@ if [ "$CHUNKED_AGG_OUTPUT" = "1"  ]; then
     try taskset -c $cpuid python3 $SCRIPT_PATH/upload_chunk.py $1 $CHUNKED_SEG_PATH $SEG_MIP
     try mv chunkmap.data chunkmap_"${output}".data
     retry 10 $COMPRESS_CMD chunkmap_"${output}".data
-    retry 10 $UPLOAD_ST_CMD chunkmap_"${output}".data."${COMPRESSED_EXT}" "$CHUNKMAP_OUTPUT"/chunkmap_"${output}".data."${COMPRESSED_EXT}"
+    retry 10 $UPLOAD_CMD chunkmap_"${output}".data."${COMPRESSED_EXT}" "$CHUNKMAP_OUTPUT"/chunkmap_"${output}".data."${COMPRESSED_EXT}"
 fi
 
 try python3 $SCRIPT_PATH/merge_remaps.py $1
