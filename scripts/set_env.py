@@ -2,7 +2,17 @@ import os
 import sys
 import json
 
-env = ["SCRATCH_PATH", "CHUNKMAP_INPUT", "CHUNKMAP_OUTPUT", "AFF_PATH", "AFF_MIP", "SEM_PATH", "SEM_MIP", "WS_PATH", "SEG_PATH", "WS_HIGH_THRESHOLD", "WS_LOW_THRESHOLD", "WS_SIZE_THRESHOLD", "AGG_THRESHOLD", "GT_PATH", "CLEFT_PATH", "MYELIN_THRESHOLD", "ADJUSTED_AFF_PATH", "CHUNKED_AGG_OUTPUT", "CHUNKED_SEG_PATH", "REDIS_SERVER", "REDIS_DB", "STATSD_HOST", "STATSD_PORT", "STATSD_PREFIX", "PARANOID", "BOTO_CONFIG"]
+
+def default_io_cmd(path):
+    if path.startswith("gs://"):
+        return "gsutil -m cp"
+    elif path.startswith("s3://"):
+        return "s5cmd cp"
+    else:
+        return "cloudfiles cp"
+
+
+env = ["SCRATCH_PATH", "CHUNKMAP_INPUT", "CHUNKMAP_OUTPUT", "AFF_PATH", "AFF_MIP", "SEM_PATH", "SEM_MIP", "WS_PATH", "SEG_PATH", "WS_HIGH_THRESHOLD", "WS_LOW_THRESHOLD", "WS_SIZE_THRESHOLD", "AGG_THRESHOLD", "GT_PATH", "CLEFT_PATH", "MYELIN_THRESHOLD", "ADJUSTED_AFF_PATH", "CHUNKED_AGG_OUTPUT", "CHUNKED_SEG_PATH", "REDIS_SERVER", "REDIS_DB", "STATSD_HOST", "STATSD_PORT", "STATSD_PREFIX", "PARANOID", "BOTO_CONFIG", "UPLOAD_CMD", "DOWNLOAD_CMD"]
 
 with open(sys.argv[1]) as f:
     data = json.load(f)
@@ -29,7 +39,13 @@ else:
     data["PARANOID"] = 0
 
 if "gsutil-secret.json" in data.get("MOUNT_SECRETS", []):
-    data["BOTO_CONFIG"]="~/gsutil.boto"
+    data["BOTO_CONFIG"] = "~/gsutil.boto"
+
+if "UPLOAD_CMD" not in data:
+    data["UPLOAD_CMD"] = data.get("DOWNLOAD_CMD", default_io_cmd(data["SCRATCH_PATH"]))
+
+if "DOWNLOAD_CMD" not in data:
+    data["DOWNLOAD_CMD"] = data.get("UPLOAD_CMD", default_io_cmd(data["SCRATCH_PATH"]))
 
 for e in env:
     if e in data:

@@ -90,16 +90,6 @@ export CLOUD_VOLUME_CACHE_DIR=${AIRFLOW_TMP_DIR}/cache
 SCRIPT_PATH="${WORKER_HOME}/scripts"
 BIN_PATH="${WORKER_HOME}/build"
 SECRETS=${SECRETS:-"${WORKER_HOME}/.cloudvolume/secrets"}
-UPLOAD_CMD="gsutil -q -m cp"
-UPLOAD_ST_CMD="gsutil -q cp"
-DOWNLOAD_CMD="gsutil -m cp"
-DOWNLOAD_ST_CMD="gsutil cp"
-COMPRESS_CMD="zstd -9 --rm -T0"
-COMPRESSST_CMD="zstd -9 --rm"
-PARALLEL_CMD="parallel --halt 2 -j ${ncpus}"
-COMPRESSED_EXT="zst"
-META=""
-
 export PARAM_JSON=$SECRETS/param
 #export PARAM_JSON="$SCRIPT_PATH"/param.json
 
@@ -113,6 +103,13 @@ if [ -f "$SECRETS"/s3-secret ] && [ ! -f "$WORKER_HOME"/.aws/credentials ]; then
 fi
 
 try source $SECRETS/config.sh
+
+COMPRESS_CMD="zstd -9 --rm -T0"
+PARALLEL_CMD="parallel --halt 2 -j ${ncpus}"
+COMPRESSED_EXT="zst"
+META=""
+
+
 #try . /root/google-cloud-sdk/path.bash.inc
 
 export SEG_MIP=0
