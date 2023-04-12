@@ -70,7 +70,7 @@ for d in $META; do
     fi
 done
 
-retry 10 $UPLOAD_CMD -r "agg_out/*" $FILE_PATH
+retry 10 $UPLOAD_CMD -r "agg_out/*" $FILE_PATH/
 
 try rm -rf chunked_rg
 try rm -rf remap

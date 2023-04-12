@@ -106,7 +106,7 @@ fi
 
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > agg_out/"${SCRATCH}"/"${output}".tar."${COMPRESSED_EXT}"
 
-retry 10 $UPLOAD_CMD -r "agg_out/*" $FILE_PATH
+retry 10 $UPLOAD_CMD -r "agg_out/*" $FILE_PATH/
 
 for fn in $(cat filelist.txt)
 do
