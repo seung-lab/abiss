@@ -107,6 +107,11 @@ if [ ! -f "$SECRETS"/config.sh  ]; then
     try python3 $SCRIPT_PATH/set_env.py $PARAM_JSON > $SECRETS/config.sh
 fi
 
+if [ -f "$SECRETS"/s3-secret ] && [ ! -f "$WORKER_HOME"/.aws/credentials ]; then
+    try mkdir "$WORKER_HOME"/.aws
+    try cp "$SECRETS"/s3-secret "$WORKER_HOME"/.aws/credentials
+fi
+
 try source $SECRETS/config.sh
 #try . /root/google-cloud-sdk/path.bash.inc
 
