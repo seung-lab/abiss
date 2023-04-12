@@ -3,16 +3,17 @@ set -euo pipefail
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
 output_chunk=`basename $1 .json`
+output_path=out/agg
 try acquire_cpu_slot
 
 just_in_case rm -rf remap
 just_in_case rm -rf chunked_rg
-just_in_case rm -rf agg_out
+just_in_case rm -rf ${output_path}
 
 try mkdir remap
 try mkdir chunked_rg
 
-try mkdir -p agg_out/{info,scratch}
+try mkdir -p ${output_path}/{info,scratch}
 
 for d in $META; do
     echo "create $d"
@@ -44,14 +45,14 @@ try cat remap.data >> localmap.data
 try taskset -c $cpuid $BIN_PATH/split_remap chunk_offset.txt $output_chunk
 try taskset -c $cpuid $BIN_PATH/assort $output_chunk $META
 
-try mv done_segments.data agg_out/info/info_"$output_chunk".data
-try mv done_sem.data agg_out/info/semantic_labels_"$output_chunk".data
-try mv done_size.data agg_out/info/seg_size_"$output_chunk".data
-try mv sem_cuts.data agg_out/info/sem_rejected_edges_"$output_chunk".log
-try mv rejected_edges.log agg_out/info/size_rejected_edges_"$output_chunk".log
-try mv twig_edges.log agg_out/info/twig_edges_"$output_chunk".log
-try mv chunked_rg agg_out
-try mv remap agg_out
+try mv done_segments.data ${output_path}/info/info_"$output_chunk".data
+try mv done_sem.data ${output_path}/info/semantic_labels_"$output_chunk".data
+try mv done_size.data ${output_path}/info/seg_size_"$output_chunk".data
+try mv sem_cuts.data ${output_path}/info/sem_rejected_edges_"$output_chunk".log
+try mv rejected_edges.log ${output_path}/info/size_rejected_edges_"$output_chunk".log
+try mv twig_edges.log ${output_path}/info/twig_edges_"$output_chunk".log
+try mv chunked_rg ${output_path}
+try mv remap ${output_path}
 
 try mv residual_rg.data residual_rg_"$output_chunk".data
 try mv ongoing_segments.data ongoing_supervoxel_counts_"$output_chunk".data
@@ -59,10 +60,10 @@ try mv ongoing_sem.data ongoing_semantic_labels_"$output_chunk".data
 try mv ongoing_size.data ongoing_seg_size_"$output_chunk".data
 
 if [ "$PARANOID" = "1" ]; then
-    try md5sum *_"${output_chunk}".data > agg_out/scratch/"${output_chunk}".data.md5sum
+    try md5sum *_"${output_chunk}".data > ${output_path}/scratch/"${output_chunk}".data.md5sum
 fi
 
-try tar -cvf - *_"${output_chunk}".data | $COMPRESS_CMD > agg_out/scratch/"${output_chunk}".tar."${COMPRESSED_EXT}"
+try tar -cvf - *_"${output_chunk}".data | $COMPRESS_CMD > ${output_path}/scratch/"${output_chunk}".tar."${COMPRESSED_EXT}"
 
 for d in $META; do
     if [ "$(ls -A $d)"  ]; then
@@ -70,11 +71,11 @@ for d in $META; do
     fi
 done
 
-retry 10 $UPLOAD_CMD "agg_out/*" $FILE_PATH/
+retry 10 $UPLOAD_CMD "${output_path}" $SCRATCH_PATH/
 
 try rm -rf chunked_rg
 try rm -rf remap
-try rm -rf agg_out
+try rm -rf ${output_path}
 
 for d in $META; do
     try rm -rf $d

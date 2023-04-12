@@ -3,9 +3,10 @@ set -euo pipefail
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
 output_chunk=`basename $1 .json`
+output_path=out/agg
 
 just_in_case rm -rf remap
-just_in_case rm -rf agg_out
+just_in_case rm -rf ${output_path}
 
 if [ "$OVERLAP" = "2"  ]; then
     SCRATCH="scratch2"
@@ -16,7 +17,7 @@ fi
 try mkdir remap
 try touch remap/.nonempty_"$output_chunk".txt
 
-try mkdir -p agg_out/{info,$SCRATCH}
+try mkdir -p ${output_path}/{info,$SCRATCH}
 
 for d in $META; do
     just_in_case rm -rf $d
@@ -83,13 +84,13 @@ if [ "$OVERLAP" = "2" ]; then
     done
 fi
 
-try mv done_segments.data agg_out/info/info_"$output_chunk".data
-try mv done_sem.data agg_out/info/semantic_labels_"$output_chunk".data
-try mv done_size.data agg_out/info/seg_size_"$output_chunk".data
-try mv sem_cuts.data agg_out/info/sem_rejected_edges_"$output_chunk".log
-try mv rejected_edges.log agg_out/info/size_rejected_edges_"$output_chunk".log
-try mv twig_edges.log agg_out/info/twig_edges_"$output_chunk".log
-try mv remap agg_out
+try mv done_segments.data ${output_path}/info/info_"$output_chunk".data
+try mv done_sem.data ${output_path}/info/semantic_labels_"$output_chunk".data
+try mv done_size.data ${output_path}/info/seg_size_"$output_chunk".data
+try mv sem_cuts.data ${output_path}/info/sem_rejected_edges_"$output_chunk".log
+try mv rejected_edges.log ${output_path}/info/size_rejected_edges_"$output_chunk".log
+try mv twig_edges.log ${output_path}/info/twig_edges_"$output_chunk".log
+try mv remap ${output_path}
 
 try mv residual_rg.data residual_rg_"$output_chunk".data
 try mv ongoing_segments.data ongoing_supervoxel_counts_"$output_chunk".data
@@ -101,12 +102,12 @@ if [ -n "$META" ]; then
 fi
 
 if [ "$PARANOID" = "1" ]; then
-    try md5sum *_"${output_chunk}".data > agg_out/"${SCRATCH}"/"${output_chunk}".data.md5sum
+    try md5sum *_"${output_chunk}".data > ${output_path}/"${SCRATCH}"/"${output_chunk}".data.md5sum
 fi
 
-try tar -cf - *_"${output_chunk}".data | $COMPRESS_CMD > agg_out/"${SCRATCH}"/"${output_chunk}".tar."${COMPRESSED_EXT}"
+try tar -cf - *_"${output_chunk}".data | $COMPRESS_CMD > ${output_path}/"${SCRATCH}"/"${output_chunk}".tar."${COMPRESSED_EXT}"
 
-retry 10 $UPLOAD_CMD "agg_out/*" $FILE_PATH/
+retry 10 $UPLOAD_CMD "${output_path}" $SCRATCH_PATH/
 
 for fn in $(cat filelist.txt)
 do
@@ -114,7 +115,7 @@ do
 done
 
 try rm -rf remap
-try rm -rf agg_out
+try rm -rf ${output_path}
 
 for d in $META; do
     try rm -rf $d

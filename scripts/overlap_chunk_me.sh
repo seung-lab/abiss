@@ -3,8 +3,9 @@ set -euo pipefail
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
 output_chunk=`basename $1 .json`
+output_path=out/agg
 
-try mkdir -p agg_out/{info,scratch2}
+try mkdir -p ${output_path}/{info,scratch2}
 
 for fn in $(cat filelist.txt)
 do
@@ -59,14 +60,14 @@ try mv reduced_ongoing_supervoxel_counts_"$output_chunk".data ongoing_supervoxel
 try mv reduced_ongoing_semantic_labels_"$output_chunk".data ongoing_semantic_labels_"$output_chunk".data
 try mv reduced_ongoing_seg_size_"$output_chunk".data ongoing_seg_size_"$output_chunk".data
 
-try mv done_segments.data agg_out/info/info_"$output_chunk"_extra.data
-try mv done_sem.data agg_out/info/semantic_labels_"$output_chunk"_extra.data
-try mv done_size.data agg_out/info/seg_size_"$output_chunk"_extra.data
-try mv sem_cuts.data agg_out/info/sem_rejected_edges_"$output_chunk"_extra.log
+try mv done_segments.data ${output_path}/info/info_"$output_chunk"_extra.data
+try mv done_sem.data ${output_path}/info/semantic_labels_"$output_chunk"_extra.data
+try mv done_size.data ${output_path}/info/seg_size_"$output_chunk"_extra.data
+try mv sem_cuts.data ${output_path}/info/sem_rejected_edges_"$output_chunk"_extra.log
 
 if [ "$PARANOID" = "1" ]; then
-    try md5sum *_"${output_chunk}".data > agg_out/scratch2/"${output_chunk}".data.md5sum
+    try md5sum *_"${output_chunk}".data > ${output_path}/scratch2/"${output_chunk}".data.md5sum
 fi
-try tar -cf - *_"${output_chunk}".data | $COMPRESS_CMD > agg_out/scratch2/"${output_chunk}".tar."${COMPRESSED_EXT}"
-retry 10 $UPLOAD_CMD "agg_out/*" $FILE_PATH/
-try rm -rf agg_out
+try tar -cf - *_"${output_chunk}".data | $COMPRESS_CMD > ${output_path}/scratch2/"${output_chunk}".tar."${COMPRESSED_EXT}"
+retry 10 $UPLOAD_CMD "${output_path}" $SCRATCH_PATH/
+try rm -rf ${output_path}
