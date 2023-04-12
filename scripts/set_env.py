@@ -1,18 +1,27 @@
 import os
 import sys
 import json
+import cloudfiles.paths
 
 
 def default_io_cmd(path):
-    if path.startswith("gs://"):
+    try:
+        d = cloudfiles.paths.extract(path)
+    except:
+        return "cloudfiles cp -r"
+
+    if d.protocol == "gs":
         return "gsutil -m cp -r"
-    elif path.startswith("s3://"):
-        return "s5cmd cp"
+    elif d.protocol == "s3":
+        if d.host:
+            return f"s5cmd --endpoint-url {d.host} cp"
+        else:
+            return "s5cmd cp"
     else:
         return "cloudfiles cp -r"
 
 
-env = ["SCRATCH_PATH", "CHUNKMAP_INPUT", "CHUNKMAP_OUTPUT", "AFF_PATH", "AFF_MIP", "SEM_PATH", "SEM_MIP", "WS_PATH", "SEG_PATH", "WS_HIGH_THRESHOLD", "WS_LOW_THRESHOLD", "WS_SIZE_THRESHOLD", "AGG_THRESHOLD", "GT_PATH", "CLEFT_PATH", "MYELIN_THRESHOLD", "ADJUSTED_AFF_PATH", "CHUNKED_AGG_OUTPUT", "CHUNKED_SEG_PATH", "REDIS_SERVER", "REDIS_DB", "STATSD_HOST", "STATSD_PORT", "STATSD_PREFIX", "PARANOID", "BOTO_CONFIG", "UPLOAD_CMD", "DOWNLOAD_CMD"]
+env = ["SCRATCH_PATH", "CHUNKMAP_INPUT", "CHUNKMAP_OUTPUT", "AFF_PATH", "AFF_MIP", "SEM_PATH", "SEM_MIP", "WS_PATH", "SEG_PATH", "WS_HIGH_THRESHOLD", "WS_LOW_THRESHOLD", "WS_SIZE_THRESHOLD", "AGG_THRESHOLD", "GT_PATH", "CLEFT_PATH", "MYELIN_THRESHOLD", "ADJUSTED_AFF_PATH", "CHUNKED_AGG_OUTPUT", "CHUNKED_SEG_PATH", "REDIS_SERVER", "REDIS_DB", "STATSD_HOST", "STATSD_PORT", "STATSD_PREFIX", "PARANOID", "BOTO_CONFIG", "UPLOAD_CMD", "DOWNLOAD_CMD", "IO_SCRATCH_PATH"]
 
 with open(sys.argv[1]) as f:
     data = json.load(f)
@@ -24,6 +33,16 @@ for s in ["SCRATCH", "WS", "SEG"]:
     path = "{}_PATH".format(s)
     if path not in data:
         data[path] = data[prefix]+data["NAME"]
+
+extracted_path = cloudfiles.paths.extract(data["SCRATCH_PATH"])
+if extracted_path.alias or extracted_path.host:
+    data["IO_SCRATCH_PATH"] = cloudfiles.paths.asprotocolpath(extracted_path._replace(alias=None, host=None))
+else:
+    data["IO_SCRATCH_PATH"] = data["SCRATCH_PATH"]
+
+if "CHUNKMAP_OUTPUT" in data:
+    d = cloudfiles.paths.extract(data["CHUNKMAP_OUTPUT"])
+    data["CHUNKMAP_OUTPUT"] = cloudfiles.paths.asprotocolpath(d._replace(alias=None, host=None))
 
 if "CHUNKMAP_INPUT" not in data:
     data["CHUNKMAP_INPUT"] = os.path.join(data["SCRATCH_PATH"], "ws", "chunkmap")

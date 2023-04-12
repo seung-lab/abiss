@@ -107,7 +107,7 @@ fi
 
 try tar -cf - *_"${output_chunk}".data | $COMPRESS_CMD > ${output_path}/"${SCRATCH}"/"${output_chunk}".tar."${COMPRESSED_EXT}"
 
-retry 10 $UPLOAD_CMD "${output_path}" $SCRATCH_PATH/
+retry 10 $UPLOAD_CMD "${output_path}" $IO_SCRATCH_PATH/
 
 for fn in $(cat filelist.txt)
 do

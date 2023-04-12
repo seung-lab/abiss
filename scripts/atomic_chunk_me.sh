@@ -71,7 +71,7 @@ for d in $META; do
     fi
 done
 
-retry 10 $UPLOAD_CMD "${output_path}" $SCRATCH_PATH/
+retry 10 $UPLOAD_CMD "${output_path}" $IO_SCRATCH_PATH/
 
 try rm -rf chunked_rg
 try rm -rf remap

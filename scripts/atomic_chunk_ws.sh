@@ -17,6 +17,6 @@ if [ "$PARANOID" = "1" ]; then
     try md5sum *_"${output_chunk}".data > ${output_path}/dend/"${output_chunk}".data.md5sum
 fi
 try tar -cvf - *_"${output_chunk}".data | $COMPRESS_CMD > ${output_path}/dend/"${output_chunk}".tar."${COMPRESSED_EXT}"
-retry 10 $UPLOAD_CMD "${output_path}" $SCRATCH_PATH/
+retry 10 $UPLOAD_CMD "${output_path}" $IO_SCRATCH_PATH/
 try rm -rf ${output_path}
 try release_cpu_slot

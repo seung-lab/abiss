@@ -23,6 +23,6 @@ fi
 
 try tar -cf - *_"${output_chunk}".data | $COMPRESS_CMD > ${output_path}/dend/"${output_chunk}".tar."${COMPRESSED_EXT}"
 
-retry 10 $UPLOAD_CMD "${output_path}" $SCRATCH_PATH/
+retry 10 $UPLOAD_CMD "${output_path}" $IO_SCRATCH_PATH/
 
 try rm -rf ${output_path}
