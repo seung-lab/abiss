@@ -5,11 +5,11 @@ import json
 
 def default_io_cmd(path):
     if path.startswith("gs://"):
-        return "gsutil -m cp"
+        return "gsutil -m cp -r"
     elif path.startswith("s3://"):
         return "s5cmd cp"
     else:
-        return "cloudfiles cp"
+        return "cloudfiles cp -r"
 
 
 env = ["SCRATCH_PATH", "CHUNKMAP_INPUT", "CHUNKMAP_OUTPUT", "AFF_PATH", "AFF_MIP", "SEM_PATH", "SEM_MIP", "WS_PATH", "SEG_PATH", "WS_HIGH_THRESHOLD", "WS_LOW_THRESHOLD", "WS_SIZE_THRESHOLD", "AGG_THRESHOLD", "GT_PATH", "CLEFT_PATH", "MYELIN_THRESHOLD", "ADJUSTED_AFF_PATH", "CHUNKED_AGG_OUTPUT", "CHUNKED_SEG_PATH", "REDIS_SERVER", "REDIS_DB", "STATSD_HOST", "STATSD_PORT", "STATSD_PREFIX", "PARANOID", "BOTO_CONFIG", "UPLOAD_CMD", "DOWNLOAD_CMD"]

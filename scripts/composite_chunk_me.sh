@@ -97,7 +97,7 @@ try mv ongoing_sem.data ongoing_semantic_labels_"$output".data
 try mv ongoing_size.data ongoing_seg_size_"$output".data
 
 if [ -n "$META" ]; then
-    retry 10 $PARALLEL_CMD $UPLOAD_CMD -r {} $FILE_PATH/ ::: $META
+    retry 10 $PARALLEL_CMD $UPLOAD_CMD {} $FILE_PATH/ ::: $META
 fi
 
 if [ "$PARANOID" = "1" ]; then
@@ -106,7 +106,7 @@ fi
 
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > agg_out/"${SCRATCH}"/"${output}".tar."${COMPRESSED_EXT}"
 
-retry 10 $UPLOAD_CMD -r "agg_out/*" $FILE_PATH/
+retry 10 $UPLOAD_CMD "agg_out/*" $FILE_PATH/
 
 for fn in $(cat filelist.txt)
 do

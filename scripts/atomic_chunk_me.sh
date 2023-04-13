@@ -66,11 +66,11 @@ try tar -cvf - *_"${output}".data | $COMPRESS_CMD > agg_out/scratch/"${output}".
 
 for d in $META; do
     if [ "$(ls -A $d)"  ]; then
-        try $UPLOAD_CMD -r $d $FILE_PATH/
+        try $UPLOAD_CMD $d $FILE_PATH/
     fi
 done
 
-retry 10 $UPLOAD_CMD -r "agg_out/*" $FILE_PATH/
+retry 10 $UPLOAD_CMD "agg_out/*" $FILE_PATH/
 
 try rm -rf chunked_rg
 try rm -rf remap

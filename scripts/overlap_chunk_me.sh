@@ -68,5 +68,5 @@ if [ "$PARANOID" = "1" ]; then
     try md5sum *_"${output}".data > agg_out/scratch2/"${output}".data.md5sum
 fi
 try tar -cf - *_"${output}".data | $COMPRESS_CMD > agg_out/scratch2/"${output}".tar."${COMPRESSED_EXT}"
-retry 10 $UPLOAD_CMD -r "agg_out/*" $FILE_PATH/
+retry 10 $UPLOAD_CMD "agg_out/*" $FILE_PATH/
 try rm -rf agg_out
