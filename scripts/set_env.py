@@ -34,11 +34,20 @@ for s in ["SCRATCH", "WS", "SEG"]:
     if path not in data:
         data[path] = data[prefix]+data["NAME"]
 
-extracted_path = cloudfiles.paths.extract(data["SCRATCH_PATH"])
-if extracted_path.alias or extracted_path.host:
-    data["IO_SCRATCH_PATH"] = cloudfiles.paths.asprotocolpath(extracted_path._replace(alias=None, host=None))
-else:
+if "UPLOAD_CMD" not in data:
+    data["UPLOAD_CMD"] = data.get("DOWNLOAD_CMD", default_io_cmd(data["SCRATCH_PATH"]))
+
+if "DOWNLOAD_CMD" not in data:
+    data["DOWNLOAD_CMD"] = data.get("UPLOAD_CMD", default_io_cmd(data["SCRATCH_PATH"]))
+
+if data["UPLOAD_CMD"].startswith("cloudfiles") and data["DOWNLOAD_CMD"].startswith("cloudfiles"):
     data["IO_SCRATCH_PATH"] = data["SCRATCH_PATH"]
+else:
+    extracted_path = cloudfiles.paths.extract(data["SCRATCH_PATH"])
+    if extracted_path.alias or extracted_path.host:
+        data["IO_SCRATCH_PATH"] = cloudfiles.paths.asprotocolpath(extracted_path._replace(alias=None, host=None))
+    else:
+        data["IO_SCRATCH_PATH"] = data["SCRATCH_PATH"]
 
 if "CHUNKMAP_OUTPUT" in data:
     d = cloudfiles.paths.extract(data["CHUNKMAP_OUTPUT"])
@@ -59,12 +68,6 @@ else:
 
 if "gsutil-secret.json" in data.get("MOUNT_SECRETS", []):
     data["BOTO_CONFIG"] = "~/gsutil.boto"
-
-if "UPLOAD_CMD" not in data:
-    data["UPLOAD_CMD"] = data.get("DOWNLOAD_CMD", default_io_cmd(data["SCRATCH_PATH"]))
-
-if "DOWNLOAD_CMD" not in data:
-    data["DOWNLOAD_CMD"] = data.get("UPLOAD_CMD", default_io_cmd(data["SCRATCH_PATH"]))
 
 for e in env:
     if e in data:
