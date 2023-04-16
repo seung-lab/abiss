@@ -1,5 +1,6 @@
 import sys
 import json
+import socket
 import requests
 import psutil
 import redis
@@ -9,8 +10,11 @@ METADATA_URL = "http://metadata.google.internal/computeMetadata/v1/instance/"
 METADATA_HEADERS = {'Metadata-Flavor': 'Google'}
 
 def get_hostname():
-    data = requests.get(METADATA_URL + 'hostname', headers=METADATA_HEADERS).text
-    return data.split(".")[0]
+    try:
+        data = requests.get(METADATA_URL + 'hostname', headers=METADATA_HEADERS).text
+        return data.split(".")[0]
+    except:
+        return socket.gethostname()
 
 
 try:
