@@ -188,8 +188,7 @@ def download_slice(prefix, tag, offset):
     import binascii
     import numpy as np
     chunkid = np.uint64(offset)
-    print(os.path.join(os.environ['FILE_PATH']), f'{prefix}_{tag}.data')
-    cf = CloudFiles(os.path.join(os.environ['FILE_PATH']))
+    cf = CloudFiles(os.path.join(os.environ['SCRATCH_PATH'], os.environ['STAGE']))
     header = cf[f'{prefix}_{tag}.data', 0:20]
     print(header[:4])
     idx_info = np.frombuffer(header[4:],dtype='uint64')

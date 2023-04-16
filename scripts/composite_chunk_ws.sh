@@ -2,26 +2,27 @@
 set -euo pipefail
 INIT_PATH="$(dirname "$0")"
 . ${INIT_PATH}/init.sh $1
-output=`basename $1 .json`
+output_chunk=`basename $1 .json`
+output_path=out/ws
 
-just_in_case rm -rf ws_out
-try mkdir -p ws_out/{dend,remap}
+just_in_case rm -rf ${output_path}
+try mkdir -p ${output_path}/{dend,remap}
 
 
 try download_children $1 $FILE_PATH/dend
 
 try python3 $SCRIPT_PATH/merge_chunks_ws.py $1
-#try $BIN_PATH/ws2 param.txt $output >& debug_"${output}".log
-try $BIN_PATH/ws2 param.txt $WS_HIGH_THRESHOLD $WS_LOW_THRESHOLD $WS_SIZE_THRESHOLD $output
+#try $BIN_PATH/ws2 param.txt $output_chunk >& debug_"${output_chunk}".log
+try $BIN_PATH/ws2 param.txt $WS_HIGH_THRESHOLD $WS_LOW_THRESHOLD $WS_SIZE_THRESHOLD $output_chunk
 
-try mv done_{pre,post}_"${output}".data ws_out/remap
+try mv done_{pre,post}_"${output_chunk}".data ${output_path}/remap
 
 if [ "$PARANOID" = "1" ]; then
-    try md5sum *_"${output}".data > ws_out/dend/"${output}".data.md5sum
+    try md5sum *_"${output_chunk}".data > ${output_path}/dend/"${output_chunk}".data.md5sum
 fi
 
-try tar -cf - *_"${output}".data | $COMPRESS_CMD > ws_out/dend/"${output}".tar."${COMPRESSED_EXT}"
+try tar -cf - *_"${output_chunk}".data | $COMPRESS_CMD > ${output_path}/dend/"${output_chunk}".tar."${COMPRESSED_EXT}"
 
-retry 10 $UPLOAD_CMD -r ws_out/* $FILE_PATH
+retry 10 $UPLOAD_CMD "${output_path}" $IO_SCRATCH_PATH/
 
-try rm -rf ws_out
+try rm -rf ${output_path}
