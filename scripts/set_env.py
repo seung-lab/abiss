@@ -26,7 +26,7 @@ env = ["SCRATCH_PATH", "CHUNKMAP_INPUT", "CHUNKMAP_OUTPUT", "AFF_PATH", "AFF_MIP
 with open(sys.argv[1]) as f:
     data = json.load(f)
 
-data["STATSD_PREFIX"] = data["NAME"]
+data["STATSD_PREFIX"] = data["NAME"].replace(".", "_")
 
 for s in ["SCRATCH", "WS", "SEG"]:
     prefix = "{}_PREFIX".format(s)
