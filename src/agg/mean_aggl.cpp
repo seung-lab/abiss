@@ -127,8 +127,8 @@ struct agglomeration_size_heuristic_t
 
 struct agglomeration_semantic_heuristic_t
 {
-    aff_t aff_threshold = 0.5;
-    size_t total_signal_threshold = 100'000;
+    aff_t aff_threshold = 0.9;
+    size_t total_signal_threshold = 50;
     double dominant_signal_ratio = 0.6;
 };
 
