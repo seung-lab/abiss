@@ -48,6 +48,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && pip install --no-cache-dir -U pip \
     && pip install --no-cache-dir -U --compile --global-option=build git+https://github.com/seung-lab/chunk_iterator#egg=chunk-iterator \
     && pip install --no-cache-dir -U cloud-volume \
+    && pip install --no-cache-dir cloud-files==4.19.1 \
     && cd ${SEG_HOME} \
     && git clone --depth 1 https://github.com/abseil/abseil-cpp.git \
     && cd abseil-cpp && mkdir build && cd build \
