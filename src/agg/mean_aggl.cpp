@@ -269,10 +269,10 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
     std::sort(std::execution::par, std::begin(sem_array), std::end(sem_array), [](auto & a, auto & b) { return a.first < b.first; });
 
     for (auto & [k, v] : sem_array) {
-        if (sem_counts[k][0] > 0 and v[0] > 0 and v[0] != sem_counts[k][0]) {
-            sem_counts[k][1] = 1;
+        if (v[0] == 0) {
+            continue;
         }
-        if (v[0] > 0) {
+        if (sem_counts[k][0] == 0 or v[1] > sem_counts[k][1]) {
             sem_counts[k] = v;
         }
     }
@@ -629,9 +629,6 @@ std::pair<size_t, size_t> sem_label(const sem_array_t & labels)
 
 bool sem_can_merge(const sem_array_t & labels1, const sem_array_t & labels2, const agglomeration_semantic_heuristic_t & sem_params)
 {
-    if (labels1[1] > 0 or labels2[1] > 0) {
-        return false;
-    }
     if (labels1[0] == 0 or labels2[0] == 0 or labels1[0] == labels2[0]) {
         return true;
     } else {
