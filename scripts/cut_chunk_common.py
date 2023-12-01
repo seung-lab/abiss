@@ -42,7 +42,9 @@ def cut_data(data, start_coord, end_coord, padding):
     bb = tuple(slice(start_coord[i], end_coord[i]) for i in range(3))
     if data.shape[3] == 1:
         if data.dtype == 'float32':
-            return pad_data(numpy.stack([numpy.squeeze(data[bb])]*3, axis=-1), padding)
+            pmap = numpy.squeeze(data[bb])
+            affinity = [numpy.minimum(numpy.roll(pmap, shift=1, axis=axis), pmap) for axis in range(3)]
+            return pad_data(numpy.stack(affinity, axis=-1), padding)
         else:
             return pad_data(data[bb], padding)
     elif data.shape[3] == 3:
