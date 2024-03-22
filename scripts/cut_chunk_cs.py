@@ -32,11 +32,11 @@ start_coord = [bbox[i]-1+boundary_flags[i] for i in range(3)]
 end_coord = [bbox[i+3]+1-boundary_flags[i+3] for i in range(3)]
 
 if "AFF_PATH" in global_param:
-    aff = load_data(global_param['AFF_PATH'],mip=global_param['AFF_RESOLUTION'],fill_missing=False)
+    aff = load_data(global_param['AFF_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=global_param.get('AFF_FILL_MISSING', False))
     aff_cutout = cut_data(aff, start_coord, end_coord, boundary_flags)
     save_raw_data("aff.raw", aff_cutout)
 
-seg = load_data(os.environ['SEG_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=True)
+seg = load_data(os.environ['SEG_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=global_param.get('SEG_FILL_MISSING', False))
 seg_cutout = cut_data(seg, start_coord, end_coord, boundary_flags)
 save_raw_data("seg.raw", seg_cutout)
 

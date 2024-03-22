@@ -24,11 +24,11 @@ print(aff_bbox)
 boundary_flags = param["boundary_flags"]
 offset = param["offset"]
 
-aff = load_data(global_param['AFF_PATH'],mip=global_param['AFF_RESOLUTION'],fill_missing=False)
+aff = load_data(global_param['AFF_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=global_param.get('AFF_FILL_MISSING', False))
 aff_cutout = adjust_affinitymap(aff, aff_bbox, boundary_flags, 1, 1)
 
 if "SEM_PATH" in global_param and global_param.get("SEMANTIC_WS", False):
-    sem = load_data(global_param['SEM_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=False)
+    sem = load_data(global_param['SEM_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=global_param.get('SEM_FILL_MISSING', False))
     aff_cutout = mask_affinity_with_semantic_labels(aff_cutout, sem, bbox, boundary_flags, 1, 1)
 
 if 'ADJUSTED_AFF_PATH' in global_param:
