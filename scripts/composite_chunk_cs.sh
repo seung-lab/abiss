@@ -7,7 +7,7 @@ output_chunk=`basename $1 .json`
 just_in_case rm -rf remap
 try mkdir remap
 
-try download_children $1 $FILE_PATH/$SCRATCH
+try download_children $1 $FILE_PATH/scratch
 
 try python3 $SCRIPT_PATH/merge_chunks_cs.py $1
 
