@@ -21,7 +21,7 @@ extensions = [
         include_dirs=include_dirs,
         language='c++',
         # extra_link_args=['-lboost_iostreams', '-fopenmp', '-ltbb'],  # only necessary for when agg is included
-        extra_compile_args=['-std=c++20', '-w'],
+        extra_compile_args=['-std=c++17', '-w'],
         # undef_macros=["NDEBUG"],
     )
 ]
