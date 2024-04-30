@@ -10,7 +10,7 @@ def chunk_origin(bbox):
             offset[i] -= 1
     return offset
 
-def write_metadata(fn, offset, size, ac_offset, low, high):
+def write_metadata(fn, offset, size, ac_offset, low, high, boundaries):
     with open(fn, "w") as f:
         f.write(" ".join([str(x) for x in offset]))
         f.write("\n")
@@ -19,6 +19,8 @@ def write_metadata(fn, offset, size, ac_offset, low, high):
         f.write(str(ac_offset))
         f.write("\n")
         f.write(" ".join([str(low), str(high)]))
+        f.write("\n")
+        f.write(" ".join([str(x) for x in boundaries]))
 
 param = read_inputs(sys.argv[1])
 global_param = read_inputs(os.environ['PARAM_JSON'])
@@ -44,4 +46,4 @@ high_th = float(global_param.get('CS_HIGH_THRESHOLD', 1.0))
 low_th = float(global_param.get('CS_LOW_THRESHOLD', 0.0))
 
 
-write_metadata("param.txt", chunk_origin(bbox), seg_cutout.shape[0:3], offset, low_th, high_th)
+write_metadata("param.txt", chunk_origin(bbox), seg_cutout.shape[0:3], offset, low_th, high_th, boundary_flags)
