@@ -129,6 +129,7 @@ def mask_affinity_with_semantic_labels(aff_cutout, sem, bbox, boundary_flags, pa
                                 (1-offsets[i][1]):sem_shape[1]-offsets[i][1],
                                 (1-offsets[i][2]):sem_shape[2]-offsets[i][2]]
         #aff_i[numpy.logical_and(sem_aligned > 0, sem_offset == sem_aligned)] = 1.0
-        aff_i[sem_offset != sem_aligned] = 0
+        mask = numpy.logical_and(numpy.logical_and(sem_offset != 0, sem_aligned != 0), sem_offset != sem_aligned)
+        aff_i[mask] = 0
 
     return aff_cutout
