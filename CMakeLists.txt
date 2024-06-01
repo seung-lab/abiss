@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.11)
 project(ABISS)
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
@@ -23,6 +23,10 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(JEMALLOC jemalloc)
 pkg_check_modules(MIMALLOC mimalloc)
 
+include(FetchContent)
+
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
 
 if(MIMALLOC_FOUND)
     add_definitions(-DUSE_MIMALLOC)
@@ -43,7 +47,7 @@ if(absl_FOUND)
     message(STATUS "Use abseil::flat_hash_map and absl::flat_hash_set")
 endif(absl_FOUND)
 
-link_libraries(TBB::tbb ${Boost_LIBRARIES} ${optionalLibs})
+link_libraries(TBB::tbb ${Boost_LIBRARIES} nlohmann_json::nlohmann_json ${optionalLibs})
 
 if(EXTRACT_SIZE)
     add_definitions(-DEXTRACT_SIZE)
