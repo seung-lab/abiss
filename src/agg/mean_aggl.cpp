@@ -31,11 +31,14 @@
 #include <future>
 #include <omp.h>
 #include <sys/stat.h>
+#include <nlohmann/json.hpp>
 
 #include "../seg/SemExtractor.hpp"
 #include "../seg/RemapTable.hpp"
 
 #include "edges.h"
+
+using json = nlohmann::json;
 
 static const size_t frozen = (1UL<<(std::numeric_limits<std::size_t>::digits-2));
 static const size_t boundary = (1UL<<(std::numeric_limits<std::size_t>::digits-1))|frozen;
@@ -1145,8 +1148,10 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 int main(int argc, char *argv[])
 {
     agglomeration_param_t params;
-    aff_t th = atof(argv[1]);
-    params.input_aff_threshold = th;
+    std::ifstream f(argv[1]);
+    json conf = json::parse(f);
+    f.close();
+    params.input_aff_threshold = std::stof(conf.at("AGG_THRESHOLD").get<std::string>());
 
     std::cout << "agglomerate" << std::endl;
 #ifdef MST_EDGE

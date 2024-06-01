@@ -61,11 +61,11 @@ do
 done
 
 if [ "$OVERLAP" = "2" ]; then
-    try $BIN_PATH/agg_overlap $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
+    try $BIN_PATH/agg_overlap $PARAM_JSON input_rg.data frozen.data ongoing_supervoxel_counts.data
 elif [ "$OVERLAP" = "1" ]; then
-    try $BIN_PATH/agg_nonoverlap $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
+    try $BIN_PATH/agg_nonoverlap $PARAM_JSON input_rg.data frozen.data ongoing_supervoxel_counts.data
 else
-    try $BIN_PATH/agg $AGG_THRESHOLD input_rg.data frozen.data ongoing_supervoxel_counts.data
+    try $BIN_PATH/agg $PARAM_JSON input_rg.data frozen.data ongoing_supervoxel_counts.data
 fi
 
 try cat remap.data >> localmap.data
