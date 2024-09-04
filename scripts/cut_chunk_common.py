@@ -40,6 +40,7 @@ def convert_and_scale_integer_data(data, dtype_out):
 
 def cut_data(data, start_coord, end_coord, padding):
     bb = tuple(slice(start_coord[i], end_coord[i]) for i in range(3))
+    global_param = cu.read_inputs(os.environ['PARAM_JSON'])
     if data.shape[3] == 1:
         if data.dtype == 'float32':
             pmap = numpy.squeeze(data[bb])
@@ -50,7 +51,6 @@ def cut_data(data, start_coord, end_coord, padding):
     elif data.shape[3] == 3:
         return pad_data(convert_and_scale_integer_data(data[bb+(slice(0,3),)], "float32"), padding)
     elif data.shape[3] == 4: #0-2 affinity, 3 myelin
-        global_param = cu.read_inputs(os.environ['PARAM_JSON'])
         th = global_param.get('MYELIN_THRESHOLD', 0.3)
         print("threshold myelin mask at {}".format(th))
         cutout = data[bb+(slice(0,4),)]
@@ -62,8 +62,10 @@ def cut_data(data, start_coord, end_coord, padding):
             tmp[mask] = 0
             #affinity[:,:,:,i] = numpy.multiply(affinity[:,:,:,i]*(1-myelin))
         return pad_data(affinity, padding)
-
     else:
+        aff_channels = global_param.get('AFF_CHANNELS', 3)
+        if data.shape[3] >= aff_channels:
+            return pad_data(convert_and_scale_integer_data(data[bb+(slice(0,aff_channels),)], "float32"), padding)
         raise RuntimeError("encountered array of dimension " + str(len(data.shape)))
 
 
