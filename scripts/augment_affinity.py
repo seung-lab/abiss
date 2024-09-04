@@ -79,47 +79,46 @@ def close_affinitymap(data, params, threshold):
     return data
 
 
-def adjust_affinitymap(aff, bbox, boundary_flags, padding_before, padding_after):
+def adjust_affinitymap(aff, bbox, boundary_flags, padding_before, padding_after, padding_boundary=None):
     global_param = cu.read_inputs(os.environ['PARAM_JSON'])
+    start_coord = [bbox[i]-(1-boundary_flags[i])*padding_before[i] for i in range(3)]
+    end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*padding_after[i] for i in range(3)]
+    padding = [x*y for x, y in zip(boundary_flags, padding_boundary)] if padding_boundary else boundary_flags
 
     if global_param.get("CLOSING_AFF", False):
         print("adjusting affinit map")
         erode_params = [[10,0.7], [10,0.7], [2,0.7]]
-        start_coord = [bbox[i]-(1-boundary_flags[i])*(padding_before+erode_params[i][0]) for i in range(3)]
-        end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*(padding_after+erode_params[i][0]) for i in range(3)]
-        data = erode_affinitymap(fold_aff(cut_data(aff, start_coord, end_coord, [0,0,0,0,0,0])), erode_params, 0.5)
+        start_coord_erode = [bbox[i]-(1-boundary_flags[i])*(padding_before[i]+erode_params[i][0]) for i in range(3)]
+        end_coord_erode = [bbox[i+3]+(1-boundary_flags[i+3])*(padding_after[i]+erode_params[i][0]) for i in range(3)]
+        data = erode_affinitymap(fold_aff(cut_data(aff, start_coord_erode, end_coord_erode, [0,0,0,0,0,0])), erode_params, 0.5)
         #bb = tuple(slice(start_coord[i], end_coord[i]) for i in range(3))
         #data = aff[bb+(slice(0,3),)]
         start_coord = [(1-boundary_flags[i])*erode_params[i][0] for i in range(3)]
         end_coord = [data.shape[i]-(1-boundary_flags[i+3])*erode_params[i][0] for i in range(3)]
-        return cut_data(data, start_coord, end_coord, boundary_flags)
+        return cut_data(data, start_coord, end_coord, padding)
     elif "ADD_NOISE" in global_param:
         try:
             noise_level = float(global_param["ADD_NOISE"])
         except ValueError:
             print("pass through without adjusting affinit map")
-            return fold_aff(cut_data(aff, start_coord, end_coord, boundary_flags))
+            return fold_aff(cut_data(aff, start_coord, end_coord, padding))
 
         print(f"add noise from a normal distribution of standard deviation {noise_level}")
-        start_coord = [bbox[i]-(1-boundary_flags[i])*padding_before for i in range(3)]
-        end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*padding_after for i in range(3)]
-        data = cut_data(aff, start_coord, end_coord, boundary_flags)
+        data = cut_data(aff, start_coord, end_coord, padding)
         mask = data == 0
         data = numpy.add(data, numpy.random.normal(0, noise_level, data.shape))
         data[mask] = 0
         return data
     else:
         print("pass through without adjusting affinit map")
-        start_coord = [bbox[i]-(1-boundary_flags[i])*padding_before for i in range(3)]
-        end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*padding_after for i in range(3)]
-        return fold_aff(cut_data(aff, start_coord, end_coord, boundary_flags))
+        return fold_aff(cut_data(aff, start_coord, end_coord, padding))
 
 def mask_affinity_with_semantic_labels(aff_cutout, sem, bbox, boundary_flags, padding_before, padding_after):
-    start_coord = [bbox[i]-(1-boundary_flags[i])*(1+padding_before) for i in range(3)]
-    end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*padding_after for i in range(3)]
+    start_coord = [bbox[i]-(1-boundary_flags[i])*(1+padding_before[i]) for i in range(3)]
+    end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*padding_after[i] for i in range(3)]
     sem_cutout = numpy.squeeze(cut_data(sem, start_coord, end_coord,
-                                        [boundary_flags[i]*(1+padding_before) for i in range(3)]
-                                        + [boundary_flags[i+3]*padding_after for i in range(3)]))
+                                        [boundary_flags[i]*(1+padding_before[i]) for i in range(3)]
+                                        + [boundary_flags[i+3]*padding_after[i] for i in range(3)]))
     sem_shape = sem_cutout.shape
     sem_aligned = sem_cutout[1:, 1:, 1:]
     offsets = [[1,0,0], [0,1,0], [0,0,1]]

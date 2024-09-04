@@ -30,22 +30,30 @@ print(aff_bbox)
 ac_offset = param["ac_offset"]
 boundary_flags = param["boundary_flags"]
 
+extra_aff_backward = [1, 1, 1]
+extra_aff_forward = [0, 0, 0]
+
+extra_aff_before = [0, 0, 0]
+extra_aff_after = [x + y for x, y in zip(extra_aff_backward, extra_aff_forward)]
+padding_boundary = extra_aff_after + extra_aff_after
+
 aff = load_data(global_param['AFF_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=global_param.get('AFF_FILL_MISSING', False))
-aff_cutout = adjust_affinitymap(aff, aff_bbox, boundary_flags, 0, 1)
+aff_cutout = adjust_affinitymap(aff, aff_bbox, boundary_flags, extra_aff_before, extra_aff_after, padding_boundary)
 
 save_raw_data("aff.raw", aff_cutout)
 del aff_cutout
 
-start_coord = bbox[0:3]
-end_coord = [bbox[i+3]+1-boundary_flags[i+3] for i in range(3)]
+start_coord = [bbox[i]-(1-boundary_flags[i])*extra_aff_before[i] for i in range(3)] # Should equals to bbox[0:3]
+end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*extra_aff_after[i] for i in range(3)]
+padding = [x*y for x, y in zip(padding_boundary, boundary_flags)]
 
 seg = load_data(os.environ['WS_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=global_param.get('WS_FILL_MISSING', False))
-seg_cutout = cut_data(seg, start_coord, end_coord, boundary_flags)
+seg_cutout = cut_data(seg, start_coord, end_coord, padding)
 save_raw_data("seg.raw", seg_cutout)
 
 if "SEM_PATH" in global_param:
     sem = load_data(global_param['SEM_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=global_param.get('SEM_FILL_MISSING', False))
-    sem_cutout = cut_data(sem, start_coord, end_coord, boundary_flags)
+    sem_cutout = cut_data(sem, start_coord, end_coord, padding)
     save_raw_data("sem.raw", sem_cutout)
 
 #save_data("aff.h5", aff_cutout)
