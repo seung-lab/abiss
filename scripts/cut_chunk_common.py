@@ -24,9 +24,9 @@ def save_raw_data(fn, data):
 def pad_data(data, padding):
     pad = [[padding[i], padding[i+3]] for i in range(3)]
     if len(data.shape) == 3:
-        return numpy.lib.pad(data, pad, 'constant', constant_values=0)
+        return numpy.pad(data, pad, 'constant', constant_values=0)
     elif len(data.shape) == 4:
-        return numpy.lib.pad(data, pad+[[0,0]], 'constant', constant_values=0)
+        return numpy.pad(data, pad+[[0,0]], 'constant', constant_values=0)
     else:
         raise RuntimeError("encountered array of dimension " + str(len(data.shape)))
 

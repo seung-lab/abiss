@@ -40,7 +40,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && rm ~/miniconda.sh \
     && conda update conda \
     && conda install nomkl \
-    && conda install -y numpy=1.22.4 scipy cryptography redis-py boto3 networkx gevent pillow gsutil s5cmd google-crc32c pysimdjson zstandard \
+    && conda install -y numpy scipy cryptography redis-py boto3 networkx gevent pillow gsutil s5cmd google-crc32c pysimdjson zstandard \
     && find ${MINICONDA_PATH} -follow -type f -name '*.a' -delete \
     && find ${MINICONDA_PATH} -follow -type f -name '*.js.map' -delete \
     && conda clean -yaf \
