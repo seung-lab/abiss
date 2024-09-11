@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 MAINTAINER ranlu
 
 ARG SEG_HOME=/workspace/seg
