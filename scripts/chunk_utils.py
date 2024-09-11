@@ -126,19 +126,26 @@ def generate_siblings(f):
     faces = []
     edges = []
     vertices = []
-    for i, f in enumerate(boundary_flags[3:]):
+    for j, f in enumerate(boundary_flags):
+        if j < 3:
+            i = j
+            offset = -1
+        else:
+            i = j - 3
+            offset = 1
+
         if f == 0:
             new_faces = [volume[0][:]]
-            new_faces[0][i] += 1
+            new_faces[0][i] += offset
             new_edges = []
             for a in faces:
                 c = a[:]
-                c[i] += 1
+                c[i] += offset
                 new_edges.append(c)
             new_vertices = []
             for b in edges:
                 c = b[:]
-                c[i] += 1
+                c[i] += offset
                 new_vertices.append(c)
             faces+=new_faces
             edges+=new_edges
