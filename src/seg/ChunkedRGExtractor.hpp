@@ -22,6 +22,9 @@ public:
 
     void collectContactingSurface(int nv, Coord & c, Ts segid1, Ts segid2)
     {
+        if (nv >= 3) {
+          return;
+        }
         auto p = std::minmax(segid1, segid2);
         m_edges[p][nv].first += m_aff[c[0]][c[1]][c[2]][nv];
         m_edges[p][nv].second += 1;
