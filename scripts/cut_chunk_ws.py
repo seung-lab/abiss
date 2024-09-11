@@ -27,7 +27,7 @@ offset = param["offset"]
 paddingBefore = [1, 1, 1]
 paddingAfter = [1, 1, 1]
 aff = load_data(global_param['AFF_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=global_param.get('AFF_FILL_MISSING', False))
-aff_cutout = adjust_affinitymap(aff, aff_bbox, boundary_flags, paddingBefore, paddingAfter)
+aff_cutout = adjust_affinitymap(aff, aff_bbox, boundary_flags, paddingBefore, paddingAfter)[:,:,:,:3]
 
 if "SEM_PATH" in global_param and global_param.get("SEMANTIC_WS", False):
     sem = load_data(global_param['SEM_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=global_param.get('SEM_FILL_MISSING', False))
