@@ -115,12 +115,22 @@ void traverseSegments(const Ts& seg, Ta& ... extractors)
     auto shape = seg.shape();
     auto c = Coord({0,0,0});
 
-    constexpr auto scan_grid = std::array<std::array<int, 3>, 3> {{
+    constexpr auto long_range = std::array<int, 3> {5, 5, 2};
+
+    constexpr auto scan_grid = std::array<std::array<int, 3>, 12> {{
                             {-1,0,0}, {0,-1,0}, {0,0,-1},
+                            {-long_range[0],0,0}, {0,-long_range[1],0},
+                            {-long_range[0],-long_range[1],0},
+                            {-long_range[0],long_range[1],0},
+                            {-long_range[0],0,-1},
+                            {0,-long_range[1],-1},
+                            {-long_range[0],0,1},
+                            {0,-long_range[1],1},
+                            {0,0,-long_range[2]},
     }};
 
-    constexpr std::array<int, 3> aff_backward = {1, 1, 1}
-    constexpr std::array<int, 3> aff_forward = {0, 0, 0};
+    constexpr std::array<int, 3> aff_backward = long_range;
+    constexpr std::array<int, 3> aff_forward = long_range;
 
     int z = skipType == 2 ? base[2]+1: base[2];
     for (; z != base[2]+shape[2]; z++) {

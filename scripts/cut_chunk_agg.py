@@ -30,8 +30,8 @@ print(aff_bbox)
 ac_offset = param["ac_offset"]
 boundary_flags = param["boundary_flags"]
 
-extra_aff_backward = [1, 1, 1]
-extra_aff_forward = [0, 0, 0]
+extra_aff_backward = [5, 5, 2]
+extra_aff_forward = [5, 5, 2]
 
 extra_aff_before = [0, 0, 0]
 extra_aff_after = [x + y for x, y in zip(extra_aff_backward, extra_aff_forward)]
