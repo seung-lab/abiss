@@ -114,6 +114,14 @@ void traverseSegments(const Ts& seg, Ta& ... extractors)
     auto base = seg.index_bases();
     auto shape = seg.shape();
     auto c = Coord({0,0,0});
+
+    constexpr auto scan_grid = std::array<std::array<int, 3>, 3> {{
+                            {-1,0,0}, {0,-1,0}, {0,0,-1},
+    }};
+
+    constexpr std::array<int, 3> aff_backward = {1, 1, 1}
+    constexpr std::array<int, 3> aff_forward = {0, 0, 0};
+
     int z = skipType == 2 ? base[2]+1: base[2];
     for (; z != base[2]+shape[2]; z++) {
         c[2] = z;
@@ -127,27 +135,31 @@ void traverseSegments(const Ts& seg, Ta& ... extractors)
                 }
                 c[0] = x;
                 for (int i = 0; i < 3; i++) {
-                    if (c[i] == base[i]) {
+                    if (c[i] < base[i] + aff_backward[i] + aff_forward[i]) {
                         (extractors.collectBoundary(i, c, seg[x][y][z]), ...);
                     }
-                    if (c[i] == (base[i] + shape[i] - 1)) {
+                    if (c[i] >= (base[i] + shape[i] - aff_backward[i] - aff_forward[i])) {
                         (extractors.collectBoundary(i+3, c, seg[x][y][z]), ...);
                     }
                 }
                 if (skipType == 1) { //Overlap in forward directions, skip overlapping volume
-                    if (x == base[0] || y == base[1] || z == base[2]) {
+                    bool shouldSkip = false;
+                    for (int i = 0; i < 3; i++) {
+                        if (c[i] < base[i] + aff_backward[i] or c[i] >= (base[i] + shape[i] - aff_forward[i])) {
+                            shouldSkip = true;
+                        }
+                    }
+                    if (shouldSkip) {
                         continue;
                     }
                 }
                 (extractors.collectVoxel(c, seg[x][y][z]), ...);
-                if (x > seg.index_bases()[0] && seg[x-1][y][z] != 0 && seg[x][y][z] != seg[x-1][y][z]) {
-                    (extractors.collectContactingSurface(0, c, seg[x][y][z], seg[x-1][y][z]), ...);
-                }
-                if (y > seg.index_bases()[1] && seg[x][y-1][z] != 0 && seg[x][y][z] != seg[x][y-1][z]) {
-                    (extractors.collectContactingSurface(1, c, seg[x][y][z], seg[x][y-1][z]), ...);
-                }
-                if (z > seg.index_bases()[2] && seg[x][y][z-1] != 0 && seg[x][y][z] != seg[x][y][z-1]) {
-                    (extractors.collectContactingSurface(2, c, seg[x][y][z], seg[x][y][z-1]), ...);
+                for (size_t i = 0; i < scan_grid.size(); i++) {
+                    const auto & p = scan_grid[i];
+                    const auto s = seg[x+p[0]][y+p[1]][z+p[2]];
+                    if (s != 0 and seg[x][y][z] != s) {
+                        (extractors.collectContactingSurface(i, c, seg[x][y][z], s), ...);
+                    }
                 }
             }
         }
