@@ -56,7 +56,7 @@ region_graph<ID,F> load_dend(size_t data_size)
 
 template<typename ID, typename F>
 std::tuple<std::vector<std::pair<ID, ID>>, size_t, size_t>
-process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & size_pairs, region_graph<ID, F> & rg, auto high_threshold, auto low_threshold, auto size_threshold, auto dust_threshold, const std::string & tag, size_t remap_size, size_t ac_offset)
+process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & size_pairs, size_t dend_size, auto high_threshold, auto low_threshold, auto size_threshold, auto dust_threshold, const std::string & tag, size_t remap_size, size_t ac_offset)
 {
     std::vector<size_t> sizes;
     std::vector<ID> segids;
@@ -94,29 +94,6 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     for (size_t i = 0; i != segids.size(); i++) {
         sets.make_set(i);
     }
-
-    std::for_each(std::execution::par, std::begin(rg), std::end(rg), [&segids](auto & a) {
-            auto it = std::lower_bound(segids.begin(), segids.end(), std::get<1>(a));
-            if (it == segids.end()) {
-                std::cerr << "Should not happen, rg element does not exist: " << std::get<1>(a) << std::endl;
-                std::abort();
-            }
-            if (std::get<1>(a) == *it) {
-                std::get<1>(a) = std::distance(segids.begin(), it);
-            } else {
-                std::abort();
-            }
-            it = std::lower_bound(segids.begin(), segids.end(), std::get<2>(a));
-            if (it == segids.end()) {
-                std::cerr << "Should not happen, rg element does not exist: " << std::get<2>(a) << std::endl;
-                std::abort();
-            }
-            if (std::get<2>(a) == *it) {
-                std::get<2>(a) = std::distance(segids.begin(), it);
-            } else {
-                std::abort();
-            }
-        });
 
     std::vector<id_pair<size_t> > same;
     MapContainer<id_pair<ID>, F, HashFunction<id_pair<ID> > > edges;
@@ -274,6 +251,35 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     std::cout << "merge faces in " << elapsed_secs << " seconds" << std::endl;
 
     std::cout << edges.size() << " edges and " << same.size() << " mergers" << std::endl;
+    begin = clock();
+    auto rg = load_dend<seg_t, aff_t>(dend_size);
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << "load dend in " << elapsed_secs << " seconds" << std::endl;
+
+    std::for_each(std::execution::par, std::begin(rg), std::end(rg), [&segids](auto & a) {
+            auto it = std::lower_bound(segids.begin(), segids.end(), std::get<1>(a));
+            if (it == segids.end()) {
+                std::cerr << "Should not happen, rg element does not exist: " << std::get<1>(a) << std::endl;
+                std::abort();
+            }
+            if (std::get<1>(a) == *it) {
+                std::get<1>(a) = std::distance(segids.begin(), it);
+            } else {
+                std::abort();
+            }
+            it = std::lower_bound(segids.begin(), segids.end(), std::get<2>(a));
+            if (it == segids.end()) {
+                std::cerr << "Should not happen, rg element does not exist: " << std::get<2>(a) << std::endl;
+                std::abort();
+            }
+            if (std::get<2>(a) == *it) {
+                std::get<2>(a) = std::distance(segids.begin(), it);
+            } else {
+                std::abort();
+            }
+        });
+
     begin = clock();
     for (auto & kv : edges) {
         auto & p = kv.first;
@@ -723,17 +729,12 @@ int main(int argc, char* argv[])
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "mark boundary supervoxels in " << elapsed_secs << " seconds" << std::endl;
-    begin = clock();
-    auto dend = load_dend<seg_t, aff_t>(dend_size);
-    end = clock();
-    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    std::cout << "load dend in " << elapsed_secs << " seconds" << std::endl;
 
     std::vector<std::pair<seg_t, seg_t> > remaps;
     size_t c = 0;
     size_t d = 0;
 
-    std::tie(remaps, c, d) = process_chunk_borders<seg_t, aff_t>(face_size, sizes, dend, high_threshold, low_threshold, size_threshold, dust_threshold, tag, remap_size, ac_offset);
+    std::tie(remaps, c, d) = process_chunk_borders<seg_t, aff_t>(face_size, sizes, dend_size, high_threshold, low_threshold, size_threshold, dust_threshold, tag, remap_size, ac_offset);
     update_border_supervoxels(remaps, flags, std::array<size_t, 6>({ydim*zdim, xdim*zdim, xdim*ydim, ydim*zdim, xdim*zdim, xdim*ydim}), tag);
     //auto m = write_remap(remaps, tag);
     std::vector<size_t> meta({xdim,ydim,zdim,c,d,0});
