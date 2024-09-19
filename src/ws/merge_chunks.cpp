@@ -7,6 +7,7 @@
 #include <tuple>
 #include <boost/pending/disjoint_sets.hpp>
 #include <ctime>
+#include <filesystem>
 #include <cstdlib>
 #include <boost/format.hpp>
 #include <execution>
@@ -19,7 +20,7 @@ std::vector<std::pair<T, T> > load_remaps(size_t data_size)
         MMArray<std::pair<T, T>, 1> remap_data("ongoing.data", std::array<size_t, 1>({data_size}));
         auto data = remap_data.data();
         std::copy(std::begin(data), std::end(data), std::back_inserter(remap_vector));
-
+        std::filesystem::remove("ongoing.data");
         std::stable_sort(std::execution::par, std::begin(remap_vector), std::end(remap_vector), [](auto & a, auto & b) { return std::get<0>(a) < std::get<0>(b); });
     }
     return remap_vector;
@@ -32,6 +33,7 @@ std::vector<std::pair< T, size_t> >  load_sizes(size_t data_size)
         MMArray<std::pair<T, size_t>, 1> count_data("counts.data",std::array<size_t, 1>({data_size}));
         auto counts = count_data.data();
         std::vector<std::pair<T, size_t> > sizes(counts.begin(), counts.end());
+        std::filesystem::remove("counts.data");
         return sizes;
     } else {
         return std::vector<std::pair<T, size_t> >();
@@ -45,6 +47,7 @@ region_graph<ID,F> load_dend(size_t data_size)
         MMArray<std::tuple<F, ID, ID>, 1> dend_data("dend.data",std::array<size_t, 1>({data_size}));
         auto dend_tuple = dend_data.data();
         region_graph<ID, F> rg(dend_tuple.begin(), dend_tuple.end());
+        std::filesystem::remove("dend.data");
         return rg;
     } else {
         return region_graph<ID,F>();
