@@ -53,7 +53,7 @@ region_graph<ID,F> load_dend(size_t data_size)
 
 template<typename ID, typename F>
 std::tuple<std::vector<std::pair<ID, ID>>, size_t, size_t>
-process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & size_pairs, region_graph<ID, F> & rg, auto high_threshold, auto low_threshold, auto size_threshold, const std::string & tag, size_t remap_size, size_t ac_offset)
+process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & size_pairs, region_graph<ID, F> & rg, auto high_threshold, auto low_threshold, auto size_threshold, auto dust_threshold, const std::string & tag, size_t remap_size, size_t ac_offset)
 {
     std::vector<size_t> sizes;
     std::vector<ID> segids;
@@ -379,11 +379,11 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
     for (size_t v = 0; v != sizes.size(); v++) {
         size_t size = sizes[v];
         const ID s = sets.find_set(v);
-        if (sizes[s] >= size_threshold) {
+        if (sizes[s] >= dust_threshold) {
             remaps[v] = s;
         }
 
-        if ( (size & (~traits::on_border)) && size >= size_threshold  ) {
+        if ( (size & (~traits::on_border)) && size >= dust_threshold  ) {
             if (s != v) {
                 std::cout << "s("<<s<<") != v("<<v<<")" << std::endl;
             }
@@ -672,11 +672,13 @@ int main(int argc, char* argv[])
     std::string ht(argv[2]);
     std::string lt(argv[3]);
     std::string st(argv[4]);
-    std::cout << "thresholds: "<< ht << " " << lt << " " << st << std::endl;
-    const char * tag = argv[5];
+    std::string dt(argv[5]);
+    std::cout << "thresholds: "<< ht << " " << lt << " " << st << " " << dt << std::endl;
+    const char * tag = argv[6];
     auto high_threshold = read_float<aff_t>(ht);
     auto low_threshold = read_float<aff_t>(lt);
     auto size_threshold = read_int(st);
+    auto dust_threshold = read_int(dt);
     param_file >> xdim >> ydim >> zdim;
     std::cout << xdim << " " << ydim << " " << zdim << std::endl;
     std::array<bool,6> flags({true,true,true,true,true,true});
@@ -727,7 +729,7 @@ int main(int argc, char* argv[])
     size_t c = 0;
     size_t d = 0;
 
-    std::tie(remaps, c, d) = process_chunk_borders<seg_t, aff_t>(face_size, sizes, dend, high_threshold, low_threshold, size_threshold, tag, remap_size, ac_offset);
+    std::tie(remaps, c, d) = process_chunk_borders<seg_t, aff_t>(face_size, sizes, dend, high_threshold, low_threshold, size_threshold, dust_threshold, tag, remap_size, ac_offset);
     update_border_supervoxels(remaps, flags, std::array<size_t, 6>({ydim*zdim, xdim*zdim, xdim*ydim, ydim*zdim, xdim*zdim, xdim*ydim}), tag);
     //auto m = write_remap(remaps, tag);
     std::vector<size_t> meta({xdim,ydim,zdim,c,d,0});

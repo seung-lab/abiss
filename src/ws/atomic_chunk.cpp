@@ -62,12 +62,14 @@ int main(int argc, char* argv[])
     std::string ht(argv[3]);
     std::string lt(argv[4]);
     std::string st(argv[5]);
-    std::cout << "thresholds: "<< ht << " " << lt << " " << st << std::endl;
+    std::string dt(argv[6]);
+    std::cout << "thresholds: "<< ht << " " << lt << " " << st  << " " << dt << std::endl;
 
-    const char * tag = argv[6];
+    const char * tag = argv[7];
     auto high_threshold = read_float<aff_t>(ht);
     auto low_threshold = read_float<aff_t>(lt);
     auto size_threshold = read_int(st);
+    auto dust_threshold = read_int(dt);
     param_file >> xdim >> ydim >> zdim;
     std::cout << xdim << " " << ydim << " " << zdim << std::endl;
 
@@ -120,7 +122,7 @@ int main(int argc, char* argv[])
     std::cout << "finished region graph in " << elapsed_secs << " seconds" << std::endl;
 
     begin = clock();
-    merge_segments(seg, rg, counts, std::make_pair(size_threshold, low_threshold), size_threshold);
+    merge_segments(seg, rg, counts, std::make_pair(size_threshold, low_threshold), dust_threshold);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 

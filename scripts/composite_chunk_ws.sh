@@ -13,7 +13,7 @@ try download_children $1 $FILE_PATH/dend
 
 try python3 $SCRIPT_PATH/merge_chunks_ws.py $1
 #try $BIN_PATH/ws2 param.txt $output_chunk >& debug_"${output_chunk}".log
-try $BIN_PATH/ws2 param.txt $WS_HIGH_THRESHOLD $WS_LOW_THRESHOLD $WS_SIZE_THRESHOLD $output_chunk
+try $BIN_PATH/ws2 param.txt $WS_HIGH_THRESHOLD $WS_LOW_THRESHOLD $WS_SIZE_THRESHOLD $WS_DUST_THRESHOLD $output_chunk
 
 try mv done_{pre,post}_"${output_chunk}".data ${output_path}/remap
 
