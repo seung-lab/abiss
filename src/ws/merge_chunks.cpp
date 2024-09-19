@@ -75,6 +75,7 @@ process_chunk_borders(size_t face_size, std::vector<std::pair<ID, size_t> > & si
         segids.push_back(kv.first);
         sizes.push_back(kv.second);
     }
+    free_container(size_pairs);
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "populate maps in " << elapsed_secs << " seconds" << std::endl;
