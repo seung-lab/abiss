@@ -66,6 +66,9 @@ if data.get("PARANOID", False):
 else:
     data["PARANOID"] = 0
 
+if "WS_DUST_THRESHOLD" not in data:
+    data["WS_DUST_THRESHOLD"] = data["WS_SIZE_THRESHOLD"]
+
 if "gsutil-secret.json" in data.get("MOUNT_SECRETS", []):
     data["BOTO_CONFIG"] = "~/gsutil.boto"
 
