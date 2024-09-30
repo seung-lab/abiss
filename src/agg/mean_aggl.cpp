@@ -692,36 +692,36 @@ inline agglomeration_output_t<T> agglomerate_cc(agglomeration_data_t<T, Compare>
                 continue;
             }
 
-            if (!comp(e.edge->w, sem_aff_threshold)) {
-                if (!sem_counts.empty()){
-                    if (!sem_can_merge(sem_counts[v0],sem_counts[v1],sem_params)) {
-                        output.sem_rg_vector.push_back(*(e.edge));
+            if (!sem_counts.empty()){
+                if ((!comp(e.edge->w, sem_aff_threshold) and (sem_counts[v0][0] == 0 or sem_counts[v1][0] == 0)) or (sem_counts[v0][0] != sem_counts[v1][0])) {
+                    output.sem_rg_vector.push_back(*(e.edge));
+                    e.edge->w = Limits::min();
+                    continue;
+                }
+            }
+
+            if (sem_counts.empty() or sem_counts[v0][0] == 0 or sem_counts[v1][0] == 0) {
+                size_t size0 = seg_size[v0];
+                size_t size1 = seg_size[v1];
+                auto p = std::minmax({size0, size1});
+                if (!comp(e.edge->w, size_aff_threshold)) {
+                    if (p.first > size_params.small_voxel_threshold and (size0+size1) > size_params.large_voxel_threshold) {
+                        output.rej_rg_vector.push_back(*(e.edge));
                         e.edge->w = Limits::min();
                         continue;
                     }
                 }
-            }
 
-            if (!comp(e.edge->w, size_aff_threshold)) {
-                size_t size0 = seg_size[v0];
-                size_t size1 = seg_size[v1];
-                auto p = std::minmax({size0, size1});
-                if (p.first > size_params.small_voxel_threshold and (size0+size1) > size_params.large_voxel_threshold) {
-                    output.rej_rg_vector.push_back(*(e.edge));
-                    e.edge->w = Limits::min();
-                    continue;
+                if (!comp(e.edge->w, backbone_threshold)){
+                    size_t size0 = seg_size[v0];
+                    size_t size1 = seg_size[v1];
+                    auto p = std::minmax({size0, size1});
+                    if ((p.first > twig_params.voxel_threshold) or (e.edge->w.num > twig_params.area_threshold)) {
+                        e.edge->w = Limits::min();
+                        continue;
+                    }
+                    output.twig_rg_vector.push_back(*(e.edge));
                 }
-            }
-
-            if (!comp(e.edge->w, backbone_threshold)){
-                size_t size0 = seg_size[v0];
-                size_t size1 = seg_size[v1];
-                auto p = std::minmax({size0, size1});
-                if ((p.first > twig_params.voxel_threshold) or (e.edge->w.num > twig_params.area_threshold)) {
-                    e.edge->w = Limits::min();
-                    continue;
-                }
-                output.twig_rg_vector.push_back(*(e.edge));
             }
 #ifdef FINAL
             if (incident[v0].size() < incident[v1].size()) {
@@ -918,7 +918,8 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 {
     Compare comp;
 
-    auto th = params.input_aff_threshold - params.twig_params.aff_threshold_delta;
+    params.sem_params.aff_threshold = params.input_aff_threshold;
+    auto th = 0.0;
 
     T const final_threshold = T(th,1);
 
