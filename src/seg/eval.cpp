@@ -19,7 +19,7 @@ int main(int argc, char * argv[])
     for (size_t i = 0; i != seg.size(); i++) {
         uint64_t segv = seg[i];
         uint64_t gtv = gt[i];
-        if (gtv != 0) {
+        if (gtv != 0 and segv != 0) {
             p_ij[gtv][segv]++;
             s_i[segv]++;
             t_j[gtv]++;
