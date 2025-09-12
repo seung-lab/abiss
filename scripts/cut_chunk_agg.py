@@ -48,6 +48,10 @@ if "SEM_PATH" in global_param:
     sem = load_data(global_param['SEM_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=global_param.get('SEM_FILL_MISSING', False))
     sem_cutout = cut_data(sem, start_coord, end_coord, boundary_flags)
     if sem_cutout.dtype != numpy.uint64:
+        if numpy.issubdtype(sem_cutout.dtype, numpy.floating):
+            raise TypeError(f"Semantic cutout is a float ({sem_cutout.dtype}). Must be an unsigned integer.")
+        if numpy.issubdtype(sem_cutout.dtype, numpy.signedinteger):
+            raise TypeError(f"Semantic cutout is a signed integer ({sem_cutout.dtype}). Must be an unsigned integer.")
         print(f"Converting semantic cutout from {sem_cutout.dtype} to uint64")
         sem_cutout = sem_cutout.astype(numpy.uint64)
     save_raw_data("sem.raw", sem_cutout)
