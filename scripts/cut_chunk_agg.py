@@ -1,4 +1,5 @@
 import sys
+import numpy
 from chunk_utils import read_inputs
 from cut_chunk_common import load_data, cut_data, save_raw_data
 from augment_affinity import adjust_affinitymap, warp_z
@@ -46,6 +47,9 @@ save_raw_data("seg.raw", seg_cutout)
 if "SEM_PATH" in global_param:
     sem = load_data(global_param['SEM_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=global_param.get('SEM_FILL_MISSING', False))
     sem_cutout = cut_data(sem, start_coord, end_coord, boundary_flags)
+    if sem_cutout.dtype != numpy.uint64:
+        print(f"Converting semantic cutout from {sem_cutout.dtype} to uint64")
+        sem_cutout = sem_cutout.astype(numpy.uint64)
     save_raw_data("sem.raw", sem_cutout)
 
 #save_data("aff.h5", aff_cutout)
