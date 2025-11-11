@@ -46,7 +46,7 @@ RUN savedAptMark="$(apt-mark showmanual)" \
     && conda clean -yaf \
     && PYTHON_VERSION="$(python --version | cut -d " " -f 2 | cut -d "." -f 1-2)" \
     && pip install --no-cache-dir -U pip \
-    && pip install --no-cache-dir -U --compile --global-option=build git+https://github.com/seung-lab/chunk_iterator#egg=chunk-iterator \
+    && pip install --no-cache-dir -U git+https://github.com/seung-lab/chunk_iterator#egg=chunk-iterator \
     && pip install --no-cache-dir -U cloud-volume \
     && pip install --no-cache-dir -U cloud-files \
     && cd ${SEG_HOME} \
