@@ -79,10 +79,40 @@ def close_affinitymap(data, params, threshold):
     return data
 
 
+def mask_affinity_with_myelin(data_cutout):
+    global_param = cu.read_inputs(os.environ['PARAM_JSON'])
+    th = global_param.get('MYELIN_THRESHOLD', 0.3)
+    print("threshold myelin mask at {}".format(th))
+    affinity = numpy.copy(data_cutout[:,:,:,0:3])
+    myelin = data_cutout[:,:,:,3]
+    mask = myelin < th
+    numpy.multiply(affinity[1:,:,:,0], mask[:-1,:,:], out=affinity[1:,:,:,0])
+    numpy.multiply(affinity[:,1:,:,1], mask[:,:-1,:], out=affinity[:,1:,:,1])
+    numpy.multiply(affinity[:,:,1:,2], mask[:,:,:-1], out=affinity[:,:,1:,2])
+    numpy.multiply(affinity, mask[..., numpy.newaxis], out=affinity)
+    return affinity
+
+
 def adjust_affinitymap(aff, bbox, boundary_flags, padding_before, padding_after):
     global_param = cu.read_inputs(os.environ['PARAM_JSON'])
+    has_myelin = aff.shape[3] == 4
 
-    if global_param.get("CLOSING_AFF", False):
+    if aff.shape[3] == 4:
+        print("applying myelin mask")
+        pad_myelin = 1
+        start_coord = [bbox[i]-(1-boundary_flags[i])*(padding_before+pad_myelin) for i in range(3)]
+        end_coord = [bbox[i+3]+(1-boundary_flags[i+3])*(padding_after+pad_myelin) for i in range(3)]
+
+        data4ch = cut_data(aff, start_coord, end_coord, [0,0,0,0,0,0])
+        data = mask_affinity_with_myelin(data4ch)
+
+        # Trim myelin padding
+        start_coord = [(1-boundary_flags[i])*pad_myelin for i in range(3)]
+        end_coord = [data.shape[i]-(1-boundary_flags[i+3])*pad_myelin for i in range(3)]
+
+        return cut_data(data, start_coord, end_coord, boundary_flags)
+
+    elif global_param.get("CLOSING_AFF", False):
         print("adjusting affinit map")
         erode_params = [[10,0.7], [10,0.7], [2,0.7]]
         start_coord = [bbox[i]-(1-boundary_flags[i])*(padding_before+erode_params[i][0]) for i in range(3)]

@@ -51,17 +51,8 @@ def cut_data(data, start_coord, end_coord, padding):
     elif data.shape[3] == 3:
         return pad_data(convert_and_scale_integer_data(data[bb+(slice(0,3),)], "float32"), padding)
     elif data.shape[3] == 4: #0-2 affinity, 3 myelin
-        th = global_param.get('MYELIN_THRESHOLD', 0.3)
-        print("threshold myelin mask at {}".format(th))
         cutout = data[bb+(slice(0,4),)]
-        affinity = cutout[:,:,:,0:3]
-        myelin = cutout[:,:,:,3]
-        mask = myelin > th
-        for i in range(3):
-            tmp = affinity[:,:,:,i]
-            tmp[mask] = 0
-            #affinity[:,:,:,i] = numpy.multiply(affinity[:,:,:,i]*(1-myelin))
-        return pad_data(affinity, padding)
+        return pad_data(cutout, padding)
     else:
         aff_channels = global_param.get('AFF_CHANNELS', 3)
         if data.shape[3] >= aff_channels:
