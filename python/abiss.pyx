@@ -35,18 +35,20 @@ def _watershed(
 
     cdef float*    aff_data
     cdef uint64_t* segmentation_data
+    cdef vector[size_t] sv_sizes
 
     aff_data = &affs[0,0,0,0]
     segmentation_data = &segmentation[0,0,0]
     width, height, depth = affs.shape[0], affs.shape[1], affs.shape[2]
 
-    sv_sizes = run_watershed(
-        width, height, depth,
-        aff_data,
-        segmentation_data,
-        size_threshold,
-        aff_threshold_low,
-        aff_threshold_high)
+    with nogil:
+        sv_sizes = run_watershed(
+            width, height, depth,
+            aff_data,
+            segmentation_data,
+            size_threshold,
+            aff_threshold_low,
+            aff_threshold_high)
 
     # if agglomeration_threshold > 0.0:
     #     rg = extract_region_graph(
@@ -61,7 +63,7 @@ def _watershed(
 
     return
 
-cdef extern from "abiss_wrapper.h":
+cdef extern from "abiss_wrapper.h" nogil:
     vector[size_t] run_watershed(
             size_t          width,
             size_t          height,
@@ -71,4 +73,4 @@ cdef extern from "abiss_wrapper.h":
             size_t          size_threshold,
             float           affThresholdLow,
             float           affThresholdHigh,
-            );
+            )
