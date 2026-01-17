@@ -1,7 +1,13 @@
 import os
+import re
 import sys
 import json
 import cloudfiles.paths
+
+
+def sanitize_runname(runname):
+    sanitized = re.sub(r'[^0-9a-zA-Z]+', '_', runname)
+    return sanitized.strip('_')
 
 
 def default_io_cmd(path):
@@ -26,7 +32,7 @@ env = ["SCRATCH_PATH", "CHUNKMAP_INPUT", "CHUNKMAP_OUTPUT", "AFF_PATH", "AFF_MIP
 with open(sys.argv[1]) as f:
     data = json.load(f)
 
-data["STATSD_PREFIX"] = data["NAME"].replace(".", "_")
+data["STATSD_PREFIX"] = sanitize_runname(data["NAME"])
 
 for s in ["SCRATCH", "WS", "SEG"]:
     prefix = "{}_PREFIX".format(s)
