@@ -12,7 +12,7 @@ int main(int argc, char * argv[])
     auto seg = read_array<uint64_t>(argv[1]);
     auto size_array = read_array<std::pair<uint64_t, uint64_t> >(argv[2]);
 
-    std::sort(size_array.begin(), size_array.end(), [](auto & a, auto & b) {
+    std::stable_sort(size_array.begin(), size_array.end(), [](auto & a, auto & b) {
         return a.first < b.first;
     });
     auto last = std::unique(size_array.begin(), size_array.end(), [](auto & a, auto & b) {

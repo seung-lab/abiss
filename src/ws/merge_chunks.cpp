@@ -602,7 +602,7 @@ void mark_border_supervoxels(std::vector<std::pair<T, size_t> > & sizes, const s
                 std::cerr << "Failed to close the file" << std::endl;
                 std::abort();
             }
-            std::sort(std::execution::par, boundary_segs.begin(), boundary_segs.end());
+            std::stable_sort(std::execution::par, boundary_segs.begin(), boundary_segs.end());
             std::for_each(std::execution::par, sizes.begin(), sizes.end(), [&boundary_segs](auto & p) {
                     if (p.first != 0) {
                         auto newid = std::lower_bound(boundary_segs.begin(), boundary_segs.end(), p.first);

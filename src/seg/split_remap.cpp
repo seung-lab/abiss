@@ -68,7 +68,7 @@ remap_t<T> load_remap(const char * filename)
     std::transform(remap_vector.begin(), remap_vector.end(), std::back_inserter(segids), [](auto & p) -> T{
             return p.second;
     });
-    std::sort(std::execution::par, segids.begin(), segids.end());
+    std::stable_sort(std::execution::par, segids.begin(), segids.end());
 
     std::cout << "create segids" << std::endl;
     auto last = std::unique(segids.begin(), segids.end());

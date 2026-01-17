@@ -120,7 +120,7 @@ std::vector<SimpleEdge<Ts, Ta> > loadRegionGraph(const std::string & fileName)
         }
     });
 
-    std::sort(std::execution::par, input_rg.begin(), input_rg.end(), [](const auto & a, const auto & b) {
+    std::stable_sort(std::execution::par, input_rg.begin(), input_rg.end(), [](const auto & a, const auto & b) {
         return ((a.s1 < b.s1) || (a.s1 == b.s1 && a.s2 < b.s2));
     });
 

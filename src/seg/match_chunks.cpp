@@ -32,7 +32,7 @@ remap_data<T> generate_remaps()
 {
     auto remap_vector = read_array<matching_entry_t<T> >("matching_faces.data");
     //sort to make sure we process the most advanced agglomerated (largest) segments first
-    std::sort(std::execution::par, remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
+    std::stable_sort(std::execution::par, remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
             return (a.agg_size > b.agg_size) || ((a.agg_size == b.agg_size) && (a.nid < b.nid));
     });
     auto last_remap = std::unique(remap_vector.begin(), remap_vector.end(), [](const auto & a, const auto & b) {
@@ -46,7 +46,7 @@ remap_data<T> generate_remaps()
         rep.segids.push_back(e.oid);
         rep.segids.push_back(e.nid);
     }
-    std::sort(std::execution::par, rep.segids.begin(), rep.segids.end());
+    std::stable_sort(std::execution::par, rep.segids.begin(), rep.segids.end());
     auto last_segid = std::unique(rep.segids.begin(), rep.segids.end());
     rep.segids.erase(last_segid, rep.segids.end());
 
@@ -149,7 +149,7 @@ void process_edges(std::string & tag, remap_data<T_seg> & rep)
         segids.push_back(e.s1);
         segids.push_back(e.s2);
     }
-    std::sort(std::execution::par, segids.begin(),segids.end());
+    std::stable_sort(std::execution::par, segids.begin(),segids.end());
     auto last = std::unique(segids.begin(), segids.end());
     segids.erase(last, segids.end());
     std::for_each(std::execution::par, segids.begin(), segids.end(), [&rep](const auto & id){
@@ -209,7 +209,7 @@ void process_edges(std::string & tag, remap_data<T_seg> & rep)
         }
     });
 
-    std::sort(std::execution::par, vetoed_edges.begin(), vetoed_edges.end(), [](auto & a, auto & b) { return (a.first < b.first) || (a.first == b.first && a.second < b.second); });
+    std::stable_sort(std::execution::par, vetoed_edges.begin(), vetoed_edges.end(), [](auto & a, auto & b) { return (a.first < b.first) || (a.first == b.first && a.second < b.second); });
     auto last_veto_edge = std::unique(vetoed_edges.begin(), vetoed_edges.end(), [](auto & a, auto & b) { return (a.first == b.first) && (a.second == b.second); });
     vetoed_edges.erase(last_veto_edge, vetoed_edges.end());
 
@@ -260,7 +260,7 @@ std::vector<T> process_boundary_supervoxels(const std::string & tag, const remap
             }
         });
 
-        std::sort(std::execution::par, remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
+        std::stable_sort(std::execution::par, remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
                 return a.agg_size > b.agg_size;
         });
 
@@ -284,7 +284,7 @@ std::vector<T> process_boundary_supervoxels(const std::string & tag, const remap
         ofs1.close();
         ofs2.close();
     }
-    std::sort(std::execution::par, boundary_svs.begin(), boundary_svs.end());
+    std::stable_sort(std::execution::par, boundary_svs.begin(), boundary_svs.end());
     auto last = std::unique(boundary_svs.begin(), boundary_svs.end());
     boundary_svs.erase(last, boundary_svs.end());
     return boundary_svs;
@@ -294,7 +294,7 @@ template <class T>
 void generate_extra_counts(const remap_data<T> & rep, const std::vector<T> & bs)
 {
     auto remap_vector = read_array<matching_entry_t<T> >("matching_faces.data");
-    std::sort(std::execution::par, remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
+    std::stable_sort(std::execution::par, remap_vector.begin(), remap_vector.end(), [](auto & a, auto & b) {
             return a.agg_size > b.agg_size;
     });
     auto last_remap = std::unique(remap_vector.begin(), remap_vector.end(), [](const auto & a, const auto & b) {
@@ -319,7 +319,7 @@ void generate_extra_counts(const remap_data<T> & rep, const std::vector<T> & bs)
             return std::make_pair<T, T>(0,0);
         }
     });
-    std::sort(std::execution::par, processed_sv.begin(), processed_sv.end(), [](const auto & a, const auto & b) {
+    std::stable_sort(std::execution::par, processed_sv.begin(), processed_sv.end(), [](const auto & a, const auto & b) {
         return (a.first < b.first);
     });
     auto last = std::unique(processed_sv.begin(), processed_sv.end(), [](const auto & a, const auto & b) {

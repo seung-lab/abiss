@@ -232,7 +232,7 @@ load_size(const char * size_filename, const std::vector<seg_t> & seg_indices)
         }
     });
 
-    std::sort(std::execution::par, std::begin(size_array), std::end(size_array), [](auto & a, auto & b) { return a.first < b.first; });
+    std::stable_sort(std::execution::par, std::begin(size_array), std::end(size_array), [](auto & a, auto & b) { return a.first < b.first; });
 
     for (auto & [k, v] : size_array) {
         size_counts[k] += v;
@@ -266,7 +266,7 @@ std::vector<sem_array_t> load_sem(const char * sem_filename, const std::vector<s
         }
     });
 
-    std::sort(std::execution::par, std::begin(sem_array), std::end(sem_array), [](auto & a, auto & b) { return a.first < b.first; });
+    std::stable_sort(std::execution::par, std::begin(sem_array), std::end(sem_array), [](auto & a, auto & b) { return a.first < b.first; });
 
     for (auto & [k, v] : sem_array) {
         std::transform(sem_counts[k].begin(), sem_counts[k].end(), v.begin(), sem_counts[k].begin(), std::plus<>());
@@ -282,7 +282,7 @@ void merge_edges(agglomeration_data_t<T, Compare> & agg_data, size_t offset)
     std::cout << "rg_vector size:" << rg_vector.size() << std::endl;
 
     if (offset != rg_vector.size()) {
-        std::sort(std::execution::par, std::begin(rg_vector)+offset, std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
+        std::stable_sort(std::execution::par, std::begin(rg_vector)+offset, std::end(rg_vector), [](auto & a, auto & b) { return (a.v0 < b.v0) || (a.v0 == b.v0 && a.v1 < b.v1);  });
         auto idx = offset;
         for (size_t i = offset+1; i != rg_vector.size(); i++) {
             auto & e = rg_vector[i];
@@ -418,7 +418,7 @@ std::vector<std::pair<seg_t, size_t> > cc_edge_offsets(std::vector<edge_t<T> > r
 template<typename T>
 void partition_rg(std::vector<edge_t<T> > & rg_vector, const std::vector<seg_t> & ccids, const std::vector<std::pair<seg_t, size_t> > & cc_queue)
 {
-    std::sort(std::execution::par, std::begin(rg_vector), std::end(rg_vector), [&](auto & a, auto & b) {
+    std::stable_sort(std::execution::par, std::begin(rg_vector), std::end(rg_vector), [&](auto & a, auto & b) {
             seg_t a0 = ccids[a.v0];
             seg_t a1 = ccids[a.v1];
             seg_t b0 = ccids[b.v0];
@@ -446,7 +446,7 @@ void partition_rg(std::vector<edge_t<T> > & rg_vector, const std::vector<seg_t> 
 
 std::vector<std::pair<seg_t, size_t> > sorted_components(std::vector<seg_t> ccids)
 {
-    std::sort(std::execution::par, ccids.begin(), ccids.end());
+    std::stable_sort(std::execution::par, ccids.begin(), ccids.end());
     std::vector<std::pair<seg_t, size_t> > cc_comps;
 
     if (ccids.empty()) {
@@ -475,7 +475,7 @@ std::vector<std::pair<seg_t, size_t> > sorted_components(std::vector<seg_t> ccid
         return cc_comps;
     }
 
-    std::sort(std::execution::par, cc_comps.begin(), cc_comps.end(), [](auto & a, auto & b) {
+    std::stable_sort(std::execution::par, cc_comps.begin(), cc_comps.end(), [](auto & a, auto & b) {
         return a.first < b.first;
     });
 
@@ -509,7 +509,7 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
             return std::make_pair(a, boundary);
             });
 
-    std::sort(std::execution::par, std::begin(ns_pair_array), std::end(ns_pair_array), [](auto & a, auto & b) { return a.first < b.first || (a.first == b.first && a.second < b.second); });
+    std::stable_sort(std::execution::par, std::begin(ns_pair_array), std::end(ns_pair_array), [](auto & a, auto & b) { return a.first < b.first || (a.first == b.first && a.second < b.second); });
 
     seg_t prev_seg = 0;
     for (auto & kv : ns_pair_array) {

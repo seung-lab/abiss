@@ -160,7 +160,7 @@ void chunkedOutput(const MapContainer<Ts,Tp> & data, const std::string & prefix,
     size_t current_ac1 = std::numeric_limits<std::size_t>::max();
 
     std::vector<std::pair<Ts, Tp> > sorted_data(std::begin(data), std::end(data));
-    std::sort(std::begin(sorted_data), std::end(sorted_data), [ac_offset](auto & a, auto & b) {
+    std::stable_sort(std::begin(sorted_data), std::end(sorted_data), [ac_offset](auto & a, auto & b) {
          return a.first < b.first;
     });
 
