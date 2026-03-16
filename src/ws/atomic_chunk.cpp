@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cassert>
+#include <cctype>
 #include <vector>
 #include <algorithm>
 #include <tuple>
@@ -65,17 +66,33 @@ int main(int argc, char* argv[])
     std::string dt(argv[6]);
     const char * tag = argv[7];
 
-    // Parse merge thresholds from argv[8..N].  When multiple values are
-    // given, watershed + region graph are computed once and the merge step
-    // is repeated for each threshold, writing indexed output files.
+    // Parse optional merge function and merge thresholds from argv[8..N].
+    // When multiple thresholds are given, watershed + region graph are
+    // computed once and the merge step is repeated for each threshold,
+    // writing indexed output files.
+    //
+    // CLI format: ws param aff high low size dust tag [merge_func] [thresholds...]
+    // merge_func: "max" (default), "mean", or "pNN" (e.g. "p75", "p90")
     std::vector<aff_t> merge_thresholds;
     auto high_threshold = read_float<aff_t>(ht);
     auto low_threshold = read_float<aff_t>(lt);
     auto size_threshold = read_int(st);
     auto dust_threshold = read_int(dt);
 
-    if (argc > 8) {
-        for (int i = 8; i < argc; i++) {
+    EdgeScoreConfig score_cfg;  // default: MAX
+    int merge_thresh_start = 8;
+
+    // If argv[8] starts with a letter, it's a merge function spec.
+    // Merge thresholds start with a digit, dot, or minus.
+    if (argc > 8 && std::isalpha(static_cast<unsigned char>(argv[8][0]))) {
+        std::string merge_func_str(argv[8]);
+        score_cfg = parse_edge_score_config(merge_func_str);
+        merge_thresh_start = 9;
+        std::cout << "merge function: " << merge_func_str << std::endl;
+    }
+
+    if (argc > merge_thresh_start) {
+        for (int i = merge_thresh_start; i < argc; i++) {
             std::string ms(argv[i]);
             merge_thresholds.push_back(read_float<aff_t>(ms));
         }
@@ -137,7 +154,7 @@ int main(int argc, char* argv[])
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "finished watershed in " << elapsed_secs << " seconds" << std::endl;
     begin = clock();
-    auto rg = get_region_graph(aff, seg , counts.size()-1, low_threshold, flags);
+    auto rg = get_region_graph(aff, seg , counts.size()-1, low_threshold, flags, score_cfg);
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << "finished region graph in " << elapsed_secs << " seconds" << std::endl;
