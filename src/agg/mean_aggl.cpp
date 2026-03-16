@@ -134,9 +134,9 @@ struct agglomeration_semantic_heuristic_t
 
 struct agglomeration_twig_heuristic_t
 {
-    aff_t aff_threshold_delta = 0;
+    aff_t aff_threshold_delta = 0.05;
     size_t voxel_threshold = 100'000;
-    size_t area_threshold = 50;
+    size_t area_threshold = 200;
 };
 
 struct agglomeration_param_t
