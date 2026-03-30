@@ -34,6 +34,7 @@ done
 
 try touch ns.data
 try touch ongoing_semantic_labels.data
+try touch ongoing_seg_size.data
 
 if [ "$OVERLAP" = "1" ]; then
     try taskset -c $cpuid $BIN_PATH/agg_nonoverlap $AGG_THRESHOLD input_rg.data frozen.data ns.data

@@ -1,15 +1,18 @@
 #pragma once
 
 #include "types.hpp"
+#include "edge_score.hpp"
 
 #include <cstddef>
 #include <iostream>
+#include <vector>
 
 template< typename ID, typename F, typename L>
 inline region_graph<ID,F>
 get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
                   const volume_ptr<ID> seg_ptr,
-                  std::size_t max_segid, const L& lowv, const std::array<bool,6> & boundary_flags)
+                  std::size_t max_segid, const L& lowv, const std::array<bool,6> & boundary_flags,
+                  const EdgeScoreConfig& score_cfg = EdgeScoreConfig())
 {
     using affinity_t = F;
     using id_pair = std::pair<ID,ID>;
@@ -26,8 +29,7 @@ get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
 
     std::vector<id_pair> pairs;
 
-    std::vector<MapContainer<ID, F> > edges(max_segid);
-    //std::vector<emilib::HashMap<ID, F> > edges(max_segid);
+    std::vector<MapContainer<ID, std::vector<F>> > edges(max_segid);
     for (auto & h : edges) {
         h.reserve(10);
     }
@@ -39,36 +41,37 @@ get_region_graph( const affinity_graph_ptr<F>& aff_ptr,
                 if ( (x > boundary_flags[0]) && seg[x][y][z] && seg[x-1][y][z] && seg[x][y][z] != seg[x-1][y][z])
                 {
                     auto p = std::minmax(seg[x][y][z], seg[x-1][y][z]);
-                    F& curr = edges[p.first][p.second];
-                    if (!curr) {
+                    auto& vec = edges[p.first][p.second];
+                    if (vec.empty()) {
                         pairs.push_back(p);
                     }
-                    curr = std::max(curr, aff[x][y][z][0]);
+                    vec.push_back(aff[x][y][z][0]);
                 }
                 if ( (y > boundary_flags[1]) && seg[x][y][z] && seg[x][y-1][z] && seg[x][y][z] != seg[x][y-1][z])
                 {
                     auto p = std::minmax(seg[x][y][z], seg[x][y-1][z]);
-                    F& curr = edges[p.first][p.second];
-                    if (!curr) {
+                    auto& vec = edges[p.first][p.second];
+                    if (vec.empty()) {
                         pairs.push_back(p);
                     }
-                    curr = std::max(curr, aff[x][y][z][1]);
+                    vec.push_back(aff[x][y][z][1]);
                 }
                 if ( (z > boundary_flags[2]) && seg[x][y][z] && seg[x][y][z-1] && seg[x][y][z] != seg[x][y][z-1])
                 {
                     auto p = std::minmax(seg[x][y][z], seg[x][y][z-1]);
-                    F& curr = edges[p.first][p.second];
-                    if (!curr) {
+                    auto& vec = edges[p.first][p.second];
+                    if (vec.empty()) {
                         pairs.push_back(p);
                     }
-                    curr = std::max(curr, aff[x][y][z][2]);
+                    vec.push_back(aff[x][y][z][2]);
                 }
             }
 
     for ( const auto& p : pairs)
     {
-        auto v = edges[p.first][p.second];
-        rg.emplace_back(v, p.first, p.second);
+        auto& affs = edges[p.first][p.second];
+        F score = compute_edge_score(affs, score_cfg);
+        rg.emplace_back(score, p.first, p.second);
     }
 
     std::cout << "Region graph size: " << rg.size() << std::endl;
