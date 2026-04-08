@@ -42,10 +42,10 @@ def cut_data(data, start_coord, end_coord, padding):
     bb = tuple(slice(start_coord[i], end_coord[i]) for i in range(3))
     global_param = cu.read_inputs(os.environ['PARAM_JSON'])
     if data.shape[3] == 1:
-        if data.dtype == 'float32':
+        if data.dtype == 'float32' or data.dtype == 'uint8':
             pmap = numpy.squeeze(data[bb])
             affinity = [numpy.minimum(numpy.roll(pmap, shift=1, axis=axis), pmap) for axis in range(3)]
-            return pad_data(numpy.stack(affinity, axis=-1), padding)
+            return pad_data(convert_and_scale_integer_data(numpy.stack(affinity, axis=-1), "float32"), padding)
         else:
             return pad_data(data[bb], padding)
     elif data.shape[3] == 3:
