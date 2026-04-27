@@ -390,7 +390,7 @@ std::vector<seg_t> extract_cc(const agglomeration_data_t<T, Compare> & agg_data,
 }
 
 template<typename T>
-std::vector<std::pair<seg_t, size_t> > cc_edge_offsets(std::vector<edge_t<T> > rg_vector, std::vector<seg_t> & ccids)
+std::vector<std::pair<seg_t, size_t> > cc_edge_offsets(const std::vector<edge_t<T> > & rg_vector, std::vector<seg_t> & ccids)
 {
     seg_t ccid = std::numeric_limits<seg_t>::max();
     std::vector<std::pair<seg_t, size_t> > cc_edges;
