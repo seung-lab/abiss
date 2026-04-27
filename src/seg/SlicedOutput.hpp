@@ -51,7 +51,7 @@ public:
             payload_size += sizeof(payload_crc32);
             index_t idx = {chunkId, m_offset, payload_size};
             m_index_buf.push_back(idx);
-            std::cout << "Write chunk at:" << m_offset << ", " << payload_size << "," << payload_crc32 << std::endl;
+            // std::cout << "Write chunk at:" << m_offset << ", " << payload_size << "," << payload_crc32 << std::endl;
             m_payload_buf.clear();
             m_offset += payload_size;
         }
