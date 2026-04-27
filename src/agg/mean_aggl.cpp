@@ -1057,7 +1057,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
                 of_twig.write(reinterpret_cast<const char *>(&(seg_indices[e.v1])), sizeof(seg_t));
                 write_edge(of_twig, e.w);
             }
-            remaps.push_back(o.remap);
+            remaps.push_back(std::move(o.remap));
             mst_size += o.merged_rg_vector.size();
             residue_size += o.res_rg_vector.size();
         }
