@@ -14,7 +14,7 @@ int main(int argc, char * argv[])
     auto size_array = read_array<std::pair<uint64_t, uint64_t> >(argv[2]);
     uint64_t threshold = std::stoull(argv[3]);
 
-    std::stable_sort(size_array.begin(), size_array.end(), [](auto & a, auto & b) {
+    std::sort(size_array.begin(), size_array.end(), [](auto & a, auto & b) {
         return a.first < b.first;
     });
     auto last = std::unique(size_array.begin(), size_array.end(), [](auto & a, auto & b) {
