@@ -1064,7 +1064,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
             std::cout << "stop agglomeration" << std::endl;
             target_th -= agg_step;
         } else {
-            if ((target_th - th) > (agg_step*1.5)) {
+            if ((target_th - th) > (agg_step)) {
                 target_th -= agg_step;
             } else {
                 target_th = th;
