@@ -1054,9 +1054,10 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         }
         std::cout << "finish agglomeration connect components" << std::endl;
 
+        std::for_each(std::execution::par, agg_data.incident.begin(), agg_data.incident.end(), [](auto & d) { MapContainer<seg_t, handle_wrapper<T, Compare>>().swap(d); });
+
         remap_edges<T, Compare>(agg_data, remaps, total_size);
         merge_edges<T, Compare, Plus, Limits>(agg_data, total_size);
-        std::for_each(std::execution::par, agg_data.incident.begin(), agg_data.incident.end(), [](auto & d) { MapContainer<seg_t, handle_wrapper<T, Compare>>().swap(d); });
         if (target_th == th) {
             std::cout << "stop agglomeration" << std::endl;
             target_th -= agg_step;
