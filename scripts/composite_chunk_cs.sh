@@ -11,6 +11,20 @@ try download_children $1 $FILE_PATH/scratch
 
 try python3 $SCRIPT_PATH/merge_chunks_cs.py $1
 
+if [ -f /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages ]; then
+    TOTAL_HUGE_PAGES=$(cat /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages)
+    MIP_LEVEL=$(python3 -c "import json; print(json.load(open('$1'))['mip_level'])")
+    TOP_MIP_LEVEL=$(python3 -c "import json; print(json.load(open('$1'))['top_mip_level'])")
+    if [ "$MIP_LEVEL" -eq "$TOP_MIP_LEVEL" ]; then
+        RESERVE=$TOTAL_HUGE_PAGES
+    else
+        DIFF=$((TOP_MIP_LEVEL - MIP_LEVEL))
+        RESERVE=$((TOTAL_HUGE_PAGES / (1 << DIFF)))
+    fi
+    export MIMALLOC_RESERVE_HUGE_OS_PAGES=$RESERVE
+    echo "RESERVE ${RESERVE} GB HUGE PAGE (mip ${MIP_LEVEL}/${TOP_MIP_LEVEL})"
+fi
+
 try $BIN_PATH/mecs param.txt $output_chunk
 
 retry 10 $UPLOAD_CMD complete_cs_"${output_chunk}".data $FILE_PATH/cs/complete_cs_"${output_chunk}".data
