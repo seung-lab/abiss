@@ -300,7 +300,9 @@ void merge_edges(agglomeration_data_t<T, Compare> & agg_data, size_t offset)
     });
 
     rg_vector.erase(erase_pos, rg_vector.end());
-    rg_vector.shrink_to_fit();
+    if (rg_vector.capacity() > ( 2 * rg_vector.size())) {
+      rg_vector.shrink_to_fit();
+    }
 
     std::cout << "new_rg_vector size:" << rg_vector.size() << std::endl;
 }
