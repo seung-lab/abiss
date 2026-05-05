@@ -14,6 +14,7 @@ struct CRInfo {
     SegPair<seg_t> p;
     std::array<size_t, 4> com;
     std::array<size_t, 3> sizes;
+    std::array<size_t, 3> in_range_sizes;
     BBox bbox;
     CRInfo() {
         p = {0, 0};
@@ -27,6 +28,7 @@ struct CRInfo {
             std::numeric_limits<int64_t>::min()
         };
         sizes = {0,0,0};
+        in_range_sizes = {0,0,0};
     }
     CRInfo(const SegPair<seg_t> & seg_pair, const ContactRegionExt & cre) {
         com = {0,0,0,0};
@@ -39,6 +41,7 @@ struct CRInfo {
             std::numeric_limits<int64_t>::min()
         };
         sizes = {0,0,0};
+        in_range_sizes = {0,0,0};
         p = seg_pair;
         for (auto & [c, n]: cre) {
             com[3] += 1;
@@ -52,6 +55,9 @@ struct CRInfo {
             for (size_t i = 0; i != 3; i++) {
                 if (n&(1<<i)) {
                     sizes[i] += 1;
+                    if (n & (1<<3)) {
+                        in_range_sizes[i] += 1;
+                    }
                 }
             }
         }
@@ -70,6 +76,7 @@ struct CRInfo {
         }
         for (int i = 0; i != 3; i++) {
             sizes[i] += other.sizes[i];
+            in_range_sizes[i] += other.in_range_sizes[i];
         }
     }
     void remove_duplicated_voxel(const Coord & c, int n) {
@@ -78,6 +85,9 @@ struct CRInfo {
             com[i] -= c[i];
             if (n&(1<<i)) {
                 sizes[i] -= 1;
+                if (n & (1<<3)) {
+                    in_range_sizes[i] -= 1;
+                }
             }
         }
     }
@@ -141,8 +151,9 @@ public:
     {
         auto p = std::minmax(segid1, segid2);
         auto aff_val = m_aff[c[0]][c[1]][c[2]][nv];
+        m_surfaces[p][c] |= 1<<nv;
         if (aff_val < m_high and aff_val > m_low) {
-            m_surfaces[p][c] |= 1<<nv;
+            m_surfaces[p][c] |= 1<<3;
         }
     }
 
