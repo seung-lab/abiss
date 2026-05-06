@@ -171,7 +171,12 @@ public:
                     cre[c] = v.at(c);
                 }
                 CRInfo ci(k, cre);
-                crs.emplace_back(ci, cre);
+                for (size_t i = 0; i != 3; i++) {
+                    if (ci.in_range_sizes[i] > 0) {
+                        crs.emplace_back(ci, cre);
+                        break;
+                    }
+                }
             }
         }
         return crs;
