@@ -579,6 +579,20 @@ inline agglomeration_data_t<T, Compare> preprocess_inputs(const char * rg_filena
             }
         });
 
+    // filter out edges between supervoxels with different semantic labels
+    if (!agg_data.sem_counts.empty()) {
+        size_t before = rg_vector.size();
+        auto it = std::remove_if(rg_vector.begin(), rg_vector.end(), [&agg_data](const auto & e) {
+            auto l0 = agg_data.sem_counts[e.v0][0];
+            auto l1 = agg_data.sem_counts[e.v1][0];
+            return l0 != 0 && l1 != 0 && l0 != l1;
+        });
+        size_t removed = std::distance(it, rg_vector.end());
+        rg_vector.erase(it, rg_vector.end());
+        std::cout << "filtered out " << removed << " / " << before
+                  << " cross-semantic edges" << std::endl;
+    }
+
     merge_edges<T, Compare, Plus, Limits>(agg_data, 0);
 
     return agg_data;
