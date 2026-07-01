@@ -923,6 +923,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
     aff_t target_th = params.starting_aff_threshold;
     aff_t agg_step = params.agglomeration_step;
+    aff_t prev_target_th = 1.0;
     size_t ncpus = params.optimal_number_of_partitions;
     size_t min_edge_threshold = params.minimal_number_of_edges;
     size_t min_cc_threshold = min_edge_threshold/10;
@@ -976,6 +977,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
         if ((cc_queue.empty() or (*m).second < min_cc_threshold) and target_th != th) {
             std::cout << "No large CC found in " << rg_vector.size() << " edges" << std::endl;
+            prev_target_th = target_th;
             target_th -= agg_step;
             if (target_th < th) {
                 target_th = th;
@@ -992,6 +994,36 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
         auto cc_edges = cc_edge_offsets(rg_vector, ccids);
         std::cout << "cc_queue: " << cc_queue.size() << std::endl;
         std::cout << "cc_edges: " << cc_edges.size() << std::endl;
+
+        // Check for connected components with more than 1 billion edges;
+        // if found, halve agg_step (clamped to 0.01) and revert to previous threshold.
+
+        if (agg_step > 0.01) {
+            size_t const max_cc_edges = 1'000'000'000UL;
+            size_t prev_offset = 0;
+            bool too_large = false;
+            for (size_t i = 0; i < cc_edges.size(); i++) {
+                size_t edge_count = cc_edges[i].second - prev_offset;
+                if (edge_count > max_cc_edges) {
+                    agg_step /= 2.0;
+                    std::cout << "CC at offset " << prev_offset << " has " << edge_count
+                              << " edges (limit " << max_cc_edges << "), reducing agg_step to " << agg_step << std::endl;
+                    too_large = true;
+                    break;
+                }
+                prev_offset = cc_edges[i].second;
+            }
+            if (too_large) {
+                target_th = prev_target_th - agg_step;
+                if (target_th < th) {
+                    target_th = th;
+                }
+                std::cout << "retrying at threshold " << target_th
+                          << " (prev_target_th=" << prev_target_th
+                          << ", agg_step=" << agg_step << ")" << std::endl;
+                continue;
+            }
+        }
 
         size_t total_size = cc_edges.back().second;
         std::cout << "number of active edges: " << total_size << std::endl;
@@ -1061,6 +1093,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 
         remap_edges<T, Compare>(agg_data, remaps, total_size);
         merge_edges<T, Compare, Plus, Limits>(agg_data, total_size);
+        prev_target_th = target_th;
         if (target_th == th) {
             std::cout << "stop agglomeration" << std::endl;
             target_th -= agg_step;
