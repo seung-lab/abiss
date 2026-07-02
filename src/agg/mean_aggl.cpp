@@ -399,19 +399,20 @@ std::vector<std::pair<seg_t, size_t> > cc_edge_offsets(const std::vector<edge_t<
     if (rg_vector.empty()) {
         return cc_edges;
     }
-    size_t i = 1;
-    for (; i != rg_vector.size(); i++) {
-        const auto & e_prev = rg_vector[i-1];
+    for (size_t i = 0; i != rg_vector.size(); i++) {
         const auto & e = rg_vector[i];
         if (ccids[e.v0] != ccids[e.v1]) {
             cc_edges.emplace_back(ccid, i);
             break;
         }
-        if (ccids[e_prev.v0] != ccids[e.v0]) {
-            cc_edges.emplace_back(ccids[e_prev.v0], i);
+        if (ccid != ccids[e.v0]) {
+            if (ccid != std::numeric_limits<seg_t>::max()) {
+                cc_edges.emplace_back(ccid, i);
+            }
+            ccid = ccids[e.v0];
         }
     }
-    if (i == rg_vector.size() and (cc_edges.empty() or (i-1) != cc_edges.back().second)) {
+    if ((cc_edges.empty() or ccid != cc_edges.back().first) and ccid != std::numeric_limits<seg_t>::max()) {
         cc_edges.emplace_back(ccid, rg_vector.size());
     }
     return cc_edges;
