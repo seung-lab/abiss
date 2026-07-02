@@ -926,7 +926,7 @@ inline void agglomerate(const char * rg_filename, const char * fs_filename, cons
 {
     Compare comp;
 
-    auto th = 0.0;
+    aff_t th = 0.0;
 
     T const final_threshold = T(th,1);
 
