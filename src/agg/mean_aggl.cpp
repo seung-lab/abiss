@@ -147,7 +147,7 @@ struct agglomeration_param_t
     aff_t input_aff_threshold;
     aff_t heuristics_aff_threshold = size_params.aff_threshold > sem_params.aff_threshold ? size_params.aff_threshold : sem_params.aff_threshold;
     aff_t starting_aff_threshold = 0.9;
-    aff_t agglomeration_step = 0.1;
+    aff_t agglomeration_step = 0.101;
     size_t optimal_number_of_partitions = omp_get_num_procs() ;
     size_t minimal_number_of_edges = 100'000;
 };
