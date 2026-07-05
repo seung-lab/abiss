@@ -114,5 +114,3 @@ META=""
 export SEG_MIP=0
 export WS_MIP=0
 export FILE_PATH=$IO_SCRATCH_PATH/$STAGE
-
-export MIMALLOC_VERBOSE=1
