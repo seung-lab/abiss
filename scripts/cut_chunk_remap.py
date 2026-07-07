@@ -16,6 +16,10 @@ seg = load_data(os.environ['WS_PATH'], mip=global_param['AFF_RESOLUTION'], fill_
 seg_cutout = cut_data(seg, start_coord, end_coord, boundary_flags)
 save_raw_data("seg.raw", seg_cutout)
 
+if "SEM_PATH" in global_param:
+    sem = load_data(global_param['SEM_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=global_param.get('SEM_FILL_MISSING', False))
+    sem_cutout = cut_data(sem, start_coord, end_coord, boundary_flags)
+    save_raw_data("sem.raw", sem_cutout)
 
 if "GT_PATH" in global_param:
     gt = load_data(os.environ['GT_PATH'], mip=global_param['AFF_RESOLUTION'], fill_missing=True, bounded=False)

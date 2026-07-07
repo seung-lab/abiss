@@ -85,6 +85,8 @@ add_executable(reduce_chunk
     src/seg/reduce_chunk.cpp)
 add_executable(size_map
     src/seg/size_map.cpp)
+add_executable(collect_sem
+    src/seg/collect_sem.cpp)
 add_executable(evaluate
     src/seg/eval.cpp)
 add_executable(ws

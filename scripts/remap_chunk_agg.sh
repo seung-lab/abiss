@@ -22,6 +22,10 @@ try python3 $SCRIPT_PATH/merge_remaps.py $1
 try python3 $SCRIPT_PATH/merge_size.py $1
 try mv seg.raw seg_"${output_chunk}".data
 try taskset -c $cpuid $BIN_PATH/ws3 param.txt seg_"${output_chunk}".data
+if [ -f sem.raw ]; then
+    try taskset -c $cpuid $BIN_PATH/collect_sem seg_"${output_chunk}".data sem_final_"${output_chunk}".data
+    retry 10 $UPLOAD_CMD sem_final_"${output_chunk}".data "$FILE_PATH"/chunked_sem/sem_final_"${output_chunk}".data
+fi
 try taskset -c $cpuid $BIN_PATH/size_map seg_"${output_chunk}".data size.data $REMAP_SIZE_MAP_THRESHOLD
 if [ ! -z ${GT_PATH:-} ]; then
     try taskset -c $cpuid $BIN_PATH/evaluate seg_"${output_chunk}".data gt.raw
