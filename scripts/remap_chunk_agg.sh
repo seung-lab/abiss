@@ -6,6 +6,10 @@ output_chunk=`basename $1 .json`
 
 try acquire_cpu_slot
 try touch chunkmap.data
+if [ -n "${EXTRA_REMAPS:-}" ]; then
+    echo "Downloading extra remaps from $EXTRA_REMAPS"
+    try retry 10 $DOWNLOAD_CMD "$EXTRA_REMAPS" extra_remaps.data
+fi
 try taskset -c $cpuid python3 $SCRIPT_PATH/cut_chunk_remap.py $1 $WS_PATH
 
 if [ "$CHUNKED_AGG_OUTPUT" = "1"  ]; then

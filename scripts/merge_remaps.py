@@ -10,6 +10,19 @@ def merge_remaps(prefixes, ancestor_tags, offset):
             if payload:
                 content += payload
 
+    extra_remaps = b''
+    if os.path.exists('extra_remaps.data'):
+        with open('extra_remaps.data', 'rb') as f:
+            extra_remaps = f.read()
+        entry_size = 16
+        if len(extra_remaps) % entry_size != 0:
+            raise ValueError(
+                f"extra_remaps.data size ({len(extra_remaps)} bytes) is not "
+                f"divisible by entry size ({entry_size} bytes)",
+            )
+        content += extra_remaps
+        print(f"loaded {len(extra_remaps) // entry_size} extra remaps")
+
     with open('remap.data','wb') as out:
         out.write(content)
 
