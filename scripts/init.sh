@@ -62,7 +62,9 @@ download_intermediary_files() {
 }
 
 lock_prefix="${AIRFLOW_TMP_DIR}/.cpulock"
+cut_sem_path="${AIRFLOW_TMP_DIR}/.cut_semaphore"
 ncpus=$(python3 -c "import os; print(len(os.sched_getaffinity(0)))")
+cut_slots=0
 cpuid=""
 function acquire_cpu_slot() {
     for i in $(python3 -c "exec(\"import os\nfor i in os.sched_getaffinity(0): print(i)\")"); do
@@ -82,6 +84,33 @@ function release_cpu_slot() {
     try rm -rf $fn
 }
 
+function _init_cut_semaphore() {
+    if [ ! -d "$cut_sem_path" ]; then
+        try mkdir -p "$cut_sem_path"
+        for i in $(seq 0 $((cut_slots - 1))); do
+            try touch "${cut_sem_path}/slot_${i}"
+        done
+    fi
+}
+
+function acquire_cut_slot() {
+    _init_cut_semaphore
+    while true; do
+        for i in $(seq 0 $((cut_slots - 1))); do
+            local fn="${cut_sem_path}/slot_${i}"
+            if mv "$fn" "${fn}.lock" 2>/dev/null; then
+                _cut_slot=$i
+                return 0
+            fi
+        done
+        sleep 1
+    done
+}
+
+function release_cut_slot() {
+    touch "${cut_sem_path}/slot_${_cut_slot}"
+}
+
 export AIRFLOW_TMP_DIR=${AIRFLOW_TMP_DIR:-"/tmp/airflow"}
 export WORKER_HOME=${WORKER_HOME:-"/workspace/seg"}
 export CLOUD_VOLUME_CACHE_DIR=${AIRFLOW_TMP_DIR}/cache
@@ -91,6 +120,15 @@ BIN_PATH="${WORKER_HOME}/build"
 SECRETS=${SECRETS:-"${WORKER_HOME}/.cloudvolume/secrets"}
 export PARAM_JSON=$SECRETS/param
 #export PARAM_JSON="$SCRIPT_PATH"/param.json
+
+# Scale cut_slots by available memory and chunk size.
+# Baseline: 8 GB per concurrent slot for a 512x512x256 chunk (67_108_864 voxels).
+total_mem_kb=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
+chunk_voxels=$(python3 -c "import json; p=json.load(open('$PARAM_JSON')); c=p.get('CHUNK_SIZE',[512,512,256]); print(c[0]*c[1]*c[2])" 2>/dev/null || echo 67108864)
+cut_slots=$(( (total_mem_kb * 67108864) / (8388608 * chunk_voxels) ))
+if [ $cut_slots -gt $ncpus ]; then cut_slots=$ncpus; fi
+if [ $cut_slots -lt 1 ]; then cut_slots=1; fi
+echo "cut_slots=$cut_slots"
 
 if [ ! -f "$SECRETS"/config.sh  ]; then
     try python3 $SCRIPT_PATH/set_env.py $PARAM_JSON > $SECRETS/config.sh

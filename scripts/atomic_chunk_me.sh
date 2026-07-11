@@ -23,7 +23,9 @@ done
 
 try python3 $SCRIPT_PATH/merge_chunkmap.py $1
 
+try acquire_cut_slot
 try taskset -c $cpuid python3 $SCRIPT_PATH/cut_chunk_agg.py $1
+try release_cut_slot
 try taskset -c $cpuid $BIN_PATH/acme param.txt $output_chunk
 try mv edges_"$output_chunk".data input_rg.data
 
